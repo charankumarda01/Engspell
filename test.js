@@ -503,6 +503,76 @@ tryv('Review view renders both empty and populated states', function () {
   return emptyOk && populatedOk;
 });
 
+/* ── READING CORNER (MISSION 4) ─────────────────────────────────────── */
+console.log('\n📚 Reading Corner (Mission 4)');
+
+tryv('VIEWS.read renders both the passage list and an open-passage state', function () {
+  _ls = {}; STORE.reload();
+  var el = { innerHTML: '', querySelector: function(){ return null; }, querySelectorAll: function(){ return []; } };
+
+  // 1. Passage list state
+  VIEWS.read.render(el, '');
+  var listOk = el.innerHTML.indexOf('Reading Corner') !== -1 && el.innerHTML.indexOf('read-passage-card') !== -1;
+
+  // 2. Open passage state
+  VIEWS.read.render(el, 'p1');
+  var openOk = el.innerHTML.indexOf('open-passage') !== -1 && el.innerHTML.indexOf('read-word') !== -1;
+
+  return listOk && openOk;
+});
+
+tryv('Word-chip lookup: a word present in the tables returns its IPA; an absent word returns the fallback text', function () {
+  var ipaPresent1 = VIEWS.read.lookupWord('articulate'); // from POWER_WORDS
+  var ipaPresent2 = VIEWS.read.lookupWord('calendar');   // from WORDS
+  var ipaAbsent = VIEWS.read.lookupWord('xyzabsentword999');
+
+  if (typeof ipaPresent1 !== 'string' || ipaPresent1.indexOf('/') !== 0) return false;
+  if (typeof ipaPresent2 !== 'string' || ipaPresent2.indexOf('/') !== 0) return false;
+  if (ipaAbsent !== 'IPA not in dictionary') return false;
+
+  return true;
+});
+
+tryv('Saving a word writes mastery key read_<word> AND creates a due SRS entry', function () {
+  _ls = {}; STORE.reload();
+  var w = 'articulate';
+  var key = 'read_' + w;
+
+  var res = VIEWS.read.saveWord(w);
+  var mastery = STORE.get('mastery');
+  var srs = STORE.get('srs');
+
+  if (!mastery[key] || mastery[key] < 1) return false;
+  if (!srs[key] || typeof srs[key].due !== 'number' || srs[key].due > Date.now()) return false;
+
+  // Verify it surfaces in srsDueItems
+  var dueItems = srsDueItems();
+  var foundDue = dueItems.some(function (it) { return it.key === key; });
+  if (!foundDue) return false;
+
+  // Verify it is recognized under vocab by TRAINER.keysFor
+  var vocabKeys = TRAINER.keysFor('vocab', mastery);
+  if (vocabKeys.indexOf(key) === -1) return false;
+
+  return true;
+});
+
+tryv('Saved-words section renders with fixtures and empty state', function () {
+  _ls = {}; STORE.reload();
+
+  // 1. Empty state
+  STORE.set('mastery', {});
+  var emptyHtml = VIEWS.read.renderSavedSection();
+  var emptyOk = emptyHtml.indexOf('empty-saved') !== -1 && emptyHtml.indexOf('No words saved') !== -1;
+
+  // 2. Fixtures state
+  STORE.set('mastery', { 'read_articulate': 2, 'read_candid': 1 });
+  var fixtureHtml = VIEWS.read.renderSavedSection();
+  var fixtureOk = fixtureHtml.indexOf('articulate') !== -1 && fixtureHtml.indexOf('candid') !== -1 && fixtureHtml.indexOf('data-remove') !== -1;
+
+  return emptyOk && fixtureOk;
+});
+
 /* ── VIEWS RENDER CHECKS ───────────────────────────────────────────── */
 console.log('\n🖼️  View render smoke tests');
 
@@ -527,7 +597,7 @@ global.document.getElementById = function(id) {
   };
 };
 
-var viewsToTest = ['home','foundations','pronunciation','spelling','phrases','coach','quiz','wordbank','settings','onboarding','daily','path','clarity','idioms','doctor','trainer','assessment','listening','atlas','review'];
+var viewsToTest = ['home','foundations','pronunciation','spelling','phrases','coach','quiz','wordbank','settings','onboarding','daily','path','clarity','idioms','doctor','trainer','assessment','listening','atlas','review','read'];
 
 viewsToTest.forEach(function(name) {
   tryv('VIEWS.' + name + '.render exists and runs', function () {

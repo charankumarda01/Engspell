@@ -666,6 +666,60 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .review-prompt { text-align: center; font-weight: 600; margin-bottom: 16px; }
 .review-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
+/* ── READING CORNER (MISSION 4) ── */
+.view-read { display: flex; flex-direction: column; gap: 24px; max-width: 900px; margin: 0 auto; }
+.read-home-header h1 { font-size: 1.8rem; margin-bottom: 6px; }
+.read-home-header .sub { color: var(--muted); font-size: 0.95rem; }
+.saved-words-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+.saved-words-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.saved-words-header h3 { font-size: 1.1rem; color: var(--gold); }
+.badge-count { background: rgba(245,158,11,0.15); color: var(--gold); font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.empty-saved { font-size: 0.9rem; margin: 8px 0; }
+.saved-words-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.saved-word-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: 0.85rem; }
+.sw-word { font-weight: 700; color: var(--text); }
+.sw-ipa { font-size: 0.8rem; color: var(--accent3); font-family: monospace; }
+.sw-play, .sw-remove { background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 2px; color: var(--muted); border-radius: 4px; transition: color 0.15s; }
+.sw-play:hover { color: var(--accent3); }
+.sw-remove:hover { color: var(--red); }
+.read-sections { display: flex; flex-direction: column; gap: 28px; }
+.read-level-group { display: flex; flex-direction: column; gap: 14px; }
+.read-level-header { display: flex; align-items: center; gap: 10px; }
+.level-badge { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 800; font-size: 0.8rem; padding: 3px 10px; border-radius: 6px; }
+.level-count { font-size: 0.85rem; color: var(--muted); }
+.read-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.read-passage-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 18px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; justify-content: space-between; }
+.read-passage-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.rpc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.rpc-level { font-size: 0.75rem; font-weight: 700; color: var(--accent3); background: rgba(124,58,237,0.15); padding: 2px 8px; border-radius: 6px; }
+.rpc-saved { font-size: 0.75rem; color: var(--gold); font-weight: 600; }
+.rpc-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+.rpc-excerpt { font-size: 0.85rem; color: var(--muted); line-height: 1.5; margin-bottom: 14px; flex: 1; }
+.rpc-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; }
+.rpc-btn { color: var(--accent3); font-weight: 600; }
+.open-passage { display: flex; flex-direction: column; gap: 20px; }
+.read-header { display: flex; flex-direction: column; gap: 10px; }
+.read-title-row { display: flex; align-items: center; gap: 12px; }
+.read-meta { display: flex; gap: 14px; font-size: 0.85rem; color: var(--muted); }
+.saved-counter { color: var(--gold); font-weight: 600; }
+.read-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.read-hint { font-size: 0.88rem; color: var(--accent3); background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); border-radius: 10px; padding: 10px 14px; }
+.read-text-container { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; font-size: 1.15rem; line-height: 2; color: #e2e8f0; }
+.read-word { cursor: pointer; border-radius: 4px; padding: 1px 3px; transition: all 0.15s; display: inline-block; }
+.read-word:hover { background: rgba(124,58,237,0.25); color: #fff; text-shadow: 0 0 1px #a78bfa; }
+.word-chip-container { position: sticky; bottom: 16px; z-index: 100; margin-top: 8px; }
+.word-chip { background: rgba(17,24,39,0.96); backdrop-filter: blur(16px); border: 1px solid var(--accent); border-radius: 16px; padding: 18px 22px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 10px; }
+.word-chip.empty { border-color: var(--border); background: var(--bg2); text-align: center; font-size: 0.85rem; color: var(--muted); padding: 14px; }
+.wc-top { display: flex; justify-content: space-between; align-items: center; }
+.wc-title-area { display: flex; align-items: baseline; gap: 12px; }
+.wc-word { font-size: 1.4rem; font-weight: 800; color: #fff; }
+.wc-ipa { font-size: 1rem; color: var(--accent3); font-family: monospace; }
+.wc-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+.wc-close:hover { color: #fff; }
+.wc-meaning { font-size: 0.9rem; color: var(--text); }
+.wc-eg { font-size: 0.85rem; color: var(--muted); }
+.wc-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+
 /* ── XP pop ── */
 .xp-pop { position: absolute; pointer-events: none; font-size: 0.9rem; font-weight: 700; color: var(--gold); animation: xpFloat 1.5s ease forwards; z-index: 500; }
 @keyframes xpFloat {

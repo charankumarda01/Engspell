@@ -625,3 +625,392 @@ VIEWS.atlas = {
     }
   }
 };
+
+/* ── READING CORNER (MISSION 4 — READ-01) ───────────────────────────── */
+VIEWS.read = {
+  _activeWord: null,
+
+  lookupEntry(word) {
+    if (!word) return null;
+    const clean = String(word).toLowerCase().replace(/[^a-z'-]/g, '').trim();
+    if (!clean) return null;
+
+    if (typeof POWER_WORDS !== 'undefined' && Array.isArray(POWER_WORDS)) {
+      const found = POWER_WORDS.find(p => p.w && p.w.toLowerCase() === clean);
+      if (found) return found;
+    }
+    if (typeof WORDS !== 'undefined' && Array.isArray(WORDS)) {
+      const found = WORDS.find(w => w.w && w.w.toLowerCase() === clean);
+      if (found) return found;
+    }
+    return null;
+  },
+
+  lookupWord(word) {
+    const entry = this.lookupEntry(word);
+    return (entry && entry.ipa) ? entry.ipa : 'IPA not in dictionary';
+  },
+
+  saveWord(word) {
+    if (!word) return null;
+    const clean = String(word).toLowerCase().replace(/[^a-z'-]/g, '').trim();
+    if (!clean) return null;
+    const key = 'read_' + clean;
+
+    STORE.master(key, true);
+
+    const srs = STORE.get('srs') || {};
+    srs[key] = {
+      interval: 0,
+      due: Date.now()
+    };
+    STORE.set('srs', srs);
+
+    TRAINER.log({ skill: 'vocab', delta: 1, source: 'read/save' });
+    STORE.addXP(2);
+
+    if (typeof updateReviewBadge === 'function') {
+      updateReviewBadge();
+    }
+
+    return {
+      key: key,
+      word: clean,
+      mastery: STORE.getMastery(key),
+      srs: srs[key]
+    };
+  },
+
+  removeWord(word) {
+    if (!word) return;
+    const clean = String(word).toLowerCase().replace(/[^a-z'-]/g, '').trim();
+    const key = 'read_' + clean;
+
+    const mastery = STORE.get('mastery') || {};
+    delete mastery[key];
+    STORE.set('mastery', mastery);
+
+    const srs = STORE.get('srs') || {};
+    delete srs[key];
+    STORE.set('srs', srs);
+
+    if (typeof updateReviewBadge === 'function') {
+      updateReviewBadge();
+    }
+  },
+
+  getSavedWords() {
+    const mastery = STORE.get('mastery') || {};
+    const words = [];
+    for (const k in mastery) {
+      if (mastery.hasOwnProperty(k) && k.startsWith('read_') && mastery[k] > 0) {
+        words.push(k.replace('read_', ''));
+      }
+    }
+    return words;
+  },
+
+  renderSavedSection() {
+    const saved = this.getSavedWords();
+    if (saved.length === 0) {
+      return `
+      <div class="saved-words-section">
+        <div class="saved-words-header">
+          <h3>⭐ My Saved Words</h3>
+          <span class="badge-count">0</span>
+        </div>
+        <p class="muted empty-saved">No words saved yet. Tap any word in a passage to save it for spaced review.</p>
+      </div>`;
+    }
+
+    const chipsHtml = saved.map(w => {
+      const ipa = this.lookupWord(w);
+      const hasIpa = ipa && ipa !== 'IPA not in dictionary';
+      return `
+      <div class="saved-word-chip" data-word="${w}">
+        <span class="sw-word">${w}</span>
+        ${hasIpa ? `<span class="sw-ipa">${ipa}</span>` : ''}
+        <button class="btn-icon sw-play" data-say="${w}" title="Listen">🔊</button>
+        <button class="btn-icon sw-remove" data-remove="${w}" title="Remove">✕</button>
+      </div>`;
+    }).join('');
+
+    return `
+    <div class="saved-words-section">
+      <div class="saved-words-header">
+        <h3>⭐ My Saved Words</h3>
+        <span class="badge-count">${saved.length}</span>
+      </div>
+      <div class="saved-words-chips">
+        ${chipsHtml}
+      </div>
+    </div>`;
+  },
+
+  getPassageSavedCount(passage) {
+    if (!passage || !passage.text) return 0;
+    const mastery = STORE.get('mastery') || {};
+    const words = passage.text.toLowerCase().match(/[a-z'-]+/g) || [];
+    let count = 0;
+    const seen = {};
+    for (let i = 0; i < words.length; i++) {
+      const w = words[i];
+      if (!seen[w]) {
+        seen[w] = true;
+        if (mastery['read_' + w] && mastery['read_' + w] > 0) {
+          count++;
+        }
+      }
+    }
+    return count;
+  },
+
+  render(el, arg) {
+    const self = this;
+
+    // Handle Open Passage state
+    if (arg) {
+      const passages = (typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : [];
+      const passage = passages.find(p => p.id === arg);
+
+      if (!passage) {
+        if (typeof navigate === 'function') { navigate('read'); }
+        return;
+      }
+
+      const wordCount = passage.text.split(/\s+/).filter(Boolean).length;
+      const savedCount = self.getPassageSavedCount(passage);
+
+      // Wrap each word in a span with data-word
+      const textHtml = passage.text.replace(/([A-Za-z0-9'-]+)/g, (match) => {
+        return `<span class="read-word" data-word="${match}">${match}</span>`;
+      });
+
+      el.innerHTML = `
+      <div class="view-read open-passage" id="open-passage-${passage.id}">
+        <div class="read-header">
+          <button class="btn-back" id="read-back">← Back to Reading Corner</button>
+          <div class="read-title-row">
+            <span class="rpc-level">${passage.level}</span>
+            <h2>${passage.title}</h2>
+          </div>
+          <div class="read-meta">
+            <span>📄 ${wordCount} words</span>
+            <span class="saved-counter">💾 saved (<strong id="psg-saved-cnt">${savedCount}</strong>)</span>
+          </div>
+          <div class="read-actions">
+            <button class="btn-primary" data-say="${passage.text}">🔊 Listen (Normal)</button>
+            <button class="btn-secondary" id="psg-slow">🐢 Listen Slow</button>
+            <a href="#/listening" class="btn-link">👂 Listening Lab →</a>
+          </div>
+        </div>
+
+        <p class="read-hint">💡 <em>Tap any word</em> to see its IPA pronunciation, hear it spoken, and save it to your SRS review queue.</p>
+
+        <div class="read-text-container" id="read-text-box">
+          ${textHtml}
+        </div>
+
+        <!-- Floating / Docked Word Chip -->
+        <div id="word-chip-container" class="word-chip-container">
+          <div class="word-chip empty">
+            <span class="wc-tip">👆 Tap any word in the passage above to inspect its pronunciation and meaning.</span>
+          </div>
+        </div>
+      </div>`;
+
+      const btnBack = (el.querySelector ? el.querySelector('#read-back') : null) || document.getElementById('read-back');
+      if (btnBack && btnBack.addEventListener) {
+        btnBack.addEventListener('click', () => {
+          if (typeof navigate === 'function') navigate('read');
+        });
+      }
+
+      const btnSlow = (el.querySelector ? el.querySelector('#psg-slow') : null) || document.getElementById('psg-slow');
+      if (btnSlow && btnSlow.addEventListener) {
+        btnSlow.addEventListener('click', () => {
+          if (typeof SPEECH !== 'undefined' && SPEECH.speakSlow) {
+            SPEECH.speakSlow(passage.text);
+          }
+        });
+      }
+
+      // Word click handling
+      const textBox = (el.querySelector ? el.querySelector('#read-text-box') : null) || document.getElementById('read-text-box');
+      const chipContainer = (el.querySelector ? el.querySelector('#word-chip-container') : null) || document.getElementById('word-chip-container');
+
+      function showWordChip(rawWord) {
+        if (!chipContainer) return;
+        const clean = String(rawWord).toLowerCase().replace(/[^a-z'-]/g, '').trim();
+        if (!clean) return;
+
+        const ipa = self.lookupWord(clean);
+        const entry = self.lookupEntry(clean);
+        const isSaved = (typeof STORE !== 'undefined' && STORE.getMastery)
+          ? STORE.getMastery('read_' + clean) > 0
+          : false;
+
+        chipContainer.innerHTML = `
+        <div class="word-chip active">
+          <div class="wc-top">
+            <div class="wc-title-area">
+              <span class="wc-word">${clean}</span>
+              <span class="wc-ipa">${ipa}</span>
+            </div>
+            <button class="btn-icon wc-close" id="wc-close" title="Close">✕</button>
+          </div>
+          ${entry && entry.meaning ? `<div class="wc-meaning"><strong>Meaning:</strong> ${entry.meaning}</div>` : ''}
+          ${entry && entry.eg ? `<div class="wc-eg"><em>"${entry.eg}"</em></div>` : ''}
+          <div class="wc-buttons">
+            <button class="btn-sm" id="wc-speak">🔊 Normal</button>
+            <button class="btn-sm" id="wc-slow">🐢 Slow</button>
+            <button class="${isSaved ? 'btn-secondary' : 'btn-primary'} btn-sm" id="wc-save">
+              ${isSaved ? '✅ Saved in Review' : '⭐ Save Word'}
+            </button>
+          </div>
+        </div>`;
+
+        const closeBtn = chipContainer.querySelector('#wc-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            chipContainer.innerHTML = `
+            <div class="word-chip empty">
+              <span class="wc-tip">👆 Tap any word in the passage above to inspect its pronunciation and meaning.</span>
+            </div>`;
+          });
+        }
+
+        const speakBtn = chipContainer.querySelector('#wc-speak');
+        if (speakBtn) {
+          speakBtn.addEventListener('click', () => {
+            if (typeof SPEECH !== 'undefined' && SPEECH.speak) {
+              SPEECH.speak(clean);
+            }
+          });
+        }
+
+        const slowBtn = chipContainer.querySelector('#wc-slow');
+        if (slowBtn) {
+          slowBtn.addEventListener('click', () => {
+            if (typeof SPEECH !== 'undefined' && SPEECH.speakSlow) {
+              SPEECH.speakSlow(clean);
+            }
+          });
+        }
+
+        const saveBtn = chipContainer.querySelector('#wc-save');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', () => {
+            self.saveWord(clean);
+            saveBtn.textContent = '✅ Saved in Review';
+            saveBtn.className = 'btn-secondary btn-sm';
+            const cntEl = (el.querySelector ? el.querySelector('#psg-saved-cnt') : null) || document.getElementById('psg-saved-cnt');
+            if (cntEl) {
+              cntEl.textContent = self.getPassageSavedCount(passage);
+            }
+            if (typeof UI !== 'undefined' && UI.toast) {
+              UI.toast('Saved "' + clean + '" to Review queue!');
+            }
+          });
+        }
+      }
+
+      if (textBox && textBox.addEventListener) {
+        textBox.addEventListener('click', (e) => {
+          const target = e.target.closest ? e.target.closest('.read-word') : null;
+          if (!target) return;
+          const w = target.getAttribute('data-word');
+          if (w) {
+            showWordChip(w);
+            if (typeof SPEECH !== 'undefined' && SPEECH.speakSlow) {
+              SPEECH.speakSlow(w.toLowerCase().replace(/[^a-z'-]/g, ''));
+            }
+          }
+        });
+      }
+
+      return;
+    }
+
+    // Passage List state (Reading Corner Home)
+    const passages = (typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : [];
+    const levels = ['A1', 'A2', 'B1', 'B2', 'C1'];
+
+    let groupsHtml = '';
+    levels.forEach(lvl => {
+      const lvlPassages = passages.filter(p => p.level === lvl);
+      if (lvlPassages.length === 0) return;
+
+      const cardsHtml = lvlPassages.map(p => {
+        const savedCount = self.getPassageSavedCount(p);
+        const wordCount = p.text.split(/\s+/).filter(Boolean).length;
+        const excerpt = p.text.slice(0, 110) + (p.text.length > 110 ? '...' : '');
+
+        return `
+        <div class="read-passage-card" onclick="navigate('read','${p.id}')">
+          <div class="rpc-top">
+            <span class="rpc-level">${p.level}</span>
+            <span class="rpc-saved">💾 saved (${savedCount})</span>
+          </div>
+          <h3 class="rpc-title">${p.title}</h3>
+          <p class="rpc-excerpt">${excerpt}</p>
+          <div class="rpc-footer">
+            <span class="rpc-words">📄 ${wordCount} words</span>
+            <span class="rpc-btn">Read →</span>
+          </div>
+        </div>`;
+      }).join('');
+
+      groupsHtml += `
+      <div class="read-level-group">
+        <div class="read-level-header">
+          <span class="level-badge">${lvl}</span>
+          <span class="level-count">${lvlPassages.length} passages</span>
+        </div>
+        <div class="read-grid">${cardsHtml}</div>
+      </div>`;
+    });
+
+    el.innerHTML = `
+    <div class="view-read">
+      <div class="read-home-header">
+        <h1>📚 Reading Corner</h1>
+        <p class="sub">Read graded texts from A1 to C1. Tap any word to see its phonetic IPA, hear correct pronunciation, and save it to your Spaced Repetition review deck.</p>
+      </div>
+
+      <div id="read-saved-container">
+        ${self.renderSavedSection()}
+      </div>
+
+      <div class="read-sections">
+        ${groupsHtml || '<p class="muted">No reading passages found.</p>'}
+      </div>
+    </div>`;
+
+    // Event delegation on saved words section
+    const savedContainer = (el.querySelector ? el.querySelector('#read-saved-container') : null) || document.getElementById('read-saved-container');
+    if (savedContainer && savedContainer.addEventListener) {
+      savedContainer.addEventListener('click', (e) => {
+        const removeBtn = e.target.closest ? e.target.closest('[data-remove]') : null;
+        if (removeBtn) {
+          const w = removeBtn.getAttribute('data-remove');
+          if (w) {
+            self.removeWord(w);
+            self.render(el);
+          }
+          return;
+        }
+
+        const playBtn = e.target.closest ? e.target.closest('[data-say]') : null;
+        if (playBtn) {
+          const w = playBtn.getAttribute('data-say');
+          if (w && typeof SPEECH !== 'undefined' && SPEECH.speakSlow) {
+            SPEECH.speakSlow(w);
+          }
+        }
+      });
+    }
+  }
+};
+
+VIEWS.read.lookupIPA = VIEWS.read.lookupWord;

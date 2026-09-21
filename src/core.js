@@ -260,7 +260,7 @@ var TRAINER = (function () {
   function keysFor(skill, mastery) {
     var map = {
       spelling: 'spell_',
-      vocab: ['idn_', 'pv_'],
+      vocab: ['idn_', 'pv_', 'read_'],
       listening: 'lsn_',
       reading: 'read_'
     };
@@ -594,6 +594,7 @@ var NAVITEMS = [
   {route:'coach',   label:'Nova',       icon:'🤖'},
   {route:'trainer', label:'Trainer',    icon:'📊'},
   {route:'review',  label:'Review',     icon:'🔁'},
+  {route:'read',    label:'Read',       icon:'📚'},
   {route:'pronunciation', label:'Sounds', icon:'🗣️'},
   {route:'spelling', label:'Spelling',  icon:'🔤'},
   {route:'phrases',  label:'Phrases',   icon:'💬'},
