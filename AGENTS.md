@@ -83,73 +83,82 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 
 ---
 
+## Mission Backlog & Release Status
+
+- **PWA-01**: Offline PWA, Web App Manifest, Service Worker cache-first — **SHIPPED** (2026-09-20 · `e517f27`)
+- **SRS-01**: Spaced repetition schedule (1/3/7/16/35 days), review queue, live nav badge — **SHIPPED** (2026-09-20 · `e517f27`)
+- **CNT-1**: Content expansion (+12 lessons, +6 scenarios, +10 passages, +30 power words) — **SHIPPED** (2026-09-21 · `e517f27`)
+- **READ-01**: Reading Corner, interactive IPA word chips, audio, vocab saves — **SHIPPED** (2026-09-21 · `d916c81`)
+
+---
+
 ## Phase Backlog (Agent Tasks)
 
-### ✅ PHASE 0 — Bootstrap (current)
+### ✅ PHASE 0 — Bootstrap
 - [x] Create README.md, AGENTS.md
-- [ ] Create index.html shell
-- [ ] Create src/ with all stub files
-- [ ] Create test.js (first 20 checks)
-- [ ] Create build.sh
-- [ ] Run node --check on all src files → green
-- [ ] Run node test.js → green
+- [x] Create index.html shell
+- [x] Create src/ with all stub files
+- [x] Create test.js (first 20 checks)
+- [x] Create build.sh
+- [x] Run node --check on all src files → green
+- [x] Run node test.js → green
 
-### PHASE 1 — Core Data & Shell
-- [ ] Fill data.js: LETTERS, SOUNDS (44), WORDS (130+), PAIRS (18), TWISTERS, SPELLING (60)
-- [ ] Fill data2.js: COURSE (32 lessons), CLARITY_DATA, IDIOMS (48), PVS (48), QUOTES, DAILY_SEEDS
-- [ ] Fill data3.js: ATLAS (12 tenses), PASSAGES (12), ASSESSMENT_POOLS, SKILL_META
-- [ ] Implement STORE (schema v1, migrate(), def)
-- [ ] Implement TRAINER (log, aggregate, radar data)
-- [ ] Implement U (norm, contractions, align, verdict)
-- [ ] Implement router + nav
-- [ ] Home view (streak, XP, week chart, next-action card)
-- [ ] Onboarding view (name, goal, placement → CEFR)
+### ✅ PHASE 1 — Core Data & Shell
+- [x] Fill data.js: LETTERS, SOUNDS (44), WORDS (130+), PAIRS (18), TWISTERS, SPELLING (60)
+- [x] Fill data2.js: COURSE (44 lessons), CLARITY_DATA, IDIOMS (48), PVS (48), QUOTES, DAILY_SEEDS
+- [x] Fill data3.js: ATLAS (12 tenses), PASSAGES (22), ASSESSMENT_POOLS, SKILL_META
+- [x] Implement STORE (schema v2, migrate(), def)
+- [x] Implement TRAINER (log, aggregate, radar data)
+- [x] Implement U (norm, contractions, align, verdict)
+- [x] Implement router + nav
+- [x] Home view (streak, XP, week chart, next-action card)
+- [x] Onboarding view (name, goal, placement → CEFR)
 
-### PHASE 2 — Learn Path & Speech
-- [ ] speech.js: TTS (voice pick, rate, slow), STT (interim, alts, error taxonomy), text fallback
-- [ ] Learn Path view (32 lessons · 4 stages)
-- [ ] Lesson Player (pattern table, 2 spoken missions, U.align scoring)
-- [ ] node test.js green · bash build.sh
+### ✅ PHASE 2 — Learn Path & Speech
+- [x] speech.js: TTS (voice pick, rate, slow), STT (interim, alts, error taxonomy), text fallback
+- [x] Learn Path view (44 lessons · 4 stages)
+- [x] Lesson Player (pattern table, 2 spoken missions, U.align scoring)
+- [x] node test.js green · bash build.sh
 
-### PHASE 3 — Daily Ritual
-- [ ] Today's Dose (date-seeded twister, power word, idiom quiz, quote shadow)
-- [ ] Streak system, XP rewards, Daily Star badge, quests
-- [ ] node test.js green · bash build.sh
+### ✅ PHASE 3 — Daily Ritual
+- [x] Today's Dose (date-seeded twister, power word, idiom quiz, quote shadow)
+- [x] Streak system, XP rewards, Daily Star badge, quests
+- [x] node test.js green · bash build.sh
 
-### PHASE 4 — Nova AI Coach
-- [ ] Nova chat UI (voice I/O + text fallback)
-- [ ] Rule engine (20 intents, 20 grammar rules, 12 vocab upgrades)
-- [ ] Gemini 2.0 Flash integration (opt-in, user key, client-side fetch)
-- [ ] Graceful fallback when no key
-- [ ] 5-Q mock interview mode
-- [ ] node test.js green · bash build.sh
+### ✅ PHASE 4 — Nova AI Coach
+- [x] Nova chat UI (voice I/O + text fallback)
+- [x] Rule engine (20 intents, 20 grammar rules, 12 vocab upgrades)
+- [x] Gemini 2.0 Flash integration (opt-in, user key, client-side fetch)
+- [x] Graceful fallback when no key
+- [x] 5-Q mock interview mode
+- [x] node test.js green · bash build.sh
 
-### PHASE 5 — Skill Labs
-- [ ] Pronunciation Lab (130+ words, 18 minimal pairs, ear quiz, twisters, sentence shadow)
-- [ ] Clarity Studio (stress, rhythm, intonation, connected speech, speed ladder)
-- [ ] Listening Lab (12 graded passages A1–C1 + comprehension + dictation)
-- [ ] Spelling Trainer (60 words · 3 levels · audio dictation)
-- [ ] Phrase Builder (24 builds, 18 grammar blanks, phrasebook)
-- [ ] Sentence Doctor (35+ rules, desi-English patterns)
-- [ ] Idioms & Phrasal Verbs (48+48, audio, quiz mode, decks)
-- [ ] Grammar Atlas (12 tenses, tense detective quiz)
-- [ ] node test.js green · bash build.sh
+### ✅ PHASE 5 — Skill Labs
+- [x] Pronunciation Lab (130+ words, 18 minimal pairs, ear quiz, twisters, sentence shadow)
+- [x] Clarity Studio (stress, rhythm, intonation, connected speech, speed ladder)
+- [x] Listening Lab (22 graded passages A1–C1 + comprehension + dictation)
+- [x] Spelling Trainer (60 words · 3 levels · audio dictation)
+- [x] Phrase Builder (24 builds, 18 grammar blanks, phrasebook)
+- [x] Sentence Doctor (35+ rules, desi-English patterns)
+- [x] Idioms & Phrasal Verbs (48+48, audio, quiz mode, decks)
+- [x] Grammar Atlas (12 tenses, tense detective quiz)
+- [x] node test.js green · bash build.sh
 
-### PHASE 6 — Adaptive System & Assessment
-- [ ] My Trainer SVG Weakness Radar (6 skills, auto-plan, next-best-action)
-- [ ] Speaking Assessment (5 tasks, WPM, filler count, CEFR calibration, report cards, history)
-- [ ] Progress graph (score over time)
-- [ ] Conversations & Scenarios (8 role-plays with voice scoring)
-- [ ] node test.js green · bash build.sh
+### ✅ PHASE 6 — Adaptive System & Assessment
+- [x] My Trainer SVG Weakness Radar (6 skills, auto-plan, next-best-action)
+- [x] Speaking Assessment (5 tasks, WPM, filler count, CEFR calibration, report cards, history)
+- [x] Progress graph (score over time)
+- [x] Conversations & Scenarios (14 role-plays with voice scoring)
+- [x] node test.js green · bash build.sh
 
-### PHASE 7 — Word Bank, Level Test, PWA & Polish
-- [ ] Word Bank (130+ words, IPA, mastery dots, search, SM-2 SRS)
-- [ ] Level Test (15 from 30-Q bank → CEFR placement + skill bars)
-- [ ] Settings (voice picker, speed, daily goal, Gemini key input, export/reset)
-- [ ] manifest.webmanifest + sw.js (PWA, install prompt, offline)
-- [ ] test.js full suite (~140 checks)
-- [ ] bash build.sh → engspell-standalone.html verified
-- [ ] node test.js green · bash build.sh
+### ✅ PHASE 7 — Word Bank, Level Test, PWA & Polish
+- [x] Word Bank (130+ words, IPA, mastery dots, search, SM-2 SRS)
+- [x] Level Test (15 from 30-Q bank → CEFR placement + skill bars)
+- [x] Settings (voice picker, speed, daily goal, Gemini key input, export/reset)
+- [x] manifest.webmanifest + sw.js (PWA, install prompt, offline)
+- [x] test.js full suite (147 checks)
+- [x] bash build.sh → engspell-standalone.html verified
+- [x] node test.js green · bash build.sh
 
 ---
 

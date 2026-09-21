@@ -650,6 +650,19 @@ tryv('manifest theme_color is set', function () {
 tryv('sw.js exists', function () {
   return _fs.existsSync(_path.join(__dirname, 'sw.js'));
 });
+tryv('Service worker asset list: every file it lists exists on disk', function () {
+  var swContent = _fs.readFileSync(_path.join(__dirname, 'sw.js'), 'utf8');
+  var match = swContent.match(/var ASSETS = \[([\s\S]*?)\];/);
+  if (!match) return false;
+  var lines = match[1].split('\n');
+  return lines.every(function (l) {
+    var m = l.match(/'([^']+)'/);
+    if (!m) return true;
+    var rel = m[1];
+    var target = rel === './' ? 'index.html' : rel.replace(/^\.\//, '');
+    return _fs.existsSync(_path.join(__dirname, target));
+  });
+});
 tryv('SW asset list contains every script tag from index.html', function () {
   var indexHtml = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
   var swContent = _fs.readFileSync(_path.join(__dirname, 'sw.js'), 'utf8');
@@ -667,6 +680,102 @@ tryv('index.html links manifest.webmanifest', function () {
 tryv('index.html registers service worker sw.js', function () {
   var html = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
   return html.indexOf('serviceWorker.register') !== -1 && html.indexOf('sw.js') !== -1;
+});
+
+/* ── NOVA COACH (GEMINI VIA STUBBED FETCH) ──────────────────────────── */
+console.log('\n🤖 Nova AI Coach (Gemini & Fallback hardening)');
+
+function _syncPromise(val, isErr) {
+  if (val && typeof val.then === 'function') {
+    return val;
+  }
+  return {
+    then: function (onOk, onErr) {
+      if (isErr) {
+        if (!onErr) return this;
+        try { return _syncPromise(onErr(val), false); }
+        catch (e) { return _syncPromise(e, true); }
+      }
+      if (!onOk) return this;
+      try {
+        var res = onOk(val);
+        if (res && typeof res.then === 'function') { return res; }
+        return _syncPromise(res, false);
+      } catch (e) {
+        return _syncPromise(e, true);
+      }
+    },
+    catch: function (onErr) {
+      if (isErr) {
+        try {
+          var res = onErr(val);
+          if (res && typeof res.then === 'function') return res;
+          return _syncPromise(res, false);
+        } catch (e) {
+          return _syncPromise(e, true);
+        }
+      }
+      return this;
+    }
+  };
+}
+
+tryv('NOVA Gemini success path returns text via STUBBED fetch', function () {
+  var originalFetch = global.fetch;
+  var calledUrl = '';
+
+  global.fetch = function (url, opts) {
+    calledUrl = url;
+    return _syncPromise({
+      ok: true,
+      status: 200,
+      json: function () {
+        return _syncPromise({
+          candidates: [{
+            content: { parts: [{ text: 'Great pronunciation! Keep practicing.' }] }
+          }]
+        }, false);
+      }
+    }, false);
+  };
+
+  try {
+    var el = { innerHTML: '', scrollTop: 0 };
+    VIEWS.coach._history = [];
+    STORE.set('settings', { geminiKey: 'AIzaSyFakeKeyForTest12345' });
+    VIEWS.coach.respond('Hello Nova', el);
+
+    var last = VIEWS.coach._history[VIEWS.coach._history.length - 1];
+    var ok = calledUrl.indexOf('generativelanguage.googleapis.com') !== -1 &&
+             last && last.role === 'nova' &&
+             last.text.indexOf('Great pronunciation') !== -1;
+    return ok;
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+tryv('NOVA Gemini failure path rejects → offline fallback runs, no exception escapes, UI state consistent', function () {
+  var originalFetch = global.fetch;
+
+  global.fetch = function () {
+    return _syncPromise(new Error('Simulated offline failure'), true);
+  };
+
+  try {
+    var el = { innerHTML: '', scrollTop: 0 };
+    VIEWS.coach._history = [];
+    STORE.set('settings', { geminiKey: 'AIzaSyFakeKeyForTest12345' });
+    VIEWS.coach.respond('I has a dog', el);
+
+    var last = VIEWS.coach._history[VIEWS.coach._history.length - 1];
+    var ok = last && last.role === 'nova' &&
+             last.text.indexOf('offline fallback') !== -1 &&
+             el.innerHTML.indexOf('view-coach') !== -1;
+    return ok;
+  } finally {
+    global.fetch = originalFetch;
+  }
 });
 
 

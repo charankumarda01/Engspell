@@ -44,10 +44,21 @@ EngSpell is a single-page "English gym" that runs entirely in the browser:
 | Sentence Doctor | `#/doctor` | Paste any sentence → 35+ diagnoses incl. desi-English |
 | Conversations | `#/scenarios` | 8 scenarios, key phrases, full voice role-play + scoring |
 | Nova — AI Coach | `#/coach` | Gemini-powered free conversation + grammar surgery |
+| Review Queue | `#/review` | SM-2 spaced repetition review deck (1/3/7/16/35 days) |
+| Reading Corner | `#/read` | Graded passages A1–C1, word tap IPA chips, vocabulary saves |
 | Speaking Assessment | `#/assessment` | 5 timed tasks → WPM + filler counts → report card |
 | Level Test | `#/quiz` | 15 from 30-Q bank → CEFR placement + skill bars |
 | Word Bank | `#/wordbank` | 130+ words, IPA, mastery tracking, SM-2 SRS, search |
 | Settings | `#/settings` | Voice picker, speed, daily goal, Gemini API key, export |
+
+---
+
+## Roadmap & Release Status
+
+- **PWA-01**: Offline PWA, Web App Manifest, Service Worker cache-first — **SHIPPED** (2026-09-20 · `e517f27`)
+- **SRS-01**: Spaced repetition schedule (1/3/7/16/35 days), review queue, live nav badge — **SHIPPED** (2026-09-20 · `e517f27`)
+- **CNT-1**: Content expansion (+12 lessons, +6 scenarios, +10 passages, +30 power words) — **SHIPPED** (2026-09-21 · `e517f27`)
+- **READ-01**: Reading Corner, interactive IPA word chips, audio, vocab saves — **SHIPPED** (2026-09-21 · `d916c81`)
 
 ---
 

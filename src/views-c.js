@@ -172,6 +172,36 @@ function _novaGemini(userText, self, el, key) {
 
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key;
 
+  if (typeof fetch === 'function') {
+    self._history.push({role: 'nova', text: '...'});
+    self.render(el);
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      return res.json();
+    }).then(function (resp) {
+      var reply = '';
+      try {
+        reply = resp.candidates[0].content.parts[0].text;
+      } catch (e) {
+        reply = 'Nova had trouble connecting. ' + _novaRules(userText);
+      }
+      self._history.push({role: 'nova', text: _esc(reply)});
+      TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
+      STORE.save();
+      SPEECH.speak(reply);
+      self.render(el);
+    }).catch(function () {
+      var reply = _novaRules(userText) + ' (offline fallback)';
+      self._history.push({role: 'nova', text: _esc(reply)});
+      self.render(el);
+    });
+    return;
+  }
+
   var xhr = new XMLHttpRequest();
   xhr.open('POST', url, true);
   xhr.setRequestHeader('Content-Type', 'application/json');
@@ -198,6 +228,12 @@ function _novaGemini(userText, self, el, key) {
   self.render(el);
   xhr.send(JSON.stringify(body));
 }
+
+VIEWS.coach.respond = function (userText, el) {
+  _novaRespond(userText, VIEWS.coach, el || { innerHTML: '', scrollTop: 0 });
+};
+VIEWS.coach._novaGemini = _novaGemini;
+VIEWS.coach._novaRules = _novaRules;
 
 /* ── LEVEL TEST (QUIZ) ─────────────────────────────────────────────── */
 VIEWS.quiz = {
