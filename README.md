@@ -7,6 +7,9 @@ and Nova, a speaking coach you actually talk to.
 Built for learners who can form basic sentences but want grammar-perfect, confident,
 high-level English. Especially designed for Indian English learners.
 
+🌐 Live: https://charankumarda01.github.io/Engspell/ (installable PWA, free forever)  
+*Deploy note: `main` branch auto-publishes via GitHub Pages; ship = commit + push.*
+
 ---
 
 ## What It Is
