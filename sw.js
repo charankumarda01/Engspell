@@ -19,6 +19,7 @@ var ASSETS = [
   './src/views-c.js',
   './src/views-d.js',
   './src/views-e.js',
+  './src/views-f.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'

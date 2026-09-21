@@ -1,6 +1,6 @@
 /* =====================================================================
    core.js — ES5 ONLY
-   STORE (localStorage, schema v2, migrations), TRAINER (events/radar),
+   STORE (localStorage, schema v3, migrations), TRAINER (events/radar),
    U (text utilities: norm, contractions, LCS align, verdict),
    UI (toast, practiceBar, scoreHTML), router, nav
    ===================================================================== */
@@ -14,7 +14,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 2;
+  var VERSION = 3;
 
   var def = {
     version: VERSION,
@@ -30,7 +30,10 @@ var STORE = (function () {
     assessments: [],
     coachStats: {messages: 0, corrections: 0, sessions: 0},
     settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: ''},
-    srs: {}   /* INV-5: new key for MISSION 2 SRS — appended, not replacing */
+    srs: {},  /* INV-5: MISSION 2 SRS */
+    docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
+    novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
+    resumeReports: []   /* INV-5: v3 — Resume analysis report history */
   };
 
   function _raw() {
@@ -51,6 +54,13 @@ var STORE = (function () {
       if (!data.srs) { data.srs = {}; }
       if (data.user && !data.user.placementTag) { data.user.placementTag = ''; }
       data.version = 2;
+    }
+    // v2 → v3: add docs, novaHistory, resumeReports
+    if (v < 3) {
+      if (!data.docs) { data.docs = []; }
+      if (!data.novaHistory) { data.novaHistory = []; }
+      if (!data.resumeReports) { data.resumeReports = []; }
+      data.version = 3;
     }
     return data;
   }
@@ -592,6 +602,8 @@ var NAVITEMS = [
   {route:'daily',   label:'Daily',      icon:'☀️'},
   {route:'path',    label:'Learn',      icon:'📖'},
   {route:'coach',   label:'Nova',       icon:'🤖'},
+  {route:'docstudio',label:'Doc Studio',icon:'📄'},
+  {route:'resume',   label:'Resume',    icon:'📝'},
   {route:'trainer', label:'Trainer',    icon:'📊'},
   {route:'review',  label:'Review',     icon:'🔁'},
   {route:'read',    label:'Read',       icon:'📚'},

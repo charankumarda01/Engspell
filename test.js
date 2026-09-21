@@ -58,6 +58,8 @@ loadSrc('src/views-b.js');
 loadSrc('src/views-c.js');
 loadSrc('src/views-d.js');
 loadSrc('src/views-e.js');
+loadSrc('src/views-f.js');
+
 
 /* ── Test runner ────────────────────────────────────────────────────── */
 var passed = 0, failed = 0, errors = [];
@@ -239,10 +241,25 @@ tryv('SPEECH.getVoices returns array', function () { return Array.isArray(SPEECH
 console.log('\n💾 STORE module');
 
 tryv('STORE exists', function () { return typeof STORE === 'object'; });
-tryv('STORE.VERSION is 2', function () { return STORE.VERSION === 2; });
+tryv('STORE.VERSION is 3', function () { return STORE.VERSION === 3; });
 tryv('STORE.get returns object', function () { return typeof STORE.get() === 'object'; });
 tryv('STORE.get user has name field', function () { return typeof STORE.get('user') === 'object'; });
 tryv('STORE.get srs field exists (INV-5 append)', function () { return STORE.get('srs') !== undefined; });
+tryv('STORE v3: docs field is array (INV-5)', function () { return Array.isArray(STORE.get('docs')); });
+tryv('STORE v3: novaHistory field is array (INV-5)', function () { return Array.isArray(STORE.get('novaHistory')); });
+tryv('STORE v3: resumeReports field is array (INV-5)', function () { return Array.isArray(STORE.get('resumeReports')); });
+tryv('VIEWS.docstudio exists and has render', function () { return typeof VIEWS.docstudio === 'object' && typeof VIEWS.docstudio.render === 'function'; });
+tryv('VIEWS.resume exists and has render', function () { return typeof VIEWS.resume === 'object' && typeof VIEWS.resume.render === 'function'; });
+tryv('VIEWS.coach._getHistory returns array', function () { VIEWS.coach._history = null; STORE.set('novaHistory', []); return Array.isArray(VIEWS.coach._getHistory()); });
+tryv('VIEWS.coach._saveHistory caps at 50 turns', function () {
+  VIEWS.coach._history = null;
+  STORE.set('novaHistory', []);
+  var h = VIEWS.coach._getHistory();
+  for (var i = 0; i < 60; i++) { h.push({role: 'user', text: 'msg' + i}); }
+  VIEWS.coach._saveHistory();
+  return STORE.get('novaHistory').length <= 50;
+});
+
 tryv('STORE.addXP increases xp', function () {
   var before = STORE.get('xp');
   STORE.addXP(10);
@@ -741,11 +758,13 @@ tryv('NOVA Gemini success path returns text via STUBBED fetch', function () {
 
   try {
     var el = { innerHTML: '', scrollTop: 0 };
-    VIEWS.coach._history = [];
+    VIEWS.coach._history = null; /* reset lazy cache */
+    STORE.set('novaHistory', []);
     STORE.set('settings', { geminiKey: 'AIzaSyFakeKeyForTest12345' });
     VIEWS.coach.respond('Hello Nova', el);
 
-    var last = VIEWS.coach._history[VIEWS.coach._history.length - 1];
+    var hist = VIEWS.coach._getHistory();
+    var last = hist[hist.length - 1];
     var ok = calledUrl.indexOf('generativelanguage.googleapis.com') !== -1 &&
              last && last.role === 'nova' &&
              last.text.indexOf('Great pronunciation') !== -1;
@@ -764,13 +783,15 @@ tryv('NOVA Gemini failure path rejects → offline fallback runs, no exception e
 
   try {
     var el = { innerHTML: '', scrollTop: 0 };
-    VIEWS.coach._history = [];
+    VIEWS.coach._history = null; /* reset lazy cache */
+    STORE.set('novaHistory', []);
     STORE.set('settings', { geminiKey: 'AIzaSyFakeKeyForTest12345' });
     VIEWS.coach.respond('I has a dog', el);
 
-    var last = VIEWS.coach._history[VIEWS.coach._history.length - 1];
+    var hist2 = VIEWS.coach._getHistory();
+    var last = hist2[hist2.length - 1];
     var ok = last && last.role === 'nova' &&
-             last.text.indexOf('offline fallback') !== -1 &&
+             last.text.indexOf('offline') !== -1 &&
              el.innerHTML.indexOf('view-coach') !== -1;
     return ok;
   } finally {

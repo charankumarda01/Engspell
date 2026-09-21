@@ -3,63 +3,147 @@
    VIEWS.coach, VIEWS.quiz, VIEWS.wordbank, VIEWS.settings, VIEWS.onboarding
    ===================================================================== */
 
-/* ── NOVA COACH ─────────────────────────────────────────────────────── */
+/* ── NOVA COACH ─────────────────────────────────────────────────────────────── */
 VIEWS.coach = {
-  _history: [],
-  _mode: 'chat',   /* chat | interview */
+  _history: null, /* loaded lazily from STORE */
+  _mode: 'chat',  /* chat | interview | document */
   _interviewQ: 0,
+  _activeDoc: null, /* {title, text} when in document mode */
+
+  _getHistory: function () {
+    if (!this._history) {
+      this._history = STORE.get('novaHistory') || [];
+    }
+    return this._history;
+  },
+
+  _saveHistory: function () {
+    var h = this._getHistory();
+    /* Cap at 50 turns */
+    if (h.length > 50) { h = h.slice(h.length - 50); }
+    this._history = h;
+    STORE.set('novaHistory', h);
+  },
+
+  _clearHistory: function () {
+    this._history = [];
+    STORE.set('novaHistory', []);
+  },
+
   render: function (el) {
     'use strict';
     var self = this;
     var settings = STORE.get('settings') || {};
     var hasKey = !!(settings.geminiKey && settings.geminiKey.trim().length > 10);
+    var history = self._getHistory();
+
+    /* Active document from Doc Studio */
+    var docs = STORE.get('docs') || [];
+    var activeDoc = null;
+    for (var di = 0; di < docs.length; di++) {
+      if (docs[di].active) { activeDoc = docs[di]; break; }
+    }
+    self._activeDoc = activeDoc;
+
+    var docBanner = '';
+    if (activeDoc) {
+      docBanner = '<div class="nova-doc-banner">'
+        + '<span class="doc-banner-icon">📄</span>'
+        + '<span class="doc-banner-title">Reading: <strong>' + _esc(activeDoc.title) + '</strong></span>'
+        + '<button class="doc-banner-clear" id="nova-clear-doc">× Clear</button>'
+        + '</div>';
+    }
+
+    var modeDocBtn = activeDoc
+      ? '<button class="tab-btn' + (self._mode === 'document' ? ' active' : '') + '" id="mode-document">📄 Doc Agent</button>'
+      : '';
 
     var html = '<div class="view-coach">' +
+      '<div class="nova-header">' +
       '<h1>🤖 Nova — AI Coach</h1>' +
-      '<p class="sub">' + (hasKey ? '✅ Gemini connected — real AI active.' : '⚠️ No API key — using rule engine. Add key in <a href="#/settings">Settings</a>.') + '</p>' +
+      '<button class="btn-ghost btn-sm" id="nova-clear-history" title="Clear conversation">Clear chat</button>' +
+      '</div>' +
+      '<p class="sub">' + (hasKey
+        ? '✅ Gemini connected — real AI active.'
+        : '⚠️ No key — rule engine only. Add your free Gemini key in <a href="#/settings">Settings</a>.'
+      ) + '</p>' +
+      docBanner +
       '<div class="coach-modes">' +
       '<button class="tab-btn' + (self._mode === 'chat' ? ' active' : '') + '" id="mode-chat">💬 Chat</button>' +
       '<button class="tab-btn' + (self._mode === 'interview' ? ' active' : '') + '" id="mode-interview">🎤 Mock Interview</button>' +
+      modeDocBtn +
       '</div>' +
       '<div class="chat-window" id="chat-window">';
 
-    if (self._history.length === 0) {
-      html += '<div class="bubble nova"><div class="bubble-label">Nova</div><div class="bubble-text">Hello! I\'m Nova, your English speaking coach. Ask me to check your grammar, explain a word, or just have a conversation. What would you like to practise today?</div></div>';
+    if (history.length === 0) {
+      html += '<div class="bubble nova"><div class="bubble-label">Nova</div>'
+        + '<div class="bubble-text">Hi! I\'m Nova, your English coach. I remember our conversations, so we can pick up right where we left off. Ask me to check grammar, explain vocabulary, or chat naturally. What would you like to work on?</div></div>';
     } else {
-      for (var i = 0; i < self._history.length; i++) {
-        var msg = self._history[i];
+      for (var i = 0; i < history.length; i++) {
+        var msg = history[i];
         var cls = msg.role === 'user' ? 'user' : 'nova';
         html += '<div class="bubble ' + cls + '"><div class="bubble-label">' + (msg.role === 'user' ? 'You' : 'Nova') + '</div><div class="bubble-text">' + msg.text + '</div></div>';
       }
     }
-    html += '</div>'; // chat-window
+    html += '</div>'; /* chat-window */
 
     if (self._mode === 'interview') {
       var q = COACH_INTERVIEW[self._interviewQ % COACH_INTERVIEW.length];
-      html += '<div class="interview-q"><strong>Q' + (self._interviewQ + 1) + ':</strong> ' + q + '</div>';
+      html += '<div class="interview-q"><span class="q-num">Q' + (self._interviewQ + 1) + '</span> ' + q + '</div>';
+    }
+    if (self._mode === 'document' && activeDoc) {
+      html += '<div class="doc-hint">💡 Ask: "What does X mean here?", "Summarize this section", or "Check my understanding: …"</div>';
     }
 
     html += '<div class="chat-input-row">';
     if (SPEECH.canListen()) {
       html += '<button class="btn-mic" id="nova-mic">🎤</button>';
     }
-    html += '<input type="text" id="nova-input" placeholder="Type or speak to Nova..." />';
+    html += '<input type="text" id="nova-input" placeholder="' +
+      (self._mode === 'document' ? 'Ask Nova about this document…' : 'Type or speak to Nova…') +
+      '" />';
     html += '<button class="btn-primary" id="nova-send">Send</button>';
     html += '</div></div>';
 
     el.innerHTML = html;
 
-    // scroll chat to bottom
+    /* Scroll chat to bottom */
     var chatWin = document.getElementById('chat-window');
     if (chatWin) { chatWin.scrollTop = chatWin.scrollHeight; }
 
+    /* Mode tabs */
     document.getElementById('mode-chat').addEventListener('click', function () {
       self._mode = 'chat'; self.render(el);
     });
     document.getElementById('mode-interview').addEventListener('click', function () {
       self._mode = 'interview'; self._interviewQ = 0; self.render(el);
     });
+    var docModeBtn = document.getElementById('mode-document');
+    if (docModeBtn) {
+      docModeBtn.addEventListener('click', function () {
+        self._mode = 'document'; self.render(el);
+      });
+    }
 
+    /* Clear doc */
+    var clearDocBtn = document.getElementById('nova-clear-doc');
+    if (clearDocBtn) {
+      clearDocBtn.addEventListener('click', function () {
+        var docs2 = STORE.get('docs') || [];
+        for (var di2 = 0; di2 < docs2.length; di2++) { docs2[di2].active = false; }
+        STORE.set('docs', docs2);
+        self._mode = 'chat';
+        self.render(el);
+      });
+    }
+
+    /* Clear history */
+    document.getElementById('nova-clear-history').addEventListener('click', function () {
+      self._clearHistory();
+      self.render(el);
+    });
+
+    /* Mic */
     var micBtn = document.getElementById('nova-mic');
     if (micBtn) {
       micBtn.addEventListener('click', function () {
@@ -77,12 +161,46 @@ VIEWS.coach = {
       });
     }
 
+    /* Word lookup on double-click */
+    if (chatWin) {
+      chatWin.addEventListener('dblclick', function (e) {
+        var sel = window.getSelection ? window.getSelection().toString().trim() : '';
+        if (!sel || sel.indexOf(' ') !== -1) { return; } /* single word only */
+        var word = sel.toLowerCase().replace(/[^a-z]/g, '');
+        if (!word) { return; }
+        /* Look up in WORDS data */
+        var found = null;
+        if (typeof WORDS !== 'undefined') {
+          for (var wi = 0; wi < WORDS.length; wi++) {
+            if (WORDS[wi].w && WORDS[wi].w.toLowerCase() === word) { found = WORDS[wi]; break; }
+          }
+        }
+        var popup = document.createElement('div');
+        popup.className = 'word-popup';
+        if (found) {
+          popup.innerHTML = '<strong>' + _esc(found.w) + '</strong> <span class="ipa">' + (found.ipa || '') + '</span><br><span class="word-def">' + _esc(found.def || found.pos || '') + '</span>'
+            + '<button class="word-popup-say" onclick="SPEECH.speak(\'' + _esc(found.w) + '\')">🔊</button>'
+            + '<button class="word-popup-close">×</button>';
+        } else {
+          popup.innerHTML = '<strong>' + _esc(sel) + '</strong><br><span class="word-def">Not in word bank — ask Nova!</span>'
+            + '<button class="word-popup-close">×</button>';
+        }
+        popup.style.cssText = 'position:fixed;bottom:140px;left:50%;transform:translateX(-50%);background:#1e2a3a;border:1px solid rgba(124,58,237,0.5);border-radius:12px;padding:14px 18px;z-index:500;font-size:0.9rem;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,0.4);';
+        document.body.appendChild(popup);
+        var closeBtn = popup.querySelector('.word-popup-close');
+        if (closeBtn) { closeBtn.addEventListener('click', function () { document.body.removeChild(popup); }); }
+        setTimeout(function () { if (popup.parentNode) { popup.parentNode.removeChild(popup); } }, 5000);
+      });
+    }
+
     function _send() {
       var input = document.getElementById('nova-input');
       var text = input.value.trim();
       if (!text) { return; }
       input.value = '';
-      self._history.push({role: 'user', text: _esc(text)});
+      var h = self._getHistory();
+      h.push({role: 'user', text: _esc(text)});
+      self._saveHistory();
       _novaRespond(text, self, el);
     }
 
@@ -94,7 +212,7 @@ VIEWS.coach = {
 };
 
 function _esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function _novaRespond(userText, self, el) {
@@ -102,12 +220,12 @@ function _novaRespond(userText, self, el) {
   var key = settings.geminiKey || '';
 
   if (key && key.trim().length > 10) {
-    // Gemini API call — INV-8
     _novaGemini(userText, self, el, key.trim());
   } else {
-    // Rule engine fallback
     var reply = _novaRules(userText);
-    self._history.push({role: 'nova', text: _esc(reply)});
+    var h = self._getHistory();
+    h.push({role: 'nova', text: _esc(reply)});
+    self._saveHistory();
     STORE.get('coachStats').messages = (STORE.get('coachStats').messages || 0) + 1;
     STORE.save();
     TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/chat'});
@@ -119,14 +237,14 @@ function _novaRespond(userText, self, el) {
 function _novaRules(text) {
   var t = text.toLowerCase();
 
-  // Grammar rule checks
+  /* Grammar rule checks */
   for (var ri = 0; ri < COACH_RULES.length; ri++) {
     if (COACH_RULES[ri].pat.test(text)) {
       return '⚠️ Grammar note: ' + COACH_RULES[ri].fix;
     }
   }
 
-  // Vocabulary upgrade
+  /* Vocabulary upgrade */
   for (var ui = 0; ui < COACH_UPGRADES.length; ui++) {
     var up = COACH_UPGRADES[ui];
     if (t.indexOf(up.basic.toLowerCase()) !== -1) {
@@ -134,7 +252,7 @@ function _novaRules(text) {
     }
   }
 
-  // Intent matching
+  /* Intent matching */
   for (var ii = 0; ii < COACH_INTENTS.length; ii++) {
     var intent = COACH_INTENTS[ii];
     var keys = intent.k.split('|');
@@ -145,25 +263,57 @@ function _novaRules(text) {
     }
   }
 
-  return 'That\'s good! Keep practising. If you\'d like grammar feedback, try saying a full sentence and I\'ll check it for you. For real AI conversation, add your Gemini key in Settings.';
+  return 'Good effort! Keep practising. For real AI feedback on grammar, pronunciation, and more — add your free Gemini key in Settings. Double-click any word in my replies to look it up instantly.';
+}
+
+function _novaBuildSystemPrompt(self) {
+  'use strict';
+  var user = STORE.get('user') || {};
+  var settings = STORE.get('settings') || {};
+  var radar = (typeof TRAINER !== 'undefined' && TRAINER.radar) ? TRAINER.radar() : [];
+
+  /* Find weakest skill */
+  var weakSkill = 'fluency';
+  var weakScore = 100;
+  for (var ri = 0; ri < radar.length; ri++) {
+    if (radar[ri].val < weakScore) { weakScore = radar[ri].val; weakSkill = radar[ri].skill; }
+  }
+
+  var name = user.name ? user.name : 'the learner';
+  var level = user.level || 'A2';
+  var mode = self._mode || 'chat';
+
+  var base = 'You are Nova, an expert English speaking coach specialising in helping Indian learners.' +
+    ' The student\'s name is ' + name + ' and their current CEFR level is ' + level + '.' +
+    ' Their weakest skill right now is ' + weakSkill + ' — prioritise that in your coaching.' +
+    ' Mode: ' + mode + '.' +
+    ' Rules: correct grammar gently by quoting the error then giving the fix; suggest vocabulary upgrades when appropriate;' +
+    ' be warm, direct, and concise (2–4 sentences unless asked for more).' +
+    ' Never say you are an AI. You are Nova.';
+
+  /* Document context */
+  if (mode === 'document' && self._activeDoc) {
+    var excerpt = self._activeDoc.text ? self._activeDoc.text.slice(0, 1200) : '';
+    base += ' The student is currently reading a document titled "' + self._activeDoc.title + '".' +
+      ' Here is an excerpt for context:\n---\n' + excerpt + '\n---' +
+      ' When the student asks about a word or phrase, quote the surrounding sentence from the excerpt before explaining.' +
+      ' When asked to summarise, produce a 3-bullet summary of the excerpt.';
+  }
+
+  return base;
 }
 
 function _novaGemini(userText, self, el, key) {
-  var hist = self._history.slice(-10);
+  var hist = self._getHistory().slice(-12); /* last 12 turns for context */
   var messages = [];
-  for (var i = 0; i < hist.length; i++) {
+  for (var i = 0; i < hist.length - 1; i++) { /* exclude the just-pushed user message */
     messages.push({
       role: hist[i].role === 'user' ? 'user' : 'model',
       parts: [{text: hist[i].text}]
     });
   }
 
-  var systemPrompt = 'You are Nova, an expert English speaking coach for Indian learners. ' +
-    'Your job: correct grammar gently, suggest vocabulary upgrades, explain idioms, ' +
-    'and encourage confident speaking. Be warm, specific, and concise. ' +
-    'When you spot grammar errors, quote the wrong phrase then give the correct one. ' +
-    'Always respond in 2-4 sentences maximum unless asked for more. ' +
-    'Never say you are an AI. You are Nova, a human coach.';
+  var systemPrompt = _novaBuildSystemPrompt(self);
 
   var body = {
     system_instruction: {parts: [{text: systemPrompt}]},
@@ -172,9 +322,14 @@ function _novaGemini(userText, self, el, key) {
 
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key;
 
+  /* Show typing indicator */
+  var h = self._getHistory();
+  h.push({role: 'nova', text: '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>'});
+  self.render(el);
+  /* Remove the typing indicator entry (it will be replaced by real reply) */
+  h.pop();
+
   if (typeof fetch === 'function') {
-    self._history.push({role: 'nova', text: '...'});
-    self.render(el);
     fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -184,19 +339,18 @@ function _novaGemini(userText, self, el, key) {
       return res.json();
     }).then(function (resp) {
       var reply = '';
-      try {
-        reply = resp.candidates[0].content.parts[0].text;
-      } catch (e) {
-        reply = 'Nova had trouble connecting. ' + _novaRules(userText);
-      }
-      self._history.push({role: 'nova', text: _esc(reply)});
+      try { reply = resp.candidates[0].content.parts[0].text; }
+      catch (e) { reply = 'Nova had trouble reading the response. ' + _novaRules(userText); }
+      h.push({role: 'nova', text: _esc(reply)});
+      self._saveHistory();
       TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
       STORE.save();
       SPEECH.speak(reply);
       self.render(el);
     }).catch(function () {
-      var reply = _novaRules(userText) + ' (offline fallback)';
-      self._history.push({role: 'nova', text: _esc(reply)});
+      var reply = _novaRules(userText) + ' (offline — no connection)';
+      h.push({role: 'nova', text: _esc(reply)});
+      self._saveHistory();
       self.render(el);
     });
     return;
@@ -213,7 +367,8 @@ function _novaGemini(userText, self, el, key) {
     } catch (e) {
       reply = 'Nova had trouble connecting. ' + _novaRules(userText);
     }
-    self._history.push({role: 'nova', text: _esc(reply)});
+    h.push({role: 'nova', text: _esc(reply)});
+    self._saveHistory();
     TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
     STORE.save();
     SPEECH.speak(reply);
@@ -221,11 +376,10 @@ function _novaGemini(userText, self, el, key) {
   };
   xhr.onerror = function () {
     var reply = _novaRules(userText) + ' (offline fallback)';
-    self._history.push({role: 'nova', text: _esc(reply)});
+    h.push({role: 'nova', text: _esc(reply)});
+    self._saveHistory();
     self.render(el);
   };
-  self._history.push({role: 'nova', text: '...'});
-  self.render(el);
   xhr.send(JSON.stringify(body));
 }
 

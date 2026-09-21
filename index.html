@@ -756,6 +756,107 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   .trainer-grid { grid-template-columns: 1fr; }
   .home-header { flex-direction: column; }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   DOCUMENT STUDIO
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.view-docstudio { display: flex; flex-direction: column; gap: 20px; }
+.ds-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ds-upload-btn { cursor: pointer; }
+.ds-layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; min-height: 520px; }
+.ds-sidebar { display: flex; flex-direction: column; gap: 8px; background: var(--bg2); border-radius: 14px; padding: 16px; border: 1px solid var(--border); overflow-y: auto; max-height: 640px; }
+.ds-sidebar-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent3); margin-bottom: 4px; }
+.ds-doc-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
+.ds-doc-item:hover { background: var(--bg3); }
+.ds-doc-item.active { background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(109,40,217,0.15)); border-color: rgba(124,58,237,0.4); }
+.ds-doc-name { flex: 1; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-doc-delete { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.1rem; padding: 0 4px; border-radius: 4px; transition: color 0.15s; }
+.ds-doc-delete:hover { color: var(--red); }
+.ds-empty { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+.ds-paste-section { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+.ds-paste-section textarea { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); padding: 10px; font-size: 0.85rem; resize: vertical; font-family: inherit; }
+.ds-paste-row { display: flex; gap: 8px; }
+.ds-paste-row input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 0.85rem; }
+.ds-reader { background: var(--bg2); border-radius: 14px; border: 1px solid var(--border); padding: 24px; overflow-y: auto; max-height: 640px; }
+.ds-no-doc { text-align: center; padding: 60px 20px; color: var(--muted); }
+.ds-no-doc-icon { font-size: 3rem; margin-bottom: 16px; }
+.ds-reader-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.ds-reader-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+.ds-reader-meta { color: var(--muted); font-size: 0.8rem; }
+.ds-reader-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.ds-doc-tip { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: var(--accent3); margin-bottom: 16px; }
+.ds-sections { display: flex; flex-direction: column; gap: 20px; }
+.ds-section-heading { font-size: 1rem; font-weight: 700; color: var(--accent3); margin-bottom: 8px; padding-top: 4px; border-top: 1px solid var(--border); }
+.ds-para { color: var(--text); line-height: 1.85; font-size: 0.95rem; margin-bottom: 8px; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RESUME ANALYZER
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.view-resume { display: flex; flex-direction: column; gap: 20px; }
+.resume-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.resume-input-panel { display: flex; flex-direction: column; gap: 10px; background: var(--bg2); border-radius: 14px; padding: 20px; border: 1px solid var(--border); }
+.resume-input-header { display: flex; align-items: center; gap: 10px; }
+.resume-input-header label.section-title { flex: 1; }
+.resume-input-panel textarea { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); padding: 12px; font-size: 0.9rem; resize: vertical; font-family: inherit; line-height: 1.7; }
+.resume-actions { display: flex; gap: 10px; align-items: center; }
+.resume-select { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 0.85rem; flex: 1; }
+.resume-report-panel { background: var(--bg2); border-radius: 14px; padding: 20px; border: 1px solid var(--border); overflow-y: auto; max-height: 640px; }
+.resume-empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.resume-empty-icon { font-size: 2.8rem; margin-bottom: 16px; }
+.resume-report { display: flex; flex-direction: column; gap: 20px; }
+.resume-score-header { text-align: center; padding: 16px; background: var(--bg3); border-radius: 12px; }
+.resume-overall-score { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+.resume-score-max { font-size: 1.2rem; opacity: 0.6; }
+.resume-score-label { font-size: 1rem; font-weight: 600; margin: 4px 0; }
+.resume-word-count { font-size: 0.8rem; color: var(--muted); }
+.resume-score-bars { display: flex; flex-direction: column; gap: 10px; }
+.resume-bar-row { display: flex; align-items: center; gap: 10px; }
+.resume-bar-label { width: 90px; font-size: 0.82rem; font-weight: 600; }
+.resume-bar-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.resume-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.resume-bar-val { width: 80px; font-size: 0.82rem; font-weight: 600; }
+.resume-bar-val small { color: var(--muted); font-weight: 400; }
+.resume-issues-section { display: flex; flex-direction: column; gap: 8px; }
+.resume-issue-group { background: var(--bg3); border-radius: 10px; padding: 12px; }
+.resume-issue-cat { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent3); margin-bottom: 8px; }
+.resume-issue-item { font-size: 0.85rem; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; }
+.sev-high { background: rgba(239,68,68,0.12); border-left: 3px solid var(--red); }
+.sev-medium { background: rgba(245,158,11,0.12); border-left: 3px solid var(--gold); }
+.sev-low { background: rgba(124,58,237,0.1); border-left: 3px solid var(--accent); }
+.resume-no-issues { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 14px; color: var(--green); font-weight: 500; }
+.resume-gemini-block, .resume-gemini-pending { background: var(--bg3); border-radius: 10px; padding: 16px; }
+.resume-gemini-text { font-size: 0.9rem; line-height: 1.8; white-space: pre-wrap; }
+.resume-history { margin-top: 8px; }
+.resume-history-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.resume-score-pill { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; font-weight: 700; font-size: 0.8rem; margin-left: auto; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   NOVA UPGRADES: doc banner, word popup, typing dots, clear button
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.nova-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.nova-header h1 { margin-bottom: 0; }
+.nova-doc-banner { display: flex; align-items: center; gap: 10px; background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.88rem; }
+.doc-banner-icon { font-size: 1.1rem; }
+.doc-banner-title { flex: 1; }
+.doc-banner-clear { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; padding: 3px 10px; font-size: 0.8rem; transition: all 0.15s; }
+.doc-banner-clear:hover { color: var(--red); border-color: var(--red); }
+.doc-hint { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--green); margin-bottom: 10px; }
+.btn-ghost { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+.btn-ghost:hover { border-color: var(--accent3); color: var(--text); }
+.btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+.q-num { background: var(--accent); color: white; border-radius: 6px; padding: 1px 8px; font-size: 0.8rem; font-weight: 700; margin-right: 6px; }
+.typing-dots span { display: inline-block; animation: dot-bounce 1.2s infinite; font-size: 1.4rem; line-height: 1; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
+.word-popup { animation: fadeInUp 0.2s ease; }
+.word-popup .ipa { color: var(--accent3); font-family: monospace; font-size: 0.85rem; }
+.word-popup .word-pos { color: var(--muted); font-size: 0.78rem; font-style: italic; }
+.word-popup .word-def { font-size: 0.88rem; }
+.word-popup-actions { display: flex; gap: 8px; margin-top: 10px; }
+.word-popup-say { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 0.8rem; }
+.word-popup-close { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 5px 12px; cursor: pointer; font-size: 0.8rem; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 </style>
 </head>
 <body>
@@ -785,6 +886,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 <script src="src/views-c.js"></script>
 <script src="src/views-d.js"></script>
 <script src="src/views-e.js"></script>
+<script src="src/views-f.js"></script>
 
 <script>
 /* ── Topbar XP/Streak live update ── */
