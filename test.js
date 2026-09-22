@@ -1907,6 +1907,66 @@ tryv('M12: never-requests-on-load assertion (permission.request called exactly 0
   }
 });
 
+/* ── M13: Moat-First Home ──────────────────────────────────────────── */
+console.log('\n🏠 M13 Moat-First Home');
+
+tryv('M13: hero markup exists (Live Coach and Learn from YOUR book cards)', function () {
+  var el = { innerHTML: '' };
+  VIEWS.home.render(el);
+
+  if (el.innerHTML.indexOf('home-heroes') === -1) { return false; }
+  if (el.innerHTML.indexOf('hero-live-coach') === -1) { return false; }
+  if (el.innerHTML.indexOf('Live Coach — speak, get stopped, get corrected') === -1) { return false; }
+  if (el.innerHTML.indexOf('hero-doc-agent') === -1) { return false; }
+  if (el.innerHTML.indexOf('Learn from YOUR book — upload anything') === -1) { return false; }
+
+  return true;
+});
+
+tryv('M13: docs-aware subtitle variants render (0 docs / n docs fixtures)', function () {
+  var origDocs = STORE.get('docs');
+  var el = { innerHTML: '' };
+
+  try {
+    // Fixture 1: 0 docs
+    STORE.set('docs', []);
+    VIEWS.home.render(el);
+    if (el.innerHTML.indexOf('Upload any book, novel, or document') === -1) {
+      return false;
+    }
+
+    // Fixture 2: n docs with reading progress
+    STORE.set('docs', [{
+      title: 'The Great Gatsby',
+      text: '01234567890123456789', // 20 chars
+      readPos: 10 // 10 chars = 50%
+    }]);
+    VIEWS.home.render(el);
+    var hasTitle = el.innerHTML.indexOf('The Great Gatsby') !== -1;
+    var hasPct = el.innerHTML.indexOf('50% completed') !== -1;
+    if (!hasTitle || !hasPct) {
+      return false;
+    }
+
+    return true;
+  } finally {
+    STORE.set('docs', origDocs);
+  }
+});
+
+tryv('M13: existing home checks untouched (stepper, dose, next lesson, xp chart)', function () {
+  var el = { innerHTML: '' };
+  VIEWS.home.render(el);
+
+  if (el.innerHTML.indexOf('flow-card') === -1) { return false; }
+  if (el.innerHTML.indexOf("Today's Dose") === -1) { return false; }
+  if (el.innerHTML.indexOf('Next Lesson') === -1) { return false; }
+  if (el.innerHTML.indexOf('XP Last 7 Days') === -1) { return false; }
+  if (el.innerHTML.indexOf('Learning Stats') === -1) { return false; }
+
+  return true;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

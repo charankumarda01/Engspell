@@ -612,6 +612,63 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 .due-pill { color: var(--acc); text-decoration: none; border-color: rgba(124,92,255,0.35); }
 .due-pill:hover { background: rgba(124,92,255,0.15); }
 
+/* ── MOAT-FIRST HERO CARDS (M13) ── */
+.home-heroes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 4px 0 8px;
+}
+.home-hero-card {
+  background: linear-gradient(135deg, rgba(16,24,48,0.9) 0%, rgba(22,32,60,0.95) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--sh1);
+}
+.home-hero-card:hover {
+  border-color: var(--acc);
+  transform: translateY(-2px);
+  box-shadow: var(--sh2);
+}
+.hero-card-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--acc2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.hero-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--txt);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.hero-card-sub {
+  font-size: 0.88rem;
+  color: var(--mut);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  flex: 1;
+}
+.hero-card-action {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--acc2);
+}
+@media (max-width: 768px) {
+  .home-heroes {
+    grid-template-columns: 1fr;
+  }
+}
+
 .start-here-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -5420,6 +5477,10 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
    ===================================================================== */
 
 /* ── HOME ──────────────────────────────────────────────────────────── */
+function _escA(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function _renderFlowCard() {
   if (typeof FLOW === 'undefined' || !FLOW.get) { return ''; }
   var flow = FLOW.get();
@@ -5519,6 +5580,34 @@ VIEWS.home = {
     var totalLessons = (typeof COURSE !== 'undefined' && COURSE.length) ? COURSE.length : 44;
     var remaining = Math.max(0, totalLessons - completed.length);
 
+    var docs = STORE.get('docs') || [];
+    var docSub = '';
+    if (docs.length === 0) {
+      docSub = 'Upload any book, novel, or document to train vocabulary & comprehension with your AI coach.';
+    } else {
+      var latestDoc = docs[docs.length - 1];
+      var docTitle = (latestDoc && latestDoc.title) ? latestDoc.title : 'Document';
+      var docLen = (latestDoc && latestDoc.text) ? latestDoc.text.length : 0;
+      var docPos = (latestDoc && latestDoc.readPos) ? latestDoc.readPos : 0;
+      var pctRead = docLen > 0 ? Math.min(100, Math.round((docPos / docLen) * 100)) : 0;
+      docSub = 'Continue reading: "' + _escA(docTitle) + '" · ' + pctRead + '% completed';
+    }
+
+    var heroesHtml = '<div class="home-heroes">' +
+      '<div class="card home-hero-card" id="hero-live-coach" onclick="navigate(\'coach\'); if(typeof VIEWS.coach!==\'undefined\'){VIEWS.coach._mode=\'drill\';}">' +
+        '<div class="hero-card-badge">⚡ Real-Time Speech Matching</div>' +
+        '<div class="hero-card-title">🎙️ Live Coach — speak, get stopped, get corrected</div>' +
+        '<div class="hero-card-sub">Instant offline feedback with word-by-word matching, interrupt engine, and live pronunciation coaching.</div>' +
+        '<span class="hero-card-action">Launch Live Drill →</span>' +
+      '</div>' +
+      '<div class="card home-hero-card" id="hero-doc-agent" onclick="navigate(\'docstudio\')">' +
+        '<div class="hero-card-badge">📄 Personal Document Studio</div>' +
+        '<div class="hero-card-title">📄 Learn from YOUR book — upload anything</div>' +
+        '<div class="hero-card-sub" id="hero-doc-sub">' + docSub + '</div>' +
+        '<span class="hero-card-action">Open Document Studio →</span>' +
+      '</div>' +
+    '</div>';
+
     var html = '<div class="view-home">' +
       '<div class="card home-greeting-band">' +
         '<div class="greeting-content">' +
@@ -5533,6 +5622,7 @@ VIEWS.home = {
         '</div>' +
       '</div>' +
       _renderFlowCard() +
+      heroesHtml +
       '<div class="section-title">🚀 Start Here</div>' +
       '<div class="start-here-grid">' +
         '<div class="card start-card" onclick="navigate(\'daily\')">' +

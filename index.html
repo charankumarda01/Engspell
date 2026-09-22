@@ -615,6 +615,63 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 .due-pill { color: var(--acc); text-decoration: none; border-color: rgba(124,92,255,0.35); }
 .due-pill:hover { background: rgba(124,92,255,0.15); }
 
+/* ── MOAT-FIRST HERO CARDS (M13) ── */
+.home-heroes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 4px 0 8px;
+}
+.home-hero-card {
+  background: linear-gradient(135deg, rgba(16,24,48,0.9) 0%, rgba(22,32,60,0.95) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--sh1);
+}
+.home-hero-card:hover {
+  border-color: var(--acc);
+  transform: translateY(-2px);
+  box-shadow: var(--sh2);
+}
+.hero-card-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--acc2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.hero-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--txt);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.hero-card-sub {
+  font-size: 0.88rem;
+  color: var(--mut);
+  line-height: 1.5;
+  margin-bottom: 14px;
+  flex: 1;
+}
+.hero-card-action {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--acc2);
+}
+@media (max-width: 768px) {
+  .home-heroes {
+    grid-template-columns: 1fr;
+  }
+}
+
 .start-here-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

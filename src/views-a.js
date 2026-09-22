@@ -4,6 +4,10 @@
    ===================================================================== */
 
 /* ── HOME ──────────────────────────────────────────────────────────── */
+function _escA(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function _renderFlowCard() {
   if (typeof FLOW === 'undefined' || !FLOW.get) { return ''; }
   var flow = FLOW.get();
@@ -103,6 +107,34 @@ VIEWS.home = {
     var totalLessons = (typeof COURSE !== 'undefined' && COURSE.length) ? COURSE.length : 44;
     var remaining = Math.max(0, totalLessons - completed.length);
 
+    var docs = STORE.get('docs') || [];
+    var docSub = '';
+    if (docs.length === 0) {
+      docSub = 'Upload any book, novel, or document to train vocabulary & comprehension with your AI coach.';
+    } else {
+      var latestDoc = docs[docs.length - 1];
+      var docTitle = (latestDoc && latestDoc.title) ? latestDoc.title : 'Document';
+      var docLen = (latestDoc && latestDoc.text) ? latestDoc.text.length : 0;
+      var docPos = (latestDoc && latestDoc.readPos) ? latestDoc.readPos : 0;
+      var pctRead = docLen > 0 ? Math.min(100, Math.round((docPos / docLen) * 100)) : 0;
+      docSub = 'Continue reading: "' + _escA(docTitle) + '" · ' + pctRead + '% completed';
+    }
+
+    var heroesHtml = '<div class="home-heroes">' +
+      '<div class="card home-hero-card" id="hero-live-coach" onclick="navigate(\'coach\'); if(typeof VIEWS.coach!==\'undefined\'){VIEWS.coach._mode=\'drill\';}">' +
+        '<div class="hero-card-badge">⚡ Real-Time Speech Matching</div>' +
+        '<div class="hero-card-title">🎙️ Live Coach — speak, get stopped, get corrected</div>' +
+        '<div class="hero-card-sub">Instant offline feedback with word-by-word matching, interrupt engine, and live pronunciation coaching.</div>' +
+        '<span class="hero-card-action">Launch Live Drill →</span>' +
+      '</div>' +
+      '<div class="card home-hero-card" id="hero-doc-agent" onclick="navigate(\'docstudio\')">' +
+        '<div class="hero-card-badge">📄 Personal Document Studio</div>' +
+        '<div class="hero-card-title">📄 Learn from YOUR book — upload anything</div>' +
+        '<div class="hero-card-sub" id="hero-doc-sub">' + docSub + '</div>' +
+        '<span class="hero-card-action">Open Document Studio →</span>' +
+      '</div>' +
+    '</div>';
+
     var html = '<div class="view-home">' +
       '<div class="card home-greeting-band">' +
         '<div class="greeting-content">' +
@@ -117,6 +149,7 @@ VIEWS.home = {
         '</div>' +
       '</div>' +
       _renderFlowCard() +
+      heroesHtml +
       '<div class="section-title">🚀 Start Here</div>' +
       '<div class="start-here-grid">' +
         '<div class="card start-card" onclick="navigate(\'daily\')">' +
