@@ -1008,6 +1008,21 @@ VIEWS.settings = {
       '</div>' +
       '</div>' +
 
+      '<div class="setting-group" id="s-group-reminders">' +
+      '<label>🔔 Daily Reminder</label>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+      '<input type="time" id="s-remind-hour" value="' + _esc(settings.remindHour || '19:00') + '" style="padding:8px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);" />' +
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">' +
+      '<input type="checkbox" id="s-remind-on"' + (settings.remindOn ? ' checked' : '') + ' style="width:18px;height:18px;" />' +
+      '<span>Enable reminder</span>' +
+      '</label>' +
+      '</div>' +
+      ((typeof Notification === 'undefined' || Notification.permission === 'denied')
+        ? '<p class="setting-hint" id="s-remind-note" style="color:var(--warn);">Reminders not supported here — streak chip is your reminder.</p>'
+        : '<p class="setting-hint" id="s-remind-note">Receive a local notification when today\'s Flow has remaining steps.</p>'
+      ) +
+      '</div>' +
+
       '<button class="btn-primary" id="s-save">💾 Save Settings</button>' +
 
       '<div class="setting-group danger-zone">' +
@@ -1047,6 +1062,89 @@ VIEWS.settings = {
         s.bargeIn = this.checked;
         STORE.set('settings', s);
         UI.toast(this.checked ? '🎙️ Barge-in alerts ON' : 'Barge-in alerts OFF', 'info');
+      });
+    }
+
+    var remindHourEl = document.getElementById('s-remind-hour');
+    var remindOnEl = document.getElementById('s-remind-on');
+    var remindNoteEl = document.getElementById('s-remind-note');
+
+    if (remindOnEl) {
+      remindOnEl.addEventListener('change', function () {
+        var isChecked = this.checked;
+        var s = STORE.get('settings') || {};
+        var h = remindHourEl ? remindHourEl.value : (s.remindHour || '19:00');
+        s.remindHour = h;
+
+        if (isChecked) {
+          if (typeof Notification === 'undefined') {
+            this.checked = false;
+            s.remindOn = false;
+            STORE.set('settings', s);
+            if (remindNoteEl) {
+              remindNoteEl.textContent = 'Reminders not supported here — streak chip is your reminder.';
+              remindNoteEl.style.color = 'var(--warn)';
+            }
+            UI.toast('Notifications not supported in this browser.', 'warning');
+            return;
+          }
+          if (Notification.permission === 'denied') {
+            this.checked = false;
+            s.remindOn = false;
+            STORE.set('settings', s);
+            if (remindNoteEl) {
+              remindNoteEl.textContent = 'Reminders not supported here — streak chip is your reminder.';
+              remindNoteEl.style.color = 'var(--warn)';
+            }
+            UI.toast('Notification permission was blocked in browser settings.', 'warning');
+            return;
+          }
+          if (Notification.permission === 'granted') {
+            s.remindOn = true;
+            STORE.set('settings', s);
+            STORE.save();
+            if (typeof REMINDERS !== 'undefined') { REMINDERS.schedule(); }
+            UI.toast('🔔 Daily reminder set for ' + h, 'success');
+          } else if (typeof Notification.requestPermission === 'function') {
+            var toggle = this;
+            Notification.requestPermission().then(function (perm) {
+              if (perm === 'granted') {
+                s.remindOn = true;
+                STORE.set('settings', s);
+                STORE.save();
+                if (typeof REMINDERS !== 'undefined') { REMINDERS.schedule(); }
+                UI.toast('🔔 Daily reminder set for ' + h, 'success');
+              } else {
+                toggle.checked = false;
+                s.remindOn = false;
+                STORE.set('settings', s);
+                STORE.save();
+                if (remindNoteEl) {
+                  remindNoteEl.textContent = 'Reminders not supported here — streak chip is your reminder.';
+                  remindNoteEl.style.color = 'var(--warn)';
+                }
+                UI.toast('Notification permission was denied.', 'warning');
+              }
+            });
+          }
+        } else {
+          s.remindOn = false;
+          STORE.set('settings', s);
+          STORE.save();
+          if (typeof REMINDERS !== 'undefined') { REMINDERS.clear(); }
+          UI.toast('Daily reminder disabled', 'info');
+        }
+      });
+    }
+
+    if (remindHourEl) {
+      remindHourEl.addEventListener('change', function () {
+        var s = STORE.get('settings') || {};
+        s.remindHour = this.value;
+        STORE.set('settings', s);
+        if (s.remindOn && typeof REMINDERS !== 'undefined') {
+          REMINDERS.schedule();
+        }
       });
     }
 
@@ -1101,6 +1199,8 @@ VIEWS.settings = {
       var liveCorrect = document.getElementById('s-live-correct') ? document.getElementById('s-live-correct').checked : false;
       var bargeIn = document.getElementById('s-barge-in') ? document.getElementById('s-barge-in').checked : false;
       var llmProvider = document.getElementById('s-provider') ? document.getElementById('s-provider').value : 'gemini';
+      var remindHour = document.getElementById('s-remind-hour') ? document.getElementById('s-remind-hour').value : '19:00';
+      var remindOn = document.getElementById('s-remind-on') ? document.getElementById('s-remind-on').checked : false;
       var curSettings = STORE.get('settings') || {};
       curSettings.voice = voice;
       curSettings.rate = rate;
@@ -1110,9 +1210,14 @@ VIEWS.settings = {
       curSettings.liveCorrect = liveCorrect;
       curSettings.bargeIn = bargeIn;
       curSettings.llmProvider = llmProvider;
+      curSettings.remindHour = remindHour;
+      curSettings.remindOn = remindOn;
       STORE.set('settings', curSettings);
       SPEECH.setRate(rate);
       if (voice) { SPEECH.setVoiceByName(voice); }
+      if (typeof REMINDERS !== 'undefined') {
+        if (remindOn) { REMINDERS.schedule(); } else { REMINDERS.clear(); }
+      }
       UI.toast('Settings saved!', 'success');
     });
 

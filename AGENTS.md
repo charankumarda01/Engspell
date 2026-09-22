@@ -95,6 +95,7 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **M9**: Live Coach, word-level offline matching, interrupt decision engine, Android backoff loop, free talk live & barge-in — **SHIPPED** (2026-09-22)
 - **M10**: Free-LLM Provider Switch, multi-provider architecture (Gemini / Groq / OpenRouter), unified llmAsk, fallback floor — **SHIPPED** (2026-09-22)
 - **M11**: First-5-Minutes Onboarding (ONB-01), 4-screen flow, placement calibration, instant win live drill, cloud brain unlock — **SHIPPED** (2026-09-22)
+- **M12**: Local Reminders (NTFY-01), aligned hour scheduling, notification permission gate, graceful degradation — **SHIPPED** (2026-09-22)
 
 ---
 

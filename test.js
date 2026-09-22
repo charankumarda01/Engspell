@@ -241,7 +241,7 @@ tryv('SPEECH.getVoices returns array', function () { return Array.isArray(SPEECH
 console.log('\n💾 STORE module');
 
 tryv('STORE exists', function () { return typeof STORE === 'object'; });
-tryv('STORE.VERSION is 5', function () { return STORE.VERSION === 5; });
+tryv('STORE.VERSION is 6', function () { return STORE.VERSION === 6; });
 tryv('STORE.get returns object', function () { return typeof STORE.get() === 'object'; });
 tryv('STORE.get user has name field', function () { return typeof STORE.get('user') === 'object'; });
 tryv('STORE.get srs field exists (INV-5 append)', function () { return STORE.get('srs') !== undefined; });
@@ -250,6 +250,10 @@ tryv('STORE v3: novaHistory field is array (INV-5)', function () { return Array.
 tryv('STORE v3: resumeReports field is array (INV-5)', function () { return Array.isArray(STORE.get('resumeReports')); });
 tryv('STORE v4: flow field exists (INV-5)', function () { return typeof STORE.get('flow') === 'object'; });
 tryv('STORE v5: llmProvider field exists (INV-5)', function () { return typeof STORE.get('settings').llmProvider === 'string'; });
+tryv('STORE v6: remindHour/remindOn field exists (INV-5)', function () {
+  var s = STORE.get('settings');
+  return typeof s.remindHour === 'string' && typeof s.remindOn === 'boolean';
+});
 tryv('VIEWS.docstudio exists and has render', function () { return typeof VIEWS.docstudio === 'object' && typeof VIEWS.docstudio.render === 'function'; });
 tryv('VIEWS.resume exists and has render', function () { return typeof VIEWS.resume === 'object' && typeof VIEWS.resume.render === 'function'; });
 tryv('VIEWS.coach._getHistory returns array', function () { VIEWS.coach._history = null; STORE.set('novaHistory', []); return Array.isArray(VIEWS.coach._getHistory()); });
@@ -1808,6 +1812,99 @@ tryv('M11: render each screen in Node', function () {
   }
 
   return true;
+});
+
+/* ── M12: Local Reminders (Retention) ──────────────────────────────── */
+console.log('\n🔔 M12 Local Reminders');
+
+tryv('M12: scheduling math (next-fire ms for fixture hours incl. over-midnight)', function () {
+  if (typeof REMINDERS !== 'object' || typeof REMINDERS.computeNextFireMs !== 'function') {
+    return false;
+  }
+  // Fixed baseline: 14:00 (2 PM) local time
+  var base = new Date();
+  base.setHours(14, 0, 0, 0);
+  var baseMs = base.getTime();
+
+  // 1. Same-day future: 19:00 (5 hours away = 5 * 3600 * 1000 = 18,000,000 ms)
+  var diff5h = REMINDERS.computeNextFireMs('19:00', baseMs);
+  if (diff5h !== 5 * 3600 * 1000) { return false; }
+
+  // 2. Over-midnight: 10:00 (already passed today -> 20 hours away next day = 20 * 3600 * 1000 = 72,000,000 ms)
+  var diff20h = REMINDERS.computeNextFireMs('10:00', baseMs);
+  if (diff20h !== 20 * 3600 * 1000) { return false; }
+
+  // 3. Exact current minute: 14:00 (matches now -> schedules for next day = 24 * 3600 * 1000 ms)
+  var diff24h = REMINDERS.computeNextFireMs('14:00', baseMs);
+  if (diff24h !== 24 * 3600 * 1000) { return false; }
+
+  // 4. Minute offset: 14:30 (30 minutes away = 30 * 60 * 1000 = 1,800,000 ms)
+  var diff30m = REMINDERS.computeNextFireMs('14:30', baseMs);
+  if (diff30m !== 30 * 60 * 1000) { return false; }
+
+  return true;
+});
+
+tryv('M12: permission-state branching via stubbed Notification', function () {
+  var origNotification = global.Notification;
+  try {
+    // 1. Granted state
+    global.Notification = function (title, opts) {
+      this.title = title;
+      this.opts = opts;
+    };
+    global.Notification.permission = 'granted';
+    if (!REMINDERS.canNotify() || REMINDERS.getPermission() !== 'granted') { return false; }
+    var n = REMINDERS.fireNotification();
+    if (!n || n.title.indexOf('EngSpell') === -1) { return false; }
+
+    // 2. Denied state
+    global.Notification.permission = 'denied';
+    if (REMINDERS.getPermission() !== 'denied') { return false; }
+    var nDenied = REMINDERS.fireNotification();
+    if (nDenied !== null) { return false; }
+
+    // 3. Unsupported state
+    delete global.Notification;
+    if (REMINDERS.canNotify() !== false || REMINDERS.getPermission() !== 'unsupported') { return false; }
+    var nUnsup = REMINDERS.fireNotification();
+    if (nUnsup !== null) { return false; }
+
+    return true;
+  } finally {
+    global.Notification = origNotification;
+  }
+});
+
+tryv('M12: never-requests-on-load assertion (permission.request called exactly 0 times during plain render)', function () {
+  var origNotification = global.Notification;
+  var requestCalls = 0;
+
+  try {
+    global.Notification = function () {};
+    global.Notification.permission = 'default';
+    global.Notification.requestPermission = function () {
+      requestCalls++;
+      return _syncPromise('granted', false);
+    };
+
+    var fakeEl = { innerHTML: '', addEventListener: function () {} };
+    // 1. Plain render of settings
+    VIEWS.settings.render(fakeEl);
+
+    // 2. Plain schedule() on app open
+    REMINDERS.schedule();
+
+    // 3. Plain getRemainingStepsSummary()
+    REMINDERS.getRemainingStepsSummary();
+
+    // Assert permission was NEVER requested
+    if (requestCalls !== 0) { return false; }
+
+    return true;
+  } finally {
+    global.Notification = origNotification;
+  }
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */

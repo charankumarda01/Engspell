@@ -14,7 +14,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 5;
+  var VERSION = 6;
 
   var def = {
     version: VERSION,
@@ -29,7 +29,7 @@ var STORE = (function () {
     daily: {date: '', twisterIdx: 0, wordIdx: 0, idiomIdx: 0, quoteIdx: 0, done: []},
     assessments: [],
     coachStats: {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0},
-    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false, llmProvider: 'gemini'},
+    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false, llmProvider: 'gemini', remindHour: '19:00', remindOn: false},
     srs: {},  /* INV-5: MISSION 2 SRS */
     docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
     novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
@@ -88,11 +88,20 @@ var STORE = (function () {
       if (!data.settings.llmProvider) { data.settings.llmProvider = 'gemini'; }
       data.version = 5;
     }
+    // v5 → v6: add remindHour, remindOn (M12)
+    if (v < 6) {
+      if (!data.settings) { data.settings = {}; }
+      if (data.settings.remindHour === undefined) { data.settings.remindHour = '19:00'; }
+      if (data.settings.remindOn === undefined) { data.settings.remindOn = false; }
+      data.version = 6;
+    }
     if (!data.settings) { data.settings = {}; }
     if (data.settings.honestMode === undefined) { data.settings.honestMode = false; }
     if (data.settings.liveCorrect === undefined) { data.settings.liveCorrect = false; }
     if (data.settings.bargeIn === undefined) { data.settings.bargeIn = false; }
     if (!data.settings.llmProvider) { data.settings.llmProvider = 'gemini'; }
+    if (data.settings.remindHour === undefined) { data.settings.remindHour = '19:00'; }
+    if (data.settings.remindOn === undefined) { data.settings.remindOn = false; }
     if (!data.coachStats) {
       data.coachStats = {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0};
     }
@@ -1202,6 +1211,111 @@ function llmAsk(opts) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+   REMINDERS — Local Daily Reminders Engine (M12: NTFY-01)
+   Aligned hour scheduling, local notifications, zero-permission on load
+   ════════════════════════════════════════════════════════════════════*/
+var REMINDERS = (function () {
+  'use strict';
+  var _timer = null;
+
+  function parseHourMin(hourStr) {
+    var parts = String(hourStr || '19:00').split(':');
+    var h = parseInt(parts[0], 10);
+    var m = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+    if (isNaN(h) || h < 0 || h > 23) { h = 19; }
+    if (isNaN(m) || m < 0 || m > 59) { m = 0; }
+    return { hour: h, minute: m };
+  }
+
+  function computeNextFireMs(targetHourStr, nowMs) {
+    var now = (nowMs !== undefined) ? new Date(nowMs) : new Date();
+    var hm = parseHourMin(targetHourStr);
+    var target = new Date(now.getTime());
+    target.setHours(hm.hour, hm.minute, 0, 0);
+
+    if (target.getTime() <= now.getTime()) {
+      target.setDate(target.getDate() + 1);
+    }
+    return target.getTime() - now.getTime();
+  }
+
+  function canNotify() {
+    return typeof Notification !== 'undefined';
+  }
+
+  function getPermission() {
+    if (!canNotify()) { return 'unsupported'; }
+    return Notification.permission;
+  }
+
+  function getRemainingStepsSummary() {
+    var flow = (typeof STORE !== 'undefined' && STORE.get) ? (STORE.get('flow') || {}) : {};
+    var steps = (flow && Array.isArray(flow.steps)) ? flow.steps : [false, false, false, false, false];
+    var done = 0;
+    for (var i = 0; i < steps.length; i++) {
+      if (steps[i]) { done++; }
+    }
+    var remaining = Math.max(0, 5 - done);
+    if (remaining === 0) {
+      return 'All 5 Flow steps completed today! Streak preserved 🔥';
+    }
+    return remaining + ' step' + (remaining === 1 ? '' : 's') + ' left in today\'s Flow to keep your streak!';
+  }
+
+  function fireNotification() {
+    if (!canNotify() || Notification.permission !== 'granted') { return null; }
+    var title = 'EngSpell — your Flow is waiting 🔥';
+    var body = getRemainingStepsSummary();
+    try {
+      var n = new Notification(title, {
+        body: body,
+        icon: 'icons/icon-192.png'
+      });
+      n.onclick = function () {
+        if (typeof window !== 'undefined') {
+          if (window.focus) { window.focus(); }
+          window.location.hash = '#/home';
+        }
+        if (n.close) { n.close(); }
+      };
+      return n;
+    } catch (e) {
+      /* ignore */
+    }
+    return null;
+  }
+
+  function schedule() {
+    if (_timer) { clearTimeout(_timer); _timer = null; }
+    if (typeof STORE === 'undefined' || !STORE.get) { return; }
+    var settings = STORE.get('settings') || {};
+    if (!settings.remindOn) { return; }
+    if (!canNotify() || Notification.permission !== 'granted') { return; }
+
+    var delayMs = computeNextFireMs(settings.remindHour || '19:00');
+    _timer = setTimeout(function () {
+      fireNotification();
+      schedule(); // reschedule for next day
+    }, delayMs);
+  }
+
+  function clear() {
+    if (_timer) { clearTimeout(_timer); _timer = null; }
+  }
+
+  return {
+    parseHourMin: parseHourMin,
+    computeNextFireMs: computeNextFireMs,
+    canNotify: canNotify,
+    getPermission: getPermission,
+    getRemainingStepsSummary: getRemainingStepsSummary,
+    fireNotification: fireNotification,
+    schedule: schedule,
+    clear: clear
+  };
+})();
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -1613,6 +1727,9 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     }
     _route();
     updateFlowChip();
+    if (typeof REMINDERS !== 'undefined') {
+      REMINDERS.schedule();
+    }
   });
 
   /* Expose globally */
@@ -1625,6 +1742,7 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.LIVE_COACH = LIVE_COACH;
   window.LLM_PROVIDERS = LLM_PROVIDERS;
   window.llmAsk = llmAsk;
+  window.REMINDERS = REMINDERS;
   window.isHonest = STORE.isHonest;
   window.computeHonestScore = STORE.computeHonestScore;
 
@@ -1635,6 +1753,7 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     global.LIVE_COACH = LIVE_COACH;
     global.LLM_PROVIDERS = LLM_PROVIDERS;
     global.llmAsk = llmAsk;
+    global.REMINDERS = REMINDERS;
     global.isHonest = STORE.isHonest;
     global.computeHonestScore = STORE.computeHonestScore;
   }
