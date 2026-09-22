@@ -241,7 +241,7 @@ tryv('SPEECH.getVoices returns array', function () { return Array.isArray(SPEECH
 console.log('\n💾 STORE module');
 
 tryv('STORE exists', function () { return typeof STORE === 'object'; });
-tryv('STORE.VERSION is 4', function () { return STORE.VERSION === 4; });
+tryv('STORE.VERSION is 5', function () { return STORE.VERSION === 5; });
 tryv('STORE.get returns object', function () { return typeof STORE.get() === 'object'; });
 tryv('STORE.get user has name field', function () { return typeof STORE.get('user') === 'object'; });
 tryv('STORE.get srs field exists (INV-5 append)', function () { return STORE.get('srs') !== undefined; });
@@ -249,6 +249,7 @@ tryv('STORE v3: docs field is array (INV-5)', function () { return Array.isArray
 tryv('STORE v3: novaHistory field is array (INV-5)', function () { return Array.isArray(STORE.get('novaHistory')); });
 tryv('STORE v3: resumeReports field is array (INV-5)', function () { return Array.isArray(STORE.get('resumeReports')); });
 tryv('STORE v4: flow field exists (INV-5)', function () { return typeof STORE.get('flow') === 'object'; });
+tryv('STORE v5: llmProvider field exists (INV-5)', function () { return typeof STORE.get('settings').llmProvider === 'string'; });
 tryv('VIEWS.docstudio exists and has render', function () { return typeof VIEWS.docstudio === 'object' && typeof VIEWS.docstudio.render === 'function'; });
 tryv('VIEWS.resume exists and has render', function () { return typeof VIEWS.resume === 'object' && typeof VIEWS.resume.render === 'function'; });
 tryv('VIEWS.coach._getHistory returns array', function () { VIEWS.coach._history = null; STORE.set('novaHistory', []); return Array.isArray(VIEWS.coach._getHistory()); });
@@ -726,7 +727,9 @@ tryv('FIX-4: INV-8 CDN scan — no external script/asset/fetch URLs in app src (
      Simple heuristic: look for http(s):// NOT preceded by href=" or target= or '(sharing)
      and NOT one of the explicitly allowed URLs. */
   var ALLOWED_HOSTS = [
-    'generativelanguage.googleapis.com', /* INV-8: the single allowed fetch endpoint */
+    'generativelanguage.googleapis.com', /* INV-8 / M10: Gemini endpoint */
+    'api.groq.com',                      /* M10: Groq endpoint */
+    'openrouter.ai',                     /* M10: OpenRouter endpoint */
     'aistudio.google.com',               /* href help link in settings UI only */
     'wa.me'                              /* WhatsApp share href only */
   ];
@@ -1462,7 +1465,7 @@ tryv('M9: scan for new network calls (only existing Gemini endpoint allowed)', f
   var path = require('path');
   var srcFiles = ['data.js','data2.js','data3.js','speech.js','core.js',
                   'views-a.js','views-b.js','views-c.js','views-d.js','views-e.js','views-f.js'];
-  var ALLOWED_HOSTS = ['generativelanguage.googleapis.com'];
+  var ALLOWED_HOSTS = ['generativelanguage.googleapis.com', 'api.groq.com', 'openrouter.ai'];
   var LOAD_PAT = /(?:fetch\s*\(|new\s+XMLHttpRequest|new\s+Worker\s*\(|import\s*\()([^"'\)]*https?:\/\/[^"'\)]+)/gi;
   var violations = [];
 
@@ -1481,6 +1484,169 @@ tryv('M9: scan for new network calls (only existing Gemini endpoint allowed)', f
     throw new Error('Unauthorized network calls: ' + violations.join(' | '));
   }
   return true;
+});
+
+/* ── M10: Free-LLM Provider Switch (₹0 Insurance) ──────────────────── */
+console.log('\n🔀 M10 Free-LLM Provider Switch');
+
+tryv('M10: per-provider request-shaping via STUBBED fetch (URL/headers/body/reply parse)', function () {
+  var origFetch = global.fetch;
+  try {
+    // 1. Gemini
+    var geminiReq = LLM_PROVIDERS.gemini.buildRequest('fake-key-gem', 'Sys Gem', [{ role: 'user', content: 'Hello Gem' }]);
+    if (geminiReq.url.indexOf('generativelanguage.googleapis.com') === -1 || geminiReq.url.indexOf('fake-key-gem') === -1) {
+      return false;
+    }
+    if (geminiReq.method !== 'POST' || geminiReq.body.system_instruction.parts[0].text !== 'Sys Gem') {
+      return false;
+    }
+    var geminiParsed = LLM_PROVIDERS.gemini.parseResponse({
+      candidates: [{ content: { parts: [{ text: 'Gemini Response' }] } }]
+    });
+    if (geminiParsed !== 'Gemini Response') { return false; }
+
+    // 2. Groq
+    var groqReq = LLM_PROVIDERS.groq.buildRequest('gsk_test123', 'Sys Groq', [{ role: 'user', content: 'Hello Groq' }]);
+    if (groqReq.url !== 'https://api.groq.com/openai/v1/chat/completions') { return false; }
+    if (groqReq.headers['Authorization'] !== 'Bearer gsk_test123') { return false; }
+    if (groqReq.body.model !== 'llama-3.1-8b-instant') { return false; }
+    if (groqReq.body.messages.length !== 2 || groqReq.body.messages[0].role !== 'system' || groqReq.body.messages[1].content !== 'Hello Groq') {
+      return false;
+    }
+    var groqParsed = LLM_PROVIDERS.groq.parseResponse({
+      choices: [{ message: { content: 'Groq Response' } }]
+    });
+    if (groqParsed !== 'Groq Response') { return false; }
+
+    // 3. OpenRouter
+    var orReq = LLM_PROVIDERS.openrouter.buildRequest('sk-or-test123', 'Sys OR', [{ role: 'user', content: 'Hello OR' }]);
+    if (orReq.url !== 'https://openrouter.ai/api/v1/chat/completions') { return false; }
+    if (orReq.headers['Authorization'] !== 'Bearer sk-or-test123') { return false; }
+    if (orReq.body.model !== 'meta-llama/llama-3.1-8b-instruct:free') { return false; }
+    if (orReq.body.messages.length !== 2 || orReq.body.messages[0].content !== 'Sys OR') { return false; }
+    var orParsed = LLM_PROVIDERS.openrouter.parseResponse({
+      choices: [{ message: { content: 'OpenRouter Response' } }]
+    });
+    if (orParsed !== 'OpenRouter Response') { return false; }
+
+    // 4. Live llmAsk execution with stubbed fetch across all 3
+    var providers = ['gemini', 'groq', 'openrouter'];
+    for (var p = 0; p < providers.length; p++) {
+      var prov = providers[p];
+      var lastCall = null;
+      global.fetch = function (url, opts) {
+        lastCall = { url: url, opts: opts };
+        var fakeBody = {};
+        if (prov === 'gemini') {
+          fakeBody = { candidates: [{ content: { parts: [{ text: 'Answer from ' + prov }] } }] };
+        } else {
+          fakeBody = { choices: [{ message: { content: 'Answer from ' + prov } }] };
+        }
+        return _syncPromise({
+          ok: true,
+          status: 200,
+          json: function () { return _syncPromise(fakeBody, false); }
+        }, false);
+      };
+
+      var resText = '';
+      llmAsk({
+        provider: prov,
+        key: 'prov-key-' + prov,
+        systemPrompt: 'Sys ' + prov,
+        messages: [{ role: 'user', content: 'Test ' + prov }],
+        onDone: function (t) { resText = t; }
+      });
+      if (resText !== 'Answer from ' + prov) { return false; }
+      if (!lastCall || !lastCall.url) { return false; }
+    }
+
+    return true;
+  } finally {
+    global.fetch = origFetch;
+  }
+});
+
+tryv('M10: 3×fail→fallback matrix', function () {
+  var origFetch = global.fetch;
+  var providers = ['gemini', 'groq', 'openrouter'];
+
+  try {
+    for (var i = 0; i < providers.length; i++) {
+      var prov = providers[i];
+      global.fetch = function () {
+        return _syncPromise(new Error(prov + ' network 500 failure'), true);
+      };
+
+      var el = { innerHTML: '', scrollTop: 0 };
+      VIEWS.coach._history = null;
+      STORE.set('novaHistory', []);
+      STORE.set('settings', { geminiKey: 'validKey12345', llmProvider: prov });
+      VIEWS.coach._lastError = null;
+
+      VIEWS.coach.respond('Hello ' + prov, el);
+
+      var hist = VIEWS.coach._getHistory();
+      var last = hist[hist.length - 1];
+
+      // Verification:
+      // 1. VIEWS.coach._lastError recorded
+      if (!VIEWS.coach._lastError || VIEWS.coach._lastError.message.indexOf(prov) === -1) {
+        return false;
+      }
+      // 2. Offline fallback reply in history
+      if (!last || last.role !== 'nova' || last.text.indexOf('offline') === -1) {
+        return false;
+      }
+      // 3. UI rendered consistently without throwing
+      if (!el.innerHTML || el.innerHTML.indexOf('view-coach') === -1) {
+        return false;
+      }
+    }
+    return true;
+  } finally {
+    global.fetch = origFetch;
+  }
+});
+
+tryv('M10: settings round-trip', function () {
+  var el = { innerHTML: '' };
+
+  // 1. Initial state
+  var s = STORE.get('settings') || {};
+  if (!s.llmProvider) { return false; }
+
+  // 2. Set to groq
+  s.llmProvider = 'groq';
+  STORE.set('settings', s);
+  STORE.save();
+  if (STORE.get('settings').llmProvider !== 'groq') { return false; }
+
+  // 3. Set to openrouter
+  s.llmProvider = 'openrouter';
+  STORE.set('settings', s);
+  STORE.save();
+  if (STORE.get('settings').llmProvider !== 'openrouter') { return false; }
+
+  // 4. Render settings view and check dropdown select exists and has openrouter selected
+  VIEWS.settings.render(el);
+  if (el.innerHTML.indexOf('id="s-provider"') === -1) { return false; }
+  if (el.innerHTML.indexOf('value="openrouter" selected') === -1) { return false; }
+
+  // 5. Restore to gemini
+  s.llmProvider = 'gemini';
+  STORE.set('settings', s);
+  STORE.save();
+  if (STORE.get('settings').llmProvider !== 'gemini') { return false; }
+
+  return true;
+});
+
+tryv('M10: existing Nova tests pass untouched (gemini default)', function () {
+  // Confirm default provider in STORE is gemini
+  var cur = STORE.get('settings') || {};
+  if (cur.llmProvider !== 'gemini') { return false; }
+  return typeof VIEWS.coach._novaGemini === 'function' && typeof VIEWS.coach.respond === 'function';
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */

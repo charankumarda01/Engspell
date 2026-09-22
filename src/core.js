@@ -14,7 +14,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 4;
+  var VERSION = 5;
 
   var def = {
     version: VERSION,
@@ -29,7 +29,7 @@ var STORE = (function () {
     daily: {date: '', twisterIdx: 0, wordIdx: 0, idiomIdx: 0, quoteIdx: 0, done: []},
     assessments: [],
     coachStats: {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0},
-    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false},
+    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false, llmProvider: 'gemini'},
     srs: {},  /* INV-5: MISSION 2 SRS */
     docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
     novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
@@ -82,10 +82,17 @@ var STORE = (function () {
       }
       data.version = 4;
     }
+    // v4 → v5: add llmProvider
+    if (v < 5) {
+      if (!data.settings) { data.settings = {}; }
+      if (!data.settings.llmProvider) { data.settings.llmProvider = 'gemini'; }
+      data.version = 5;
+    }
     if (!data.settings) { data.settings = {}; }
     if (data.settings.honestMode === undefined) { data.settings.honestMode = false; }
     if (data.settings.liveCorrect === undefined) { data.settings.liveCorrect = false; }
     if (data.settings.bargeIn === undefined) { data.settings.bargeIn = false; }
+    if (!data.settings.llmProvider) { data.settings.llmProvider = 'gemini'; }
     if (!data.coachStats) {
       data.coachStats = {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0};
     }
@@ -1028,6 +1035,173 @@ var LIVE_COACH = (function () {
 })();
 
 /* ══════════════════════════════════════════════════════════════════════
+   LLM_PROVIDERS & llmAsk — Multi-provider free LLM architecture (M10)
+   Providers: Gemini 2.0 Flash | Groq Llama 3.1 8B | OpenRouter Llama 3.1 8B
+   Unified request-shaping, response normalization, zero-dollar fallback floor
+   ════════════════════════════════════════════════════════════════════*/
+var LLM_PROVIDERS = {
+  gemini: {
+    id: 'gemini',
+    name: 'Gemini 2.0 Flash',
+    urlFor: function (key) {
+      return 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key);
+    },
+    buildRequest: function (key, systemPrompt, messages) {
+      var contents = [];
+      for (var i = 0; i < messages.length; i++) {
+        var m = messages[i];
+        var role = (m.role === 'user') ? 'user' : 'model';
+        var text = m.content || (m.parts && m.parts[0] && m.parts[0].text) || (m.text || '');
+        contents.push({
+          role: role,
+          parts: [{ text: text }]
+        });
+      }
+      var body = {
+        system_instruction: { parts: [{ text: systemPrompt || '' }] },
+        contents: contents,
+        generationConfig: { maxOutputTokens: 250, temperature: 0.7 }
+      };
+      return {
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body
+      };
+    },
+    parseResponse: function (data) {
+      if (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        return data.candidates[0].content.parts[0].text || '';
+      }
+      return '';
+    }
+  },
+
+  groq: {
+    id: 'groq',
+    name: 'Groq (Llama 3.1 8B Instant)',
+    buildRequest: function (key, systemPrompt, messages) {
+      var chatMessages = [];
+      if (systemPrompt) {
+        chatMessages.push({ role: 'system', content: systemPrompt });
+      }
+      for (var i = 0; i < messages.length; i++) {
+        var m = messages[i];
+        var role = (m.role === 'user') ? 'user' : 'assistant';
+        var text = m.content || (m.parts && m.parts[0] && m.parts[0].text) || (m.text || '');
+        chatMessages.push({ role: role, content: text });
+      }
+      var body = {
+        model: 'llama-3.1-8b-instant',
+        messages: chatMessages,
+        max_tokens: 250,
+        temperature: 0.7
+      };
+      return {
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key
+        },
+        body: body
+      };
+    },
+    parseResponse: function (data) {
+      if (data && data.choices && data.choices[0] && data.choices[0].message) {
+        return data.choices[0].message.content || '';
+      }
+      return '';
+    }
+  },
+
+  openrouter: {
+    id: 'openrouter',
+    name: 'OpenRouter (Llama 3.1 8B Free)',
+    buildRequest: function (key, systemPrompt, messages) {
+      var chatMessages = [];
+      if (systemPrompt) {
+        chatMessages.push({ role: 'system', content: systemPrompt });
+      }
+      for (var i = 0; i < messages.length; i++) {
+        var m = messages[i];
+        var role = (m.role === 'user') ? 'user' : 'assistant';
+        var text = m.content || (m.parts && m.parts[0] && m.parts[0].text) || (m.text || '');
+        chatMessages.push({ role: role, content: text });
+      }
+      var body = {
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        messages: chatMessages,
+        max_tokens: 250,
+        temperature: 0.7
+      };
+      return {
+        url: 'https://openrouter.ai/api/v1/chat/completions',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + key,
+          'HTTP-Referer': 'https://engspell.ai',
+          'X-Title': 'EngSpell'
+        },
+        body: body
+      };
+    },
+    parseResponse: function (data) {
+      if (data && data.choices && data.choices[0] && data.choices[0].message) {
+        return data.choices[0].message.content || '';
+      }
+      return '';
+    }
+  }
+};
+
+function llmAsk(opts) {
+  opts = opts || {};
+  var settings = (typeof STORE !== 'undefined' && STORE.get) ? (STORE.get('settings') || {}) : {};
+  var provider = (opts.provider || settings.llmProvider || 'gemini').toLowerCase();
+  var key = (opts.key !== undefined) ? opts.key : (settings.geminiKey || '');
+  var systemPrompt = opts.systemPrompt || '';
+  var rawMessages = opts.messages || [];
+
+  var provDef = LLM_PROVIDERS[provider] || LLM_PROVIDERS.gemini;
+  var req = provDef.buildRequest(key ? key.trim() : '', systemPrompt, rawMessages);
+
+  if (typeof fetch !== 'function') {
+    var noFetchErr = new Error('fetch API not available in this environment');
+    if (typeof opts.onError === 'function') { opts.onError(noFetchErr); }
+    if (typeof Promise !== 'undefined') { return Promise.reject(noFetchErr); }
+    return null;
+  }
+
+  return fetch(req.url, {
+    method: req.method || 'POST',
+    headers: req.headers,
+    body: JSON.stringify(req.body)
+  }).then(function (res) {
+    if (!res.ok) {
+      throw new Error(provider + ' error: HTTP ' + res.status);
+    }
+    return res.json();
+  }).then(function (data) {
+    var text = provDef.parseResponse(data);
+    if (!text || typeof text !== 'string') {
+      throw new Error(provider + ' returned empty or invalid response');
+    }
+    text = text.trim();
+    if (typeof opts.onDone === 'function') {
+      opts.onDone(text);
+    }
+    return text;
+  }).catch(function (err) {
+    if (typeof opts.onError === 'function') {
+      opts.onError(err);
+    }
+    throw err;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -1449,6 +1623,8 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.updateFlowChip = updateFlowChip;
   window.FLOW = FLOW;
   window.LIVE_COACH = LIVE_COACH;
+  window.LLM_PROVIDERS = LLM_PROVIDERS;
+  window.llmAsk = llmAsk;
   window.isHonest = STORE.isHonest;
   window.computeHonestScore = STORE.computeHonestScore;
 
@@ -1457,6 +1633,8 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     global.updateReviewBadge = updateReviewBadge;
     global.FLOW = FLOW;
     global.LIVE_COACH = LIVE_COACH;
+    global.LLM_PROVIDERS = LLM_PROVIDERS;
+    global.llmAsk = llmAsk;
     global.isHonest = STORE.isHonest;
     global.computeHonestScore = STORE.computeHonestScore;
   }

@@ -361,8 +361,8 @@ VIEWS.coach = {
       '</div>' +
       '</div>' +
       '<p class="sub">' + (hasKey
-        ? '✅ Gemini connected — real AI active.'
-        : '⚠️ No key — rule engine only. Add your free Gemini key in <a href="#/settings">Settings</a>.'
+        ? '✅ ' + (settings.llmProvider || 'gemini').toUpperCase() + ' connected — real AI active. <span class="coach-provider-chip" style="margin-left:6px;padding:2px 8px;border-radius:10px;background:rgba(124,92,255,0.2);color:var(--acc2);font-size:0.75rem;font-weight:700;">' + (settings.llmProvider || 'gemini') + '</span>'
+        : '⚠️ No key — rule engine only. Add your free Gemini / Groq / OpenRouter key in <a href="#/settings">Settings</a>.'
       ) + '</p>' +
       docBanner +
       '<div class="coach-modes">' +
@@ -707,23 +707,19 @@ function _novaBuildSystemPrompt(self) {
 }
 
 function _novaGemini(userText, self, el, key) {
+  var settings = STORE.get('settings') || {};
+  var provider = settings.llmProvider || 'gemini';
   var hist = self._getHistory().slice(-12); /* last 12 turns for context */
   var messages = [];
   for (var i = 0; i < hist.length - 1; i++) { /* exclude the just-pushed user message */
     messages.push({
       role: hist[i].role === 'user' ? 'user' : 'model',
-      parts: [{text: hist[i].text}]
+      content: hist[i].text
     });
   }
+  messages.push({ role: 'user', content: userText });
 
   var systemPrompt = _novaBuildSystemPrompt(self);
-
-  var body = {
-    system_instruction: {parts: [{text: systemPrompt}]},
-    contents: messages.concat([{role: 'user', parts: [{text: userText}]}])
-  };
-
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key;
 
   /* Show typing indicator */
   var h = self._getHistory();
@@ -732,71 +728,52 @@ function _novaGemini(userText, self, el, key) {
   /* Remove the typing indicator entry (it will be replaced by real reply) */
   h.pop();
 
-  if (typeof fetch === 'function') {
-    fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body)
-    }).then(function (res) {
-      if (!res.ok) { throw new Error('HTTP ' + res.status); }
-      return res.json();
-    }).then(function (resp) {
-      var reply = '';
-      try { reply = resp.candidates[0].content.parts[0].text; }
-      catch (e) { reply = 'Nova had trouble reading the response. ' + _novaRules(userText); }
-      h.push({role: 'nova', text: _esc(reply)});
-      self._saveHistory();
-      TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
-      if (typeof FLOW !== 'undefined' && FLOW.recordNovaTurn) {
-        FLOW.recordNovaTurn();
-      }
-      STORE.save();
-      SPEECH.speak(reply);
-      self.render(el);
-    }).catch(function () {
-      var reply = _novaRules(userText) + ' (offline — no connection)';
-      h.push({role: 'nova', text: _esc(reply)});
-      self._saveHistory();
-      self.render(el);
-    });
-    return;
-  }
+  self._inFlightReply = true;
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', url, true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.onload = function () {
-    var reply = '';
-    try {
-      var resp = JSON.parse(xhr.responseText);
-      reply = resp.candidates[0].content.parts[0].text;
-    } catch (e) {
-      reply = 'Nova had trouble connecting. ' + _novaRules(userText);
-    }
+  llmAsk({
+    provider: provider,
+    key: key,
+    systemPrompt: systemPrompt,
+    messages: messages
+  }).then(function (reply) {
+    self._inFlightReply = false;
     h.push({role: 'nova', text: _esc(reply)});
     self._saveHistory();
-    TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
+    TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/' + provider});
     if (typeof FLOW !== 'undefined' && FLOW.recordNovaTurn) {
       FLOW.recordNovaTurn();
     }
     STORE.save();
     SPEECH.speak(reply);
     self.render(el);
-  };
-  xhr.onerror = function () {
-    var reply = _novaRules(userText) + ' (offline fallback)';
+  }).catch(function (err) {
+    self._inFlightReply = false;
+    if (typeof UI !== 'undefined' && UI.toast) {
+      UI.toast('⚠️ ' + provider + ' unavailable. Switching to offline engine.', 'warning');
+    }
+    if (typeof NOVA !== 'undefined' && typeof NOVA.fail === 'function') {
+      NOVA.fail(err);
+    } else if (typeof VIEWS.coach.fail === 'function') {
+      VIEWS.coach.fail(err);
+    }
+    var reply = _novaRules(userText) + ' (offline — no connection)';
     h.push({role: 'nova', text: _esc(reply)});
     self._saveHistory();
     self.render(el);
-  };
-  xhr.send(JSON.stringify(body));
+  });
 }
 
 VIEWS.coach.respond = function (userText, el) {
   _novaRespond(userText, VIEWS.coach, el || { innerHTML: '', scrollTop: 0 });
 };
+VIEWS.coach.fail = function (err) {
+  this._lastError = err;
+};
 VIEWS.coach._novaGemini = _novaGemini;
 VIEWS.coach._novaRules = _novaRules;
+var NOVA = VIEWS.coach;
+if (typeof window !== 'undefined') { window.NOVA = VIEWS.coach; }
+if (typeof global !== 'undefined') { global.NOVA = VIEWS.coach; }
 
 /* ── LEVEL TEST (QUIZ) ─────────────────────────────────────────────── */
 VIEWS.quiz = {
@@ -989,9 +966,23 @@ VIEWS.settings = {
       '</div>' +
 
       '<div class="setting-group">' +
-      '<label>Gemini API Key <small>(<a href="https://aistudio.google.com" target="_blank" rel="noopener">Get free key ↗</a>)</small></label>' +
-      '<input type="password" id="s-gemini" value="' + _esc(settings.geminiKey || '') + '" placeholder="Paste your Gemini API key here..." />' +
-      '<p class="setting-hint">Your key never leaves your device. It\'s only used for Nova\'s AI chat (INV-8).</p>' +
+      '<label>AI Provider</label>' +
+      '<select id="s-provider">' +
+      '<option value="gemini"' + (settings.llmProvider === 'gemini' || !settings.llmProvider ? ' selected' : '') + '>Gemini (Google 2.0 Flash — Free)</option>' +
+      '<option value="groq"' + (settings.llmProvider === 'groq' ? ' selected' : '') + '>Groq (Llama 3.1 8B Instant — Ultra Fast)</option>' +
+      '<option value="openrouter"' + (settings.llmProvider === 'openrouter' ? ' selected' : '') + '>OpenRouter (Llama 3.1 8B Free)</option>' +
+      '</select>' +
+      '<p class="setting-hint">Select your free AI backend (₹0 free tier on all three).</p>' +
+      '</div>' +
+
+      '<div class="setting-group">' +
+      '<label>API Key <small>(<a href="https://aistudio.google.com" target="_blank" rel="noopener">Get Gemini key ↗</a>)</small></label>' +
+      '<input type="password" id="s-gemini" value="' + _esc(settings.geminiKey || '') + '" placeholder="Paste your API key here..." />' +
+      '<p class="setting-hint">One key field for whichever provider you choose. Stays in your local browser storage (INV-8).</p>' +
+      '<div style="margin-top:8px;display:flex;align-items:center;gap:10px;">' +
+      '<button class="btn-secondary btn-sm" id="s-test-llm">🧪 Test & activate</button>' +
+      '<span id="s-test-status" style="font-size:0.85rem;"></span>' +
+      '</div>' +
       '</div>' +
 
       '<div class="setting-group">' +
@@ -1059,6 +1050,48 @@ VIEWS.settings = {
       });
     }
 
+    var provEl = document.getElementById('s-provider');
+    if (provEl) {
+      provEl.addEventListener('change', function () {
+        var s = STORE.get('settings') || {};
+        s.llmProvider = this.value;
+        STORE.set('settings', s);
+        UI.toast('AI provider set to ' + this.value, 'info');
+      });
+    }
+
+    var testLlmBtn = document.getElementById('s-test-llm');
+    if (testLlmBtn) {
+      testLlmBtn.addEventListener('click', function () {
+        var selProv = document.getElementById('s-provider') ? document.getElementById('s-provider').value : 'gemini';
+        var keyInput = document.getElementById('s-gemini');
+        var k = keyInput ? keyInput.value.trim() : '';
+        var statusEl = document.getElementById('s-test-status');
+        if (!k) {
+          UI.toast('Please enter an API key first.', 'warning');
+          return;
+        }
+        if (statusEl) { statusEl.textContent = 'Testing connection...'; }
+        llmAsk({
+          provider: selProv,
+          key: k,
+          systemPrompt: 'You are an automated ping test. Reply with OK.',
+          messages: [{ role: 'user', content: 'Ping' }]
+        }).then(function (reply) {
+          if (statusEl) { statusEl.innerHTML = '<strong style="color:var(--ok);">✅ Verified & Active!</strong>'; }
+          UI.toast('✅ ' + selProv.toUpperCase() + ' verified & active!', 'success');
+          var s = STORE.get('settings') || {};
+          s.geminiKey = k;
+          s.llmProvider = selProv;
+          STORE.set('settings', s);
+          STORE.save();
+        }).catch(function (err) {
+          if (statusEl) { statusEl.innerHTML = '<strong style="color:var(--bad);">❌ Failed</strong>'; }
+          UI.toast('⚠️ Connection failed: ' + (err.message || 'Check key'), 'error');
+        });
+      });
+    }
+
     document.getElementById('s-save').addEventListener('click', function () {
       var voice = document.getElementById('s-voice').value;
       var rate = parseFloat(document.getElementById('s-rate').value);
@@ -1067,6 +1100,7 @@ VIEWS.settings = {
       var honestMode = document.getElementById('s-honest') ? document.getElementById('s-honest').checked : false;
       var liveCorrect = document.getElementById('s-live-correct') ? document.getElementById('s-live-correct').checked : false;
       var bargeIn = document.getElementById('s-barge-in') ? document.getElementById('s-barge-in').checked : false;
+      var llmProvider = document.getElementById('s-provider') ? document.getElementById('s-provider').value : 'gemini';
       var curSettings = STORE.get('settings') || {};
       curSettings.voice = voice;
       curSettings.rate = rate;
@@ -1075,6 +1109,7 @@ VIEWS.settings = {
       curSettings.honestMode = honestMode;
       curSettings.liveCorrect = liveCorrect;
       curSettings.bargeIn = bargeIn;
+      curSettings.llmProvider = llmProvider;
       STORE.set('settings', curSettings);
       SPEECH.setRate(rate);
       if (voice) { SPEECH.setVoiceByName(voice); }
