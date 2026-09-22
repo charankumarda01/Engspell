@@ -2442,6 +2442,95 @@ tryv('M17: addAssessment and fixer session completion record to weeklyHistory', 
   return okAssess && okFixer;
 });
 
+/* ── M18 GROWTH & LANDING (GROWTH-01) ───────────────────────────────── */
+console.log('\n🚀 M18 Growth & Landing (GROWTH-01)');
+
+tryv('M18: landing contains zero external http(s) references', function () {
+  var landingPath = _path.join(__dirname, 'landing', 'index.html');
+  if (!_fs.existsSync(landingPath)) { return false; }
+  var html = _fs.readFileSync(landingPath, 'utf8');
+
+  // Strip canonical, meta tags, and JSON-LD schema blocks which are allowed to contain schema.org and canonical URLs
+  var stripped = html
+    .replace(/<link[^>]*rel=["']canonical["'][^>]*>/gi, '')
+    .replace(/<meta[^>]*>/gi, '')
+    .replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '');
+
+  // Scan remaining HTML for external URLs in src, href, url(), fetch, XHR
+  var hasExternalSrc = /src=["'](https?:|\/\/)/i.test(stripped);
+  var hasExternalHref = /href=["'](https?:|\/\/)/i.test(stripped);
+  var hasExternalCssUrl = /url\(['"]?(https?:|\/\/)/i.test(stripped);
+  var hasExternalFetch = /fetch\(['"]?(https?:|\/\/)/i.test(stripped);
+  var hasExternalXHR = /XMLHttpRequest/i.test(stripped);
+
+  // Also assert screenshots use local relative paths under ../docs/ui-m8/
+  var hasScreenshotImg = /src=["']\.\.\/docs\/ui-m8\/01_desktop_home\.png["']/.test(html);
+
+  return !hasExternalSrc && !hasExternalHref && !hasExternalCssUrl &&
+         !hasExternalFetch && !hasExternalXHR && hasScreenshotImg;
+});
+
+tryv('M18: meta + title + JSON-LD present and JSON parses', function () {
+  var landingPath = _path.join(__dirname, 'landing', 'index.html');
+  var html = _fs.readFileSync(landingPath, 'utf8');
+
+  var hasTitle = /<title>[^<]+<\/title>/i.test(html);
+  var hasMetaDesc = /<meta[^>]*name=["']description["'][^>]*content=["'][^"']+["']/i.test(html);
+  var hasCanonical = /<link[^>]*rel=["']canonical["']/i.test(html);
+  var hasOgTitle = /<meta[^>]*property=["']og:title["']/i.test(html);
+  var hasOgImage = /<meta[^>]*property=["']og:image["']/i.test(html);
+  var hasTwitterCard = /<meta[^>]*name=["']twitter:card["']/i.test(html);
+
+  // Extract JSON-LD
+  var match = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i.exec(html);
+  if (!match) { return false; }
+  var jsonLd = JSON.parse(match[1]);
+
+  var okJsonLd = (jsonLd['@type'] === 'SoftwareApplication' &&
+                  jsonLd.name === 'EngSpell' &&
+                  jsonLd.offers && jsonLd.offers.price === '0');
+
+  return hasTitle && hasMetaDesc && hasCanonical && hasOgTitle && hasOgImage && hasTwitterCard && okJsonLd;
+});
+
+tryv('M18: robots+sitemap exist with expected lines', function () {
+  var robotsPath = _path.join(__dirname, 'robots.txt');
+  var sitemapPath = _path.join(__dirname, 'sitemap.xml');
+
+  if (!_fs.existsSync(robotsPath) || !_fs.existsSync(sitemapPath)) { return false; }
+
+  var robots = _fs.readFileSync(robotsPath, 'utf8');
+  var sitemap = _fs.readFileSync(sitemapPath, 'utf8');
+
+  var okRobots = robots.indexOf('User-agent: *') !== -1 &&
+                 robots.indexOf('Allow: /') !== -1 &&
+                 robots.indexOf('Sitemap: https://charankumarda01.github.io/Engspell/sitemap.xml') !== -1;
+
+  var okSitemap = sitemap.indexOf('<urlset') !== -1 &&
+                  sitemap.indexOf('https://charankumarda01.github.io/Engspell/') !== -1 &&
+                  sitemap.indexOf('https://charankumarda01.github.io/Engspell/landing/') !== -1;
+
+  return okRobots && okSitemap;
+});
+
+tryv('M18: README has badge and demo anchors', function () {
+  var readmePath = _path.join(__dirname, 'README.md');
+  var readme = _fs.readFileSync(readmePath, 'utf8');
+
+  var hasBadge = readme.indexOf('workflows/ci.yml/badge.svg') !== -1;
+  var hasDemoSection = readme.indexOf('▶ See it in 30 seconds') !== -1;
+  var hasDemoScriptLink = readme.indexOf('docs/demo-30s.md') !== -1;
+
+  // Verify docs/demo-30s.md exists and has Win+G instructions
+  var demoDocPath = _path.join(__dirname, 'docs', 'demo-30s.md');
+  var demoDocExists = _fs.existsSync(demoDocPath);
+  var demoDocContent = demoDocExists ? _fs.readFileSync(demoDocPath, 'utf8') : '';
+  var hasWinG = demoDocContent.indexOf('Win + G') !== -1 || demoDocContent.indexOf('Xbox Game Bar') !== -1;
+  var hasStoryboard = demoDocContent.indexOf('Act 1') !== -1 && demoDocContent.indexOf('Act 2') !== -1 && demoDocContent.indexOf('Act 3') !== -1;
+
+  return hasBadge && hasDemoSection && hasDemoScriptLink && demoDocExists && hasWinG && hasStoryboard;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

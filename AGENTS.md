@@ -105,6 +105,7 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **M14**: Engineering to 10 (ENG-10), GitHub Actions CI, SW cache autobump on build, comprehensive A11Y sweep — **SHIPPED** (2026-09-22)
 - **M15**: Content Pipeline (CNT-GEN), deterministic generator (tools/genpack.js), drift gate, +24 lessons / +12 scenarios / +12 passages — **SHIPPED** (2026-09-22)
 - **M17**: Weekly Progress (WEEKLY-01), "So What" progress rollups, ISO-week buckets, CEFR story, This Week card & home strip — **SHIPPED** (2026-09-22)
+- **M18**: Growth & Landing (GROWTH-01), standalone landing page, SEO, JSON-LD, robots.txt, sitemap.xml, 30s demo storyboard — **SHIPPED** (2026-09-22)
 
 ---
 

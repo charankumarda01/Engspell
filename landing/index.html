@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EngSpell — The ₹0 Forever English Coach That Stops You Mid-Sentence</title>
+  <meta name="description" content="The ₹0 forever English coach that stops you mid-sentence. Offline-first speech recognition, live pronunciation matching, brutal honesty scoring, and structured daily fluency.">
+  <link rel="canonical" href="https://charankumarda01.github.io/Engspell/landing/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://charankumarda01.github.io/Engspell/landing/">
+  <meta property="og:title" content="EngSpell — The ₹0 Forever English Coach That Stops You Mid-Sentence">
+  <meta property="og:description" content="Offline-first English speaking coach with real-time speech recognition, live word matching, and brutal honesty scoring. Zero subscriptions, ₹0 forever.">
+  <meta property="og:image" content="https://charankumarda01.github.io/Engspell/docs/ui-m8/01_desktop_home.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://charankumarda01.github.io/Engspell/landing/">
+  <meta name="twitter:title" content="EngSpell — The ₹0 Forever English Coach That Stops You Mid-Sentence">
+  <meta name="twitter:description" content="Offline-first English speaking coach with real-time speech recognition, live word matching, and brutal honesty scoring. Zero subscriptions, ₹0 forever.">
+  <meta name="twitter:image" content="https://charankumarda01.github.io/Engspell/docs/ui-m8/01_desktop_home.png">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "EngSpell",
+    "operatingSystem": "Web, Windows, Android, iOS, macOS, Linux",
+    "applicationCategory": "EducationalApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "INR"
+    },
+    "description": "The ₹0 forever English coach that stops you mid-sentence with real-time speech recognition, instant pronunciation feedback, and brutal honesty.",
+    "url": "https://charankumarda01.github.io/Engspell/"
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg0: #070b16;
+      --bg1: #0a0f1e;
+      --bg2: #101830;
+      --bg3: #16203c;
+      --line: rgba(148, 163, 216, 0.14);
+      --txt: #e8ecf8;
+      --mut: #9aa6c9;
+      --acc: #7c5cff;
+      --acc2: #5eead4;
+      --gold: #fbbf24;
+      --ok: #34d399;
+      --warn: #f59e0b;
+      --bad: #f87171;
+      --grad: linear-gradient(135deg, #7c5cff, #ec4899);
+      --r-sm: 10px;
+      --r-md: 14px;
+      --r-lg: 20px;
+      --sh1: 0 1px 2px rgba(0, 0, 0, 0.35);
+      --sh2: 0 12px 32px rgba(3, 7, 20, 0.45);
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg0);
+      color: var(--txt);
+      font-family: var(--font);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: var(--acc2);
+      text-decoration: none;
+      transition: opacity 0.15s ease;
+    }
+
+    a:hover {
+      opacity: 0.85;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 11, 22, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      padding: 16px 0;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span.logo-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--r-sm);
+      background: var(--grad);
+      font-size: 1.1rem;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-links a {
+      font-size: 0.9rem;
+      color: var(--mut);
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      color: var(--txt);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: var(--r-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--grad);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(124, 92, 255, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(124, 92, 255, 0.45);
+      opacity: 1;
+    }
+
+    .btn-ghost {
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      color: var(--txt);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg3);
+      border-color: rgba(148, 163, 216, 0.25);
+      opacity: 1;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(124, 92, 255, 0.12);
+      border: 1px solid rgba(124, 92, 255, 0.3);
+      color: var(--acc2);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      color: #ffffff;
+    }
+
+    .hero h1 span.gradient-text {
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.lead {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: var(--mut);
+      max-width: 740px;
+      margin: 0 auto 36px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-guarantee {
+      margin-top: 18px;
+      font-size: 0.85rem;
+      color: var(--mut);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-guarantee span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── SCREENSHOT STRIP ── */
+    .section-screenshots {
+      padding: 40px 0 80px;
+    }
+
+    .section-head {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .section-head h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .section-head p {
+      font-size: 1rem;
+      color: var(--mut);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .screenshot-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .screenshot-card {
+      background: var(--bg1);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      overflow: hidden;
+      box-shadow: var(--sh2);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .screenshot-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(124, 92, 255, 0.4);
+    }
+
+    .screenshot-img-wrapper {
+      width: 100%;
+      height: 220px;
+      background: var(--bg2);
+      overflow: hidden;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .screenshot-img-wrapper img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      display: block;
+    }
+
+    .screenshot-body {
+      padding: 16px 20px;
+    }
+
+    .screenshot-body h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--txt);
+      margin-bottom: 4px;
+    }
+
+    .screenshot-body p {
+      font-size: 0.85rem;
+      color: var(--mut);
+    }
+
+    /* ── 3-STEP HOW IT WORKS ── */
+    .section-how {
+      padding: 80px 0;
+      background: var(--bg1);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+    }
+
+    .step-card {
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 32px 24px;
+      position: relative;
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--r-sm);
+      background: rgba(124, 92, 255, 0.2);
+      color: var(--acc2);
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      border: 1px solid rgba(124, 92, 255, 0.3);
+    }
+
+    .step-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .step-card p {
+      font-size: 0.95rem;
+      color: var(--mut);
+      line-height: 1.6;
+    }
+
+    /* ── HONESTY & PRIVACY ── */
+    .section-values {
+      padding: 80px 0;
+    }
+
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+    }
+
+    .value-card {
+      background: var(--bg1);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 36px 30px;
+    }
+
+    .value-icon {
+      font-size: 2.2rem;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+
+    .value-card h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+
+    .value-card p {
+      font-size: 0.95rem;
+      color: var(--mut);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .value-bullets {
+      list-style: none;
+    }
+
+    .value-bullets li {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: var(--txt);
+    }
+
+    .value-bullets li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--ok);
+      font-weight: 800;
+    }
+
+    /* ── INSTALL PWA ── */
+    .section-install {
+      padding: 70px 0;
+      background: var(--bg1);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .install-box {
+      background: var(--bg2);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 40px 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 28px;
+    }
+
+    .install-step-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .install-step-item .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--acc);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .install-step-item h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .install-step-item p {
+      font-size: 0.88rem;
+      color: var(--mut);
+    }
+
+    /* ── FAQ ── */
+    .section-faq {
+      padding: 80px 0;
+    }
+
+    .faq-list {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .faq-item {
+      background: var(--bg1);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 22px 26px;
+    }
+
+    .faq-item h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .faq-item p {
+      font-size: 0.92rem;
+      color: var(--mut);
+      line-height: 1.6;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg0);
+      border-top: 1px solid var(--line);
+      padding: 48px 0 32px;
+      text-align: center;
+      color: var(--mut);
+      font-size: 0.88rem;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--mut);
+    }
+
+    .footer-links a:hover {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="container nav-inner">
+      <a href="../index.html" class="brand">
+        <span class="logo-icon">🗣️</span>
+        <span>EngSpell</span>
+      </a>
+      <div class="nav-links">
+        <a href="#how">How It Works</a>
+        <a href="#screenshots">Tour</a>
+        <a href="#faq">FAQ</a>
+        <a href="../index.html" class="btn btn-primary">Open App →</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        ⚡ 100% Offline-First · Zero Subscriptions · Built for Indian Learners
+      </div>
+      <h1>
+        The ₹0 forever English coach that<br>
+        <span class="gradient-text">stops you mid-sentence.</span>
+      </h1>
+      <p class="lead">
+        Real-time speech recognition catches grammar slips and hesitation while you speak.
+        No polite sugarcoating, no monthly subscriptions — just honest diagnostics, structured daily rituals, and rapid spoken fluency.
+      </p>
+      <div class="hero-actions">
+        <a href="../index.html" class="btn btn-primary" style="padding:14px 28px;font-size:1.05rem;">
+          🚀 Start Speaking Now — 100% Free
+        </a>
+        <a href="#screenshots" class="btn btn-ghost" style="padding:14px 24px;">
+          ▶ See It in Action
+        </a>
+      </div>
+      <div class="hero-guarantee">
+        <span>🛡️ Zero ads, zero tracking</span>
+        <span>⚡ Works without internet</span>
+        <span>🎤 Browser Web Speech API</span>
+        <span>₹0 Forever guarantee</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREENSHOT TOUR -->
+  <section class="section-screenshots" id="screenshots">
+    <div class="container">
+      <div class="section-head">
+        <h2>Built Like a High-Performance Studio</h2>
+        <p>A structured, distraction-free environment engineered to take you from foundational phonics to fluent workplace presentation.</p>
+      </div>
+
+      <div class="screenshot-gallery">
+        <div class="screenshot-card">
+          <div class="screenshot-img-wrapper">
+            <img src="../docs/ui-m8/01_desktop_home.png" alt="EngSpell Desktop Home View with Today's Flow">
+          </div>
+          <div class="screenshot-body">
+            <h3>Moat-First Home &amp; Flow</h3>
+            <p>5-step daily routine: Diagnose, Learn, Drill, Apply, and Prove to enforce progress.</p>
+          </div>
+        </div>
+
+        <div class="screenshot-card">
+          <div class="screenshot-img-wrapper">
+            <img src="../docs/ui-m8/02_mobile_home.png" alt="EngSpell Mobile Home View">
+          </div>
+          <div class="screenshot-body">
+            <h3>Mobile PWA Experience</h3>
+            <p>Runs offline on Android &amp; iOS with tactile gesture navigation and quick-action bar.</p>
+          </div>
+        </div>
+
+        <div class="screenshot-card">
+          <div class="screenshot-img-wrapper">
+            <img src="../docs/ui-m8/03_mobile_sheet.png" alt="EngSpell Mobile Navigation Sheet">
+          </div>
+          <div class="screenshot-body">
+            <h3>Complete Skill Suite</h3>
+            <p>Pronunciation Lab, Grammar Atlas, Document Studio, Reading Corner, and Sentence Doctor.</p>
+          </div>
+        </div>
+
+        <div class="screenshot-card">
+          <div class="screenshot-img-wrapper">
+            <img src="../docs/ui-m8/04_nav_sidebar_scrolled.png" alt="EngSpell Sidebar Navigation">
+          </div>
+          <div class="screenshot-body">
+            <h3>Deep Pedagogical Structure</h3>
+            <p>Structured into 5 clear tiers: Daily, Skills, Reading &amp; Docs, Assessment, and AI Coach.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3-STEP HOW IT WORKS -->
+  <section class="section-how" id="how">
+    <div class="container">
+      <div class="section-head">
+        <h2>How EngSpell Works in 3 Steps</h2>
+        <p>A closed-loop learning engine that turns spoken practice into permanent muscle memory.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-badge">1</div>
+          <h3>Diagnose Weaknesses</h3>
+          <p>Complete a 60-second placement quiz or re-evaluate your weakest skill. The 8-skill Weakness Radar instantly pinpoints where your pronunciation or tense formation slips.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge">2</div>
+          <h3>Speak Aloud with Live Interrupts</h3>
+          <p>Read target sentences aloud. EngSpell's offline speech recognition matches word-by-word in real time and halts you the moment you hesitate or mispronounce a vowel.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge">3</div>
+          <h3>Prove &amp; Track Weekly Trends</h3>
+          <p>Review progress with ISO-week rollups. Watch words-per-minute (WPM) climb, filler words drop, and CEFR levels advance without sugarcoated praise.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HONESTY & PRIVACY -->
+  <section class="section-values">
+    <div class="container">
+      <div class="section-head">
+        <h2>Unapologetically Honest. Strictly Private.</h2>
+        <p>Most language apps are designed to keep you happy. EngSpell is designed to make you fluent.</p>
+      </div>
+
+      <div class="values-grid">
+        <div class="value-card">
+          <div class="value-icon">🗡️</div>
+          <h3>Brutal Honesty Mode</h3>
+          <p>Other apps say "Great job!" even when your sentence is riddled with subject-verb errors. EngSpell gives you the uncompromising truth:</p>
+          <ul class="value-bullets">
+            <li>Strict /10 scoring on every single spoken drill and sentence</li>
+            <li>Line-by-line breakdown of errors with specific fixes (▸)</li>
+            <li>Zero sugarcoated praise below an 8/10 performance</li>
+            <li>Exact corrected sentence templates for immediate mimicry</li>
+          </ul>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">🔒</div>
+          <h3>Offline-First &amp; Zero Subscription</h3>
+          <p>Your voice, data, and learning history belong to you. We believe education should be free and accessible to everyone:</p>
+          <ul class="value-bullets">
+            <li>Zero subscription fees, zero paywalls, ₹0 forever</li>
+            <li>Speech recognition and TTS run locally via browser APIs</li>
+            <li>All 68 lessons, 26 scenarios, and 34 passages work 100% offline</li>
+            <li>Bring your own optional free Gemini API key for Nova cloud intelligence</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL STEPS -->
+  <section class="section-install">
+    <div class="container">
+      <div class="section-head">
+        <h2>Install on Any Device in 10 Seconds</h2>
+        <p>EngSpell is a Progressive Web App (PWA). It consumes less than 1 MB of storage and installs directly from your browser without app store bloat.</p>
+      </div>
+
+      <div class="install-box">
+        <div class="install-step-item">
+          <div class="num">1</div>
+          <h4>Open the App</h4>
+          <p>Navigate to <a href="../index.html">EngSpell in your browser</a> on desktop, Android, or iPhone.</p>
+        </div>
+
+        <div class="install-step-item">
+          <div class="num">2</div>
+          <h4>Tap 'Install' or 'Add to Home'</h4>
+          <p>On Chrome/Edge: click the install icon in the address bar. On Safari: tap Share → Add to Home Screen.</p>
+        </div>
+
+        <div class="install-step-item">
+          <div class="num">3</div>
+          <h4>Practise Anywhere Offline</h4>
+          <p>Launch EngSpell from your home screen or desktop anytime — even on airplane mode.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section-faq" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Frequently Asked Questions</h2>
+        <p>Everything you need to know about EngSpell.</p>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>Is EngSpell really 100% free forever?</h3>
+          <p>Yes. There are no subscriptions, no locked premium tiers, no credit cards, and no ads. All core curriculum, exercises, phonetic audio, and local AI engines are open and free forever.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Does EngSpell require an internet connection?</h3>
+          <p>No. EngSpell is designed offline-first. All lessons, flashcards, word banks, and browser-native speech recognition run entirely on your device without pinging an external server.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>How does the live speech interrupt engine work?</h3>
+          <p>Using the browser's native Web Speech API, EngSpell performs client-side word-by-word alignment as you speak. If you hesitate for too long or repeat filler sounds, the coach gently pauses you so you can restart with clean cadence.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>What is Nova AI Coach and do I need an API key?</h3>
+          <p>Nova is our conversational speaking partner. It features a built-in offline rule engine that requires zero setup. For deeper generative conversation, you can optionally paste your free Google Gemini API key in Settings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="../index.html">Launch EngSpell</a>
+        <a href="#how">How It Works</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#faq">FAQ</a>
+        <a href="../docs/demo-30s.md">30s Demo Script</a>
+      </div>
+      <p>&copy; 2026 EngSpell · Free, Offline-First English Mastery Studio · ₹0 Forever</p>
+    </div>
+  </footer>
+
+</body>
+</html>

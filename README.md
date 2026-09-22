@@ -14,6 +14,20 @@ high-level English. Especially designed for Indian English learners.
 
 ---
 
+## ▶ See it in 30 seconds
+
+Experience the ₹0 forever English coach that stops you mid-sentence:
+
+- **Storyboard & Script**: [docs/demo-30s.md](docs/demo-30s.md) — 3-act walkthrough (Placement win → Live Drill interrupt → Brutal verdict).
+- **Interactive Tour**: [Landing Page](https://charankumarda01.github.io/Engspell/landing/) — Standalone product tour with screenshot gallery and feature deep-dives.
+- **UI Walkthrough Gallery**:
+  - [Desktop Home with Today's Flow](docs/ui-m8/01_desktop_home.png)
+  - [Mobile PWA Experience](docs/ui-m8/02_mobile_home.png)
+  - [Complete Skill Suite Sheet](docs/ui-m8/03_mobile_sheet.png)
+  - [Deep 5-Tier Sidebar Navigation](docs/ui-m8/04_nav_sidebar_scrolled.png)
+
+---
+
 ## What It Is
 
 EngSpell is a single-page "English gym" that runs entirely in the browser:

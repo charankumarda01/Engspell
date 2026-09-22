@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://charankumarda01.github.io/Engspell/sitemap.xml
