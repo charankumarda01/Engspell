@@ -94,6 +94,7 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **M7**: Honest Mode, brutal honesty toggle, /10 scoring, offline uncapped fixes, resume review persona — **SHIPPED** (2026-09-22)
 - **M9**: Live Coach, word-level offline matching, interrupt decision engine, Android backoff loop, free talk live & barge-in — **SHIPPED** (2026-09-22)
 - **M10**: Free-LLM Provider Switch, multi-provider architecture (Gemini / Groq / OpenRouter), unified llmAsk, fallback floor — **SHIPPED** (2026-09-22)
+- **M11**: First-5-Minutes Onboarding (ONB-01), 4-screen flow, placement calibration, instant win live drill, cloud brain unlock — **SHIPPED** (2026-09-22)
 
 ---
 

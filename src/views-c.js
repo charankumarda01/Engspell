@@ -1135,121 +1135,395 @@ VIEWS.settings = {
   }
 };
 
-/* ── ONBOARDING ─────────────────────────────────────────────────────── */
+/* ── ONBOARDING (M11: First-5-Minutes 4-Screen Flow) ─────────────────────── */
 VIEWS.onboarding = {
-  _step: 0,
-  _answers: {},
+  _screen: 0, /* 0: Welcome, 1: Placement, 2: Instant Win Live Drill, 3: Power-up Cloud Brain */
+  _answers: { name: '', placementTag: 'A2', level: 'A2', geminiKey: '' },
+  _placementQIndex: 0,
+  _placementScore: 0,
+  _drillSentence: '',
+  _drillMatched: false,
+  _drillFirstWordCelebrated: false,
+  _lastPartial: '',
+
+  mapPlacementScore: function (score) {
+    if (score >= 5) { return 'B1'; }
+    if (score === 4) { return 'A2+'; }
+    if (score === 3) { return 'A2'; }
+    return 'A1';
+  },
+
+  getSentenceForLevel: function (level) {
+    if (level === 'B1') {
+      return 'Clear communication creates incredible new career opportunities.';
+    }
+    if (level === 'A2+') {
+      return 'Practice makes pronunciation clearer every single day.';
+    }
+    if (level === 'A2') {
+      return 'She speaks English with confidence and clarity.';
+    }
+    return 'I want to speak English clearly.';
+  },
+
+  skipTour: function (el) {
+    var u = STORE.get('user') || {};
+    u.name = (this._answers && this._answers.name) ? this._answers.name : (u.name || 'Learner');
+    u.level = (this._answers && this._answers.level) ? this._answers.level : (u.level || 'A2');
+    u.placementTag = (this._answers && this._answers.placementTag) ? this._answers.placementTag : (u.placementTag || u.level);
+    if (!u.goal) { u.goal = 'Daily conversation fluency'; }
+    STORE.set('user', u);
+    STORE.save();
+    if (typeof navigate === 'function') {
+      navigate('home');
+    }
+  },
+
+  goToScreen: function (n, el) {
+    this._screen = Math.max(0, Math.min(3, n));
+    if (el) { this.render(el); }
+  },
+
   render: function (el) {
     'use strict';
     var self = this;
-    var step = self._step;
+    var screen = self._screen || 0;
 
-    var steps = [
-      {
-        q: 'What\'s your name?',
-        type: 'text',
-        key: 'name',
-        placeholder: 'Enter your first name',
-        hint: 'We\'ll personalise your experience.'
-      },
-      {
-        q: 'What\'s your main goal?',
-        type: 'opts',
-        key: 'goal',
-        opts: ['Speak confidently at work', 'Ace job interviews', 'Study abroad preparation', 'Improve grammar & accent', 'Daily conversation fluency']
-      },
-      {
-        q: 'Which best describes your English?',
-        type: 'opts',
-        key: 'placement',
-        opts: [
-          'I know basic sentences (A2)',
-          'I can have simple conversations (B1)',
-          'I speak well but want to be more precise (B2)',
-          'I am nearly fluent (C1)',
-          'I am a complete beginner (A1)'
-        ]
-      },
-      {
-        q: 'How many minutes can you practise daily?',
-        type: 'opts',
-        key: 'dailyGoal',
-        opts: ['5 minutes', '10 minutes', '20 minutes', '30 minutes', '60 minutes']
-      },
-      {
-        q: 'Quick check — which sentence is correct?',
-        type: 'opts',
-        key: 'q1',
-        opts: ['She don\'t like tea.', 'She doesn\'t like tea.', 'She not like tea.'],
-        correct: 1
-      }
+    var placementPool = [
+      (typeof QUIZ_BANK !== 'undefined' && QUIZ_BANK[0]) || { q: 'Which sentence is correct?', opts: ["She don't like tea.", "She doesn't like tea.", "She not like tea."], ans: 1, skill: 'grammar' },
+      (typeof QUIZ_BANK !== 'undefined' && QUIZ_BANK[8]) || { q: 'What does "meticulous" mean?', opts: ['careless', 'showing great attention to detail', 'slow'], ans: 1, skill: 'vocab' },
+      (typeof QUIZ_BANK !== 'undefined' && QUIZ_BANK[15]) || { q: 'Which word has the stress on the first syllable?', opts: ['believe', 'attract', 'manage'], ans: 2, skill: 'pronunciation' },
+      (typeof QUIZ_BANK !== 'undefined' && QUIZ_BANK[19]) || { q: '"Under the weather" means:', opts: ['it is raining', 'feeling unwell', 'outdoors'], ans: 1, skill: 'vocab' },
+      (typeof QUIZ_BANK !== 'undefined' && QUIZ_BANK[21]) || { q: 'She hasn\'t seen them ___ Monday.', opts: ['for', 'since', 'during'], ans: 1, skill: 'grammar' }
     ];
 
-    if (step >= steps.length) {
-      // Save and go home
-      var cefrMap = {'I know basic sentences (A2)': 'A2', 'I can have simple conversations (B1)': 'B1', 'I speak well but want to be more precise (B2)': 'B2', 'I am nearly fluent (C1)': 'C1', 'I am a complete beginner (A1)': 'A1'};
-      var goalStr = self._answers.goal || '';
-      var level = cefrMap[self._answers.placement] || 'A2';
-      var goalMin = parseInt((self._answers.dailyGoal || '10').replace(/\D/g, ''), 10) || 10;
-      STORE.set('user', {name: self._answers.name || 'Learner', goal: goalStr, level: level, placementTag: level});
-      STORE.set('settings', {voice: '', rate: 1.0, dailyGoal: goalMin, geminiKey: ''});
-      STORE.touchStreak();
-      navigate('home');
-      return;
+    var html = '<div class="view-onboarding" style="max-width:560px;margin:30px auto;padding:28px 24px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);">';
+
+    /* Header with step counter & skip tour link */
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<span style="font-weight:800;color:var(--txt);font-size:1.05rem;">✨ EngSpell</span>'
+      + '<a href="#skip" id="ob-skip-tour" style="color:var(--mut);font-size:0.85rem;text-decoration:none;">Skip tour →</a>'
+      + '</div>';
+
+    /* Progress bar */
+    var pct = Math.round(((screen + 1) / 4) * 100);
+    html += '<div style="height:6px;background:var(--bg3);border-radius:999px;overflow:hidden;margin-bottom:20px;">'
+      + '<div style="height:100%;width:' + pct + '%;background:var(--grad);transition:width 0.3s ease;"></div>'
+      + '</div>'
+      + '<div style="font-size:0.75rem;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Step ' + (screen + 1) + ' of 4</div>';
+
+    /* SCREEN 1: Welcome */
+    if (screen === 0) {
+      html += '<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;line-height:1.3;">Welcome to EngSpell</h1>'
+        + '<p style="color:var(--mut);margin-bottom:24px;font-size:0.95rem;line-height:1.5;">Master clear English pronunciation, speaking fluency, and confidence — 100% free, offline-first, and private.</p>'
+        + '<div style="margin-bottom:20px;">'
+        + '<label style="display:block;font-size:0.85rem;font-weight:600;color:var(--txt);margin-bottom:6px;">What should we call you?</label>'
+        + '<input type="text" id="ob-name-input" placeholder="Enter your first name" value="' + _esc(self._answers.name || '') + '" style="width:100%;padding:12px 14px;font-size:1rem;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);" />'
+        + '</div>'
+        + '<button class="btn-primary btn-lg" id="ob-s1-next" style="width:100%;padding:12px;font-size:1rem;cursor:pointer;">Start 2-Minute Setup →</button>';
     }
 
-    var s = steps[step];
-    var content = '';
-    if (s.type === 'text') {
-      content = '<input type="text" id="ob-input" placeholder="' + (s.placeholder || '') + '" value="' + (self._answers[s.key] || '') + '" />' +
-        '<button class="btn-primary" id="ob-next">Continue →</button>';
-    } else {
-      content = '<div class="ob-opts">';
-      for (var oi = 0; oi < s.opts.length; oi++) {
-        content += '<button class="ob-opt" id="ob-opt-' + oi + '">' + s.opts[oi] + '</button>';
+    /* SCREEN 2: Placement */
+    else if (screen === 1) {
+      var qIdx = self._placementQIndex || 0;
+      var curQ = placementPool[qIdx] || placementPool[0];
+      html += '<h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px;">Quick Level Placement</h1>'
+        + '<p style="color:var(--mut);font-size:0.85rem;margin-bottom:16px;">Question ' + (qIdx + 1) + ' of 5 · Skill: <span style="color:var(--acc2);text-transform:capitalize;">' + _esc(curQ.skill || 'grammar') + '</span></p>'
+        + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:18px;">'
+        + '<h2 style="font-size:1.05rem;font-weight:600;margin-bottom:16px;color:var(--txt);">' + _esc(curQ.q) + '</h2>'
+        + '<div style="display:flex;flex-direction:column;gap:10px;">';
+      for (var oi = 0; oi < curQ.opts.length; oi++) {
+        html += '<button class="btn-secondary ob-placement-opt" data-opt="' + oi + '" style="text-align:left;padding:12px 14px;font-size:0.95rem;justify-content:flex-start;">' + _esc(curQ.opts[oi]) + '</button>';
       }
-      content += '</div>';
+      html += '</div></div>';
     }
 
-    el.innerHTML = '<div class="view-onboarding">' +
-      '<div class="ob-logo">✨ EngSpell</div>' +
-      '<div class="ob-progress"><div class="ob-prog-fill" style="width:' + Math.round((step / steps.length) * 100) + '%"></div></div>' +
-      '<h2>' + s.q + '</h2>' +
-      (s.hint ? '<p class="ob-hint">' + s.hint + '</p>' : '') +
-      content +
-      '</div>';
+    /* SCREEN 3: Instant Win — Live Drill */
+    else if (screen === 2) {
+      var tag = self._answers.placementTag || 'A2';
+      var target = self._drillSentence || self.getSentenceForLevel(tag);
+      self._drillSentence = target;
 
-    if (s.type === 'text') {
-      document.getElementById('ob-input').focus();
-      document.getElementById('ob-next').addEventListener('click', function () {
-        var val = document.getElementById('ob-input').value.trim();
-        if (!val) { UI.toast('Please enter an answer.', 'error'); return; }
-        self._answers[s.key] = val;
-        self._step++;
+      html += '<h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px;">🎙️ Instant Win — First Live Drill</h1>'
+        + '<p style="color:var(--mut);font-size:0.85rem;margin-bottom:14px;">Calibrated for your level: <strong style="color:var(--acc2);">' + _esc(tag) + '</strong>. Speak or type to see word-level live matching.</p>'
+        + '<div id="ob-xp-pop" style="display:' + (self._drillFirstWordCelebrated ? 'block' : 'none') + ';background:rgba(52,211,153,0.15);border:1px solid var(--ok);border-radius:var(--r-sm);padding:10px 14px;color:var(--ok);font-weight:700;text-align:center;margin-bottom:14px;">'
+        + '🎉 +10 XP! First word unlocked! Flow Step 1 (Diagnose) marked DONE!'
+        + '</div>'
+        + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px;text-align:center;">'
+        + '<div style="font-size:0.75rem;color:var(--mut);text-transform:uppercase;margin-bottom:8px;">Target sentence</div>'
+        + '<div id="ob-chips-container" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0;">'
+        + (typeof LIVE_COACH !== 'undefined' ? LIVE_COACH.renderChipHTML(target, self._lastPartial || '') : _esc(target))
+        + '</div>'
+        + '</div>';
+
+      if (SPEECH.canListen()) {
+        html += '<div style="text-align:center;margin-bottom:14px;">'
+          + '<button class="btn-primary" id="ob-mic-btn" style="padding:10px 20px;font-size:1rem;">🎙️ Start Speaking</button>'
+          + '<p style="font-size:0.78rem;color:var(--mut);margin-top:6px;">Microphone access is used strictly in-browser for speech recognition (never recorded or sent to any server).</p>'
+          + '</div>';
+      }
+
+      html += '<div style="display:flex;gap:8px;margin-bottom:16px;">'
+        + '<input type="text" id="ob-typed-input" placeholder="Or type the sentence to practice..." style="flex:1;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);" />'
+        + '<button class="btn-secondary" id="ob-typed-submit">Check</button>'
+        + '</div>'
+        + '<button class="btn-primary" id="ob-s3-next" style="width:100%;padding:12px;' + (self._drillFirstWordCelebrated ? '' : 'opacity:0.6;') + '">' + (self._drillFirstWordCelebrated ? 'Continue to Power-up →' : 'Continue →') + '</button>';
+    }
+
+    /* SCREEN 4: Power-up (Cloud Brain) */
+    else if (screen === 3) {
+      var currentKey = (STORE.get('settings') || {}).geminiKey || '';
+      html += '<h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px;">⚡ Power-Up: Nova\'s Cloud Brain</h1>'
+        + '<p style="color:var(--mut);font-size:0.85rem;margin-bottom:16px;">Nova works 100% offline out-of-the-box. Connect your free Google Gemini API key to unlock nuanced conversation and live accent coaching.</p>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
+        + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;font-size:0.8rem;">'
+        + '<div style="font-weight:700;color:var(--acc2);margin-bottom:4px;">⚡ Real AI Active</div>'
+        + '<div style="color:var(--mut);line-height:1.4;">Nuanced corrections, idiom coaching, Indian English accent tips, dynamic roleplay.</div>'
+        + '</div>'
+        + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;font-size:0.8rem;">'
+        + '<div style="font-weight:700;color:var(--ok);margin-bottom:4px;">🛡️ Offline Rules</div>'
+        + '<div style="color:var(--mut);line-height:1.4;">Grammar rules, pronunciation lab, word bank, and SRS review always free forever.</div>'
+        + '</div>'
+        + '</div>'
+        + '<div style="margin-bottom:16px;">'
+        + '<label style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:6px;color:var(--txt);">Gemini API Key <small>(<a href="https://aistudio.google.com" target="_blank" rel="noopener" style="color:var(--acc2);">Get free key at Google AI Studio ↗</a>)</small></label>'
+        + '<input type="password" id="ob-gemini-key" placeholder="Paste your Gemini key here..." value="' + _esc(currentKey) + '" style="width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);margin-bottom:8px;" />'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        + '<button class="btn-secondary btn-sm" id="ob-test-llm">🧪 Test & activate</button>'
+        + '<span id="ob-test-status" style="font-size:0.85rem;">' + (currentKey ? '<strong style="color:var(--ok);">✅ Active</strong>' : '') + '</span>'
+        + '</div>'
+        + '</div>'
+        + '<button class="btn-primary" id="ob-finish" style="width:100%;padding:12px;font-size:1rem;margin-bottom:8px;cursor:pointer;">Start Learning (Flow 1/5 Lit) →</button>'
+        + '<div style="text-align:center;">'
+        + '<button class="btn-ghost btn-sm" id="ob-skip-cloud" style="color:var(--mut);">Skip — works offline too</button>'
+        + '</div>';
+    }
+
+    html += '</div>'; /* view-onboarding */
+
+    el.innerHTML = html;
+
+    /* Bind skip tour */
+    var skipLink = document.getElementById('ob-skip-tour');
+    if (skipLink) {
+      skipLink.addEventListener('click', function (e) {
+        if (e && e.preventDefault) { e.preventDefault(); }
+        self.skipTour(el);
+      });
+    }
+
+    /* Screen 1 event handlers */
+    if (screen === 0) {
+      var nameInput = document.getElementById('ob-name-input');
+      var s1Next = document.getElementById('ob-s1-next');
+      function _submitS1() {
+        var n = nameInput ? nameInput.value.trim() : '';
+        self._answers.name = n || 'Learner';
+        var u = STORE.get('user') || {};
+        u.name = self._answers.name;
+        STORE.set('user', u);
+        STORE.save();
+        self._screen = 1;
         self.render(el);
-      });
-      document.getElementById('ob-input').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { document.getElementById('ob-next').click(); }
-      });
-    } else {
-      for (var oi2 = 0; oi2 < s.opts.length; oi2++) {
-        (function (idx) {
-          var btn = document.getElementById('ob-opt-' + idx);
-          if (!btn) { return; }
-          btn.addEventListener('click', function () {
-            self._answers[s.key] = s.opts[idx];
-            if (s.correct !== undefined) {
-              if (idx === s.correct) {
-                UI.toast('Correct! Well done.', 'success');
-              } else {
-                UI.toast('The correct answer was: ' + s.opts[s.correct], 'info');
-              }
-            }
-            self._step++;
-            setTimeout(function () { self.render(el); }, s.correct !== undefined ? 800 : 0);
-          });
-        }(oi2));
       }
+      if (s1Next) { s1Next.addEventListener('click', _submitS1); }
+      if (nameInput) {
+        if (nameInput.focus) { nameInput.focus(); }
+        nameInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { _submitS1(); }
+        });
+      }
+    }
+
+    /* Screen 2 event handlers */
+    else if (screen === 1) {
+      var optBtns = el.querySelectorAll('.ob-placement-opt');
+      for (var bi = 0; bi < optBtns.length; bi++) {
+        (function (b) {
+          b.addEventListener('click', function () {
+            var selectedIdx = parseInt(b.getAttribute('data-opt'), 10);
+            var qIdx = self._placementQIndex || 0;
+            var curQ = placementPool[qIdx] || placementPool[0];
+            if (selectedIdx === curQ.ans) {
+              self._placementScore = (self._placementScore || 0) + 1;
+              UI.toast('Correct!', 'success');
+            } else {
+              UI.toast('Good try!', 'info');
+            }
+            self._placementQIndex = qIdx + 1;
+            if (self._placementQIndex >= 5) {
+              var tag = self.mapPlacementScore(self._placementScore);
+              self._answers.placementTag = tag;
+              self._answers.level = tag;
+              var u = STORE.get('user') || {};
+              u.placementTag = tag;
+              u.level = tag;
+              STORE.set('user', u);
+              STORE.save();
+              TRAINER.log({ skill: 'fluency', delta: self._placementScore, source: 'onboarding/placement', ts: Date.now() });
+              self._drillSentence = self.getSentenceForLevel(tag);
+              self._screen = 2;
+              setTimeout(function () { self.render(el); }, 250);
+            } else {
+              setTimeout(function () { self.render(el); }, 200);
+            }
+          });
+        }(optBtns[bi]));
+      }
+    }
+
+    /* Screen 3 event handlers */
+    else if (screen === 2) {
+      var tag2 = self._answers.placementTag || 'A2';
+      var target2 = self._drillSentence || self.getSentenceForLevel(tag2);
+      var micBtn = document.getElementById('ob-mic-btn');
+      var typedInput = document.getElementById('ob-typed-input');
+      var typedSubmit = document.getElementById('ob-typed-submit');
+      var s3Next = document.getElementById('ob-s3-next');
+      var isListening = false;
+
+      function _onPartialMatch(text) {
+        self._lastPartial = text;
+        var chipsContainer = document.getElementById('ob-chips-container');
+        if (chipsContainer && typeof LIVE_COACH !== 'undefined') {
+          chipsContainer.innerHTML = LIVE_COACH.renderChipHTML(target2, text);
+        }
+        var match = (typeof LIVE_COACH !== 'undefined') ? LIVE_COACH.matchPrefix(target2, text) : { matchedCount: 0 };
+        if (match.matchedCount >= 1 && !self._drillFirstWordCelebrated) {
+          self._drillFirstWordCelebrated = true;
+          STORE.addXP(10, 'onboarding-drill');
+          if (typeof FLOW !== 'undefined' && FLOW.mark) {
+            FLOW.mark(1);
+          }
+          var popEl = document.getElementById('ob-xp-pop');
+          if (popEl) { popEl.style.display = 'block'; }
+          if (s3Next) {
+            s3Next.style.opacity = '1';
+            s3Next.textContent = 'Continue to Power-up →';
+          }
+          UI.toast('🎉 First word matched! +10 XP & Step 1 Done!', 'success');
+        }
+      }
+
+      if (typedSubmit && typedInput) {
+        typedSubmit.addEventListener('click', function () {
+          var val = typedInput.value.trim();
+          if (!val) { return; }
+          _onPartialMatch(val);
+        });
+        typedInput.addEventListener('input', function () {
+          _onPartialMatch(this.value);
+        });
+      }
+
+      if (micBtn && SPEECH.canListen()) {
+        micBtn.addEventListener('click', function () {
+          if (isListening) {
+            SPEECH.stopListening();
+            isListening = false;
+            micBtn.textContent = '🎙️ Start Speaking';
+            return;
+          }
+          isListening = true;
+          micBtn.textContent = '🛑 Listening... speak now';
+          SPEECH.listen({
+            onresult: function (transcript, isFinal) {
+              _onPartialMatch(transcript);
+              if (isFinal) {
+                isListening = false;
+                if (micBtn) { micBtn.textContent = '🎙️ Start Speaking'; }
+              }
+            },
+            onerror: function (err) {
+              isListening = false;
+              if (micBtn) { micBtn.textContent = '🎙️ Start Speaking'; }
+              UI.toast('Mic note: ' + err, 'warning');
+            }
+          });
+        });
+      }
+
+      if (s3Next) {
+        s3Next.addEventListener('click', function () {
+          if (isListening) { SPEECH.stopListening(); }
+          /* Ensure step 1 is marked if not already */
+          if (!self._drillFirstWordCelebrated) {
+            self._drillFirstWordCelebrated = true;
+            STORE.addXP(10, 'onboarding-drill');
+            if (typeof FLOW !== 'undefined' && FLOW.mark) {
+              FLOW.mark(1);
+            }
+          }
+          self._screen = 3;
+          self.render(el);
+        });
+      }
+    }
+
+    /* Screen 4 event handlers */
+    else if (screen === 3) {
+      var testBtn = document.getElementById('ob-test-llm');
+      var keyInput = document.getElementById('ob-gemini-key');
+      var statusEl = document.getElementById('ob-test-status');
+      var finishBtn = document.getElementById('ob-finish');
+      var skipCloudBtn = document.getElementById('ob-skip-cloud');
+
+      if (testBtn && keyInput) {
+        testBtn.addEventListener('click', function () {
+          var k = keyInput.value.trim();
+          if (!k) {
+            UI.toast('Please enter a Gemini key first.', 'warning');
+            return;
+          }
+          if (statusEl) { statusEl.textContent = 'Testing connection...'; }
+          if (typeof llmAsk === 'function') {
+            llmAsk({
+              provider: 'gemini',
+              key: k,
+              systemPrompt: 'Automated test. Reply OK.',
+              messages: [{ role: 'user', content: 'Ping' }]
+            }).then(function () {
+              if (statusEl) { statusEl.innerHTML = '<strong style="color:var(--ok);">✅ Verified & Active!</strong>'; }
+              UI.toast('✅ Gemini verified & active!', 'success');
+              var s = STORE.get('settings') || {};
+              s.geminiKey = k;
+              s.llmProvider = 'gemini';
+              STORE.set('settings', s);
+              STORE.save();
+              if (typeof NOVA !== 'undefined') { NOVA.ready = true; }
+              if (typeof VIEWS.coach !== 'undefined') { VIEWS.coach.ready = true; }
+            }).catch(function (err) {
+              if (statusEl) { statusEl.innerHTML = '<strong style="color:var(--bad);">❌ Failed</strong>'; }
+              UI.toast('Connection failed: ' + (err.message || 'Check key'), 'error');
+            });
+          }
+        });
+      }
+
+      function _completeAll() {
+        var k = keyInput ? keyInput.value.trim() : '';
+        if (k) {
+          var s = STORE.get('settings') || {};
+          s.geminiKey = k;
+          s.llmProvider = 'gemini';
+          STORE.set('settings', s);
+          if (typeof NOVA !== 'undefined') { NOVA.ready = true; }
+          if (typeof VIEWS.coach !== 'undefined') { VIEWS.coach.ready = true; }
+        }
+        var u = STORE.get('user') || {};
+        if (!u.name) { u.name = self._answers.name || 'Learner'; }
+        if (!u.level) { u.level = self._answers.level || 'A2'; }
+        if (!u.placementTag) { u.placementTag = self._answers.placementTag || u.level; }
+        if (!u.goal) { u.goal = 'Daily conversation fluency'; }
+        STORE.set('user', u);
+        STORE.save();
+        if (typeof navigate === 'function') {
+          navigate('home');
+        }
+      }
+
+      if (finishBtn) { finishBtn.addEventListener('click', _completeAll); }
+      if (skipCloudBtn) { skipCloudBtn.addEventListener('click', _completeAll); }
     }
   }
 };
