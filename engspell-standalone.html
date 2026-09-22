@@ -6938,6 +6938,256 @@ var DATA4 = {
 if (typeof window !== 'undefined') { window.DATA4 = DATA4; }
 if (typeof global !== 'undefined') { global.DATA4 = DATA4; }
 /* =====================================================================
+   data5.js — Indian Accent Studio Content Packs (M20 ACCENT-UP)
+   ES5 only — zero dependencies, fully offline
+   Research-backed Indian-English contrast pairs, stress, and rhythm
+   ===================================================================== */
+
+var ACCENT_PACKS = [
+  {
+    id: 'ax-vw',
+    title: 'V vs W Friction & Rounding',
+    ipa: '/v/ vs /w/',
+    desiTrap: 'Indian tongues switch /v/ and /w/ as allophones (interchangeable), biting the lower lip for "w" or rounding lips for "v", turning "very well" into "wery vell".',
+    fix: 'For /v/: gently rest your top front teeth against the inner edge of your lower lip, vibrate vocal cords, and exhale smoothly. For /w/: shape both lips into a tight small circle with zero teeth contact, then glide open.',
+    pairs: [
+      { a: { w: 'wine', ipa: '/waɪn/', tag: 'desi' }, b: { w: 'vine', ipa: '/vaɪn/', tag: 'target' } },
+      { a: { w: 'wet', ipa: '/wɛt/', tag: 'desi' }, b: { w: 'vet', ipa: '/vɛt/', tag: 'target' } },
+      { a: { w: 'west', ipa: '/wɛst/', tag: 'desi' }, b: { w: 'vest', ipa: '/vɛst/', tag: 'target' } },
+      { a: { w: 'wiper', ipa: '/ˈwaɪpər/', tag: 'desi' }, b: { w: 'viper', ipa: '/ˈvaɪpər/', tag: 'target' } },
+      { a: { w: 'whale', ipa: '/weɪl/', tag: 'desi' }, b: { w: 'vale', ipa: '/veɪl/', tag: 'target' } },
+      { a: { w: 'worse', ipa: '/wɜːrs/', tag: 'desi' }, b: { w: 'verse', ipa: '/vɜːrs/', tag: 'target' } },
+      { a: { w: 'wheel', ipa: '/wiːl/', tag: 'desi' }, b: { w: 'veal', ipa: '/viːl/', tag: 'target' } },
+      { a: { w: 'wary', ipa: '/ˈwɛəri/', tag: 'desi' }, b: { w: 'vary', ipa: '/ˈvɛəri/', tag: 'target' } },
+      { a: { w: 'wane', ipa: '/weɪn/', tag: 'desi' }, b: { w: 'vane', ipa: '/veɪn/', tag: 'target' } },
+      { a: { w: 'went', ipa: '/wɛnt/', tag: 'desi' }, b: { w: 'vent', ipa: '/vɛnt/', tag: 'target' } },
+      { a: { w: 'waltz', ipa: '/wɔːlts/', tag: 'desi' }, b: { w: 'vault', ipa: '/vɔːlt/', tag: 'target' } },
+      { a: { w: 'wow', ipa: '/waʊ/', tag: 'desi' }, b: { w: 'vow', ipa: '/vaʊ/', tag: 'target' } }
+    ],
+    sentences: [
+      'We viewed the vast valley with wonder and awe.',
+      'Victor works very well with various software tools.',
+      'Wear a warm winter vest when visiting the west.',
+      'The volunteer wanted whatever wine was available.',
+      'Validate every web workflow with vigilance.',
+      'We visualised the world with vivid wonder.',
+      'Vikas waited while Wendy verified the wire.',
+      'Water valves will work whenever waterflows waver.',
+      'Never waver while verifying vital work vectors.',
+      'We welcome valuable volunteers with warm wishes.',
+      'Various widgets were well verified without warnings.',
+      'William voted with vigor whenever winners were welcomed.'
+    ]
+  },
+  {
+    id: 'ax-th',
+    title: 'Dental TH vs T/D Stops',
+    ipa: '/θ, ð/ vs /t, d/',
+    desiTrap: 'Indian languages replace English dental fricatives /θ/ and /ð/ with hard dental plosives /t̪ʰ/ and /d̪/, turning "think" into "tink", "three" into "tree", and "this" into "dis".',
+    fix: 'Place the tip of your tongue gently between your front teeth with open airflow. For voiceless /θ/ (think, thank), blow soft air without voice. For voiced /ð/ (this, they), hum with your vocal cords. Never block airflow completely.',
+    pairs: [
+      { a: { w: 'tink', ipa: '/tɪŋk/', tag: 'desi' }, b: { w: 'think', ipa: '/θɪŋk/', tag: 'target' } },
+      { a: { w: 'tank', ipa: '/tæŋk/', tag: 'desi' }, b: { w: 'thank', ipa: '/θæŋk/', tag: 'target' } },
+      { a: { w: 'teem', ipa: '/tiːm/', tag: 'desi' }, b: { w: 'theme', ipa: '/θiːm/', tag: 'target' } },
+      { a: { w: 'tick', ipa: '/tɪk/', tag: 'desi' }, b: { w: 'thick', ipa: '/θɪk/', tag: 'target' } },
+      { a: { w: 'tie', ipa: '/taɪ/', tag: 'desi' }, b: { w: 'thigh', ipa: '/θaɪ/', tag: 'target' } },
+      { a: { w: 'tin', ipa: '/tɪn/', tag: 'desi' }, b: { w: 'thin', ipa: '/θɪn/', tag: 'target' } },
+      { a: { w: 'tree', ipa: '/triː/', tag: 'desi' }, b: { w: 'three', ipa: '/θriː/', tag: 'target' } },
+      { a: { w: 'dare', ipa: '/dɛər/', tag: 'desi' }, b: { w: 'there', ipa: '/ðɛər/', tag: 'target' } },
+      { a: { w: 'den', ipa: '/dɛn/', tag: 'desi' }, b: { w: 'then', ipa: '/ðɛn/', tag: 'target' } },
+      { a: { w: 'day', ipa: '/deɪ/', tag: 'desi' }, b: { w: 'they', ipa: '/ðeɪ/', tag: 'target' } },
+      { a: { w: 'breed', ipa: '/briːd/', tag: 'desi' }, b: { w: 'breathe', ipa: '/briːð/', tag: 'target' } },
+      { a: { w: 'clode', ipa: '/kloʊd/', tag: 'desi' }, b: { w: 'clothe', ipa: '/kloʊð/', tag: 'target' } }
+    ],
+    sentences: [
+      'I think three thrilling themes through thoroughly.',
+      'They think that this rhythm suits their method.',
+      'Thank them for their thoughtful advice together.',
+      'Both brothers breathe beneath the southern weather.',
+      'There are thirty thousand things they need today.',
+      'The theory was thought through with empathy.',
+      'Neither father nor mother noticed that threat.',
+      'These three thousand brothers gather together there.',
+      'Breathe smoothly through the mouth without tension.',
+      'Whether the weather is warm, they think together.',
+      'Thirty-three thieves thought that they thrilled the throne.',
+      'Nothing is worth more than their truthful empathy.'
+    ]
+  },
+  {
+    id: 'ax-r',
+    title: 'Smooth Rhotic R vs Tap/Roll',
+    ipa: '/r/ [ɹ]',
+    desiTrap: 'Indian English often uses a tapped [ɾ] or alveolar trill [r], flapping the tongue sharply against the alveolar ridge or retroflexing excessively on post-vocalic "r" in "car", "world", and "bird".',
+    fix: 'Pull the body of your tongue back slightly toward the centre of your mouth. Curl the sides against your upper molars, but ensure the tip NEVER touches your gum ridge. Keep airflow continuous and smooth.',
+    pairs: [
+      { a: { w: 'ka', ipa: '/kɑː/', tag: 'desi' }, b: { w: 'car', ipa: '/kɑːr/', tag: 'target' } },
+      { a: { w: 'wurld', ipa: '/wɜːld/', tag: 'desi' }, b: { w: 'world', ipa: '/wɜːrld/', tag: 'target' } },
+      { a: { w: 'burd', ipa: '/bɜːd/', tag: 'desi' }, b: { w: 'bird', ipa: '/bɜːrd/', tag: 'target' } },
+      { a: { w: 'gurl', ipa: '/ɡɜːl/', tag: 'desi' }, b: { w: 'girl', ipa: '/ɡɜːrl/', tag: 'target' } },
+      { a: { w: 'pahk', ipa: '/pɑːk/', tag: 'desi' }, b: { w: 'park', ipa: '/pɑːrk/', tag: 'target' } },
+      { a: { w: 'dahk', ipa: '/dɑːk/', tag: 'desi' }, b: { w: 'dark', ipa: '/dɑːrk/', tag: 'target' } },
+      { a: { w: 'hahd', ipa: '/hɑːd/', tag: 'desi' }, b: { w: 'hard', ipa: '/hɑːrd/', tag: 'target' } },
+      { a: { w: 'tun', ipa: '/tɜːn/', tag: 'desi' }, b: { w: 'turn', ipa: '/tɜːrn/', tag: 'target' } },
+      { a: { w: 'wahm', ipa: '/wɔːm/', tag: 'desi' }, b: { w: 'warm', ipa: '/wɔːrm/', tag: 'target' } },
+      { a: { w: 'fust', ipa: '/fɜːst/', tag: 'desi' }, b: { w: 'first', ipa: '/fɜːrst/', tag: 'target' } },
+      { a: { w: 'poht', ipa: '/pɔːt/', tag: 'desi' }, b: { w: 'port', ipa: '/pɔːrt/', tag: 'target' } },
+      { a: { w: 'stah', ipa: '/stɑː/', tag: 'desi' }, b: { w: 'star', ipa: '/stɑːr/', tag: 'target' } }
+    ],
+    sentences: [
+      'The red car turned around the dark rural park.',
+      'Robert reached the river after a regular run.',
+      'Her career required remarkable research records.',
+      'Our world requires creative workers every year.',
+      'Remember to read every report rather carefully.',
+      'The green bird carried warm straw for her nest.',
+      'Real research results require rare perseverance.',
+      'Rain returned rapidly across the northern prairie.',
+      'Four brilliant doctors reviewed the career records.',
+      'Try running around the track before every race.',
+      'Rural roads require sharper curves and clear mirrors.',
+      'Every morning worker recorded great performance.'
+    ]
+  },
+  {
+    id: 'ax-td',
+    title: 'Alveolar T/D vs Retroflex',
+    ipa: '/t, d/ [tʰ, d]',
+    desiTrap: 'Indian languages replace English alveolar /t/ and /d/ with retroflex plosives /ʈ/ and /ɖ/ by curling the tongue tip backwards to touch the hard palate, resulting in a heavy percussive acoustic quality.',
+    fix: 'Tap the tip of your tongue strictly against the bumpy alveolar ridge directly behind your upper front teeth (never touch the roof of your mouth). Release initial /t/ with a noticeable puff of air (aspiration).',
+    pairs: [
+      { a: { w: 'thime', ipa: '/ʈʰaɪm/', tag: 'desi' }, b: { w: 'time', ipa: '/taɪm/', tag: 'target' } },
+      { a: { w: 'teem', ipa: '/ʈiːm/', tag: 'desi' }, b: { w: 'team', ipa: '/tiːm/', tag: 'target' } },
+      { a: { w: 'tayk', ipa: '/ʈeɪk/', tag: 'desi' }, b: { w: 'take', ipa: '/teɪk/', tag: 'target' } },
+      { a: { w: 'thop', ipa: '/ʈɒp/', tag: 'desi' }, b: { w: 'top', ipa: '/tɒp/', tag: 'target' } },
+      { a: { w: 'tai', ipa: '/ʈaɪ/', tag: 'desi' }, b: { w: 'tie', ipa: '/taɪ/', tag: 'target' } },
+      { a: { w: 'thest', ipa: '/ʈɛst/', tag: 'desi' }, b: { w: 'test', ipa: '/tɛst/', tag: 'target' } },
+      { a: { w: 'dhaak', ipa: '/ɖɑːk/', tag: 'desi' }, b: { w: 'dark', ipa: '/dɑːrk/', tag: 'target' } },
+      { a: { w: 'dhoor', ipa: '/ɖʊər/', tag: 'desi' }, b: { w: 'door', ipa: '/dɔːr/', tag: 'target' } },
+      { a: { w: 'dheep', ipa: '/ɖiːp/', tag: 'desi' }, b: { w: 'deep', ipa: '/diːp/', tag: 'target' } },
+      { a: { w: 'dhate', ipa: '/ɖeɪt/', tag: 'desi' }, b: { w: 'date', ipa: '/deɪt/', tag: 'target' } },
+      { a: { w: 'dhown', ipa: '/ɖaʊn/', tag: 'desi' }, b: { w: 'down', ipa: '/daʊn/', tag: 'target' } },
+      { a: { w: 'dhay', ipa: '/ɖeɪ/', tag: 'desi' }, b: { w: 'day', ipa: '/deɪ/', tag: 'target' } }
+    ],
+    sentences: [
+      'Take two tickets to the downtown theater today.',
+      'David decided to deliver the data directly.',
+      'Tell the team to test the database today.',
+      'Tom touched the top table twice this morning.',
+      'The director delivered dynamic details during dinner.',
+      'Twenty talented dancers toured thirty diverse towns.',
+      'Deep down David doubted that draft decision.',
+      'Touch the tip of the dental tooth with technique.',
+      'Daily tasks demand true dedication and detail.',
+      'Total test data demonstrates dependable duration.',
+      'Tell Ted to download the technical directory today.',
+      'David delivered twenty distinct technical documents.'
+    ]
+  },
+  {
+    id: 'ax-stress',
+    title: 'Word Stress & Syllable Timing',
+    ipa: '/ˈ/ stress mark',
+    desiTrap: 'Because Indian languages are syllable-timed (giving equal length to all syllables), speakers often stress the first syllable or root incorrectly ("DE-ve-lop" instead of "de-VEL-op", "COM-for-ta-ble" into 4 syllables).',
+    fix: 'Make the stressed syllable louder, higher in pitch, and noticeably longer. Reduce unstressed vowels to a tiny, quiet schwa (/ə/). Compress "comfortable" to 3 syllables: COM-fer-t\'bl.',
+    words: [
+      { w: 'develop', ipa: '/dɪˈvɛləp/', stressMarked: 'deVELop' },
+      { w: 'comfortable', ipa: '/ˈkʌmftərbəl/', stressMarked: 'COMfortable' },
+      { w: 'photographer', ipa: '/fəˈtɒɡrəfər/', stressMarked: 'phoTOgrapher' },
+      { w: 'photography', ipa: '/fəˈtɒɡrəfi/', stressMarked: 'phoTOGraphy' },
+      { w: 'definitely', ipa: '/ˈdɛfɪnɪtli/', stressMarked: 'DEFinitely' },
+      { w: 'vegetable', ipa: '/ˈvɛdʒtəbəl/', stressMarked: 'VEGetable' },
+      { w: 'chocolate', ipa: '/ˈtʃɒklɪt/', stressMarked: 'CHOC-late' },
+      { w: 'police', ipa: '/pəˈliːs/', stressMarked: 'poLICE' },
+      { w: 'hotel', ipa: '/hoʊˈtɛl/', stressMarked: 'hoTEL' },
+      { w: 'career', ipa: '/kəˈrɪər/', stressMarked: 'caREER' },
+      { w: 'certificate', ipa: '/sərˈtɪfɪkət/', stressMarked: 'cerTIFicate' },
+      { w: 'technology', ipa: '/tɛkˈnɒlədʒi/', stressMarked: 'techNOLogy' },
+      { w: 'economy', ipa: '/ɪˈkɒnəmi/', stressMarked: 'eCONomy' },
+      { w: 'economic', ipa: '/ˌiːkəˈnɒmɪk/', stressMarked: 'ecoNOMic' },
+      { w: 'decision', ipa: '/dɪˈsɪʒən/', stressMarked: 'deCISion' },
+      { w: 'management', ipa: '/ˈmænɪdʒmənt/', stressMarked: 'MANagement' },
+      { w: 'important', ipa: '/ɪmˈpɔːrtənt/', stressMarked: 'imPORtant' },
+      { w: 'presentation', ipa: '/ˌprɛzənˈteɪʃən/', stressMarked: 'presenTAtion' },
+      { w: 'particular', ipa: '/pərˈtɪkjələr/', stressMarked: 'parTICular' },
+      { w: 'opportunity', ipa: '/ˌɒpərˈtjuːnɪti/', stressMarked: 'opporTUNity' }
+    ],
+    sentences: [
+      'We need to deVELop a COMfortable techNOLogy for our caREER.',
+      'The phoTOgrapher made an imPORtant deCISion on the ecoNOMic plan.',
+      'Our MANagement definitely welcomed this opporTUNity with enthuSIasm.',
+      'She reCEIVED her offiCIAL cerTIFicate at the hoTEL reCEPtion.',
+      'Fresh VEGetables and dark CHOC-late make a deLIcious snack.',
+      'The poLICE conDUCted an exTENsive inVES-tigation yes-terday.',
+      'Global eCONomy depends upon innoVAtive techNOLogy soLUtions.',
+      'This parTICular presenTAtion highLIGHTS our straTEGic diREC-tion.',
+      'His caREER opporTUNity reQUIRED conTINuous proFES-sional training.',
+      'We def-initely apPREciate your reMARKable deCISion today.',
+      'The COMfortable hoTEL proVI-ded exCELlent conDI-tions for work.',
+      'phoTOGraphy reQUIRES paTIENCE and deTAILED ob-serVAtion.'
+    ]
+  },
+  {
+    id: 'ax-diph',
+    title: 'Pure Diphthongs & Vowel Length',
+    ipa: '/eɪ, əʊ, ɪ, iː/',
+    desiTrap: 'Indian speakers often flatten gliding diphthongs (/eɪ/ in "say", /əʊ/ in "go") into monotone long vowels [eː] and [oː], and fail to distinguish short lax /ɪ/ (ship) from long tense /iː/ (sheep).',
+    fix: 'Let diphthongs glide actively from starting tongue shape to ending shape: for /eɪ/ glide from "eh" up toward "ee"; for /əʊ/ glide from a neutral vowel to rounded lips. For /iː/ (sheep), smile and tense; for /ɪ/ (ship), relax and drop your jaw.',
+    pairs: [
+      { a: { w: 'ship', ipa: '/ʃɪp/', tag: 'desi' }, b: { w: 'sheep', ipa: '/ʃiːp/', tag: 'target' } },
+      { a: { w: 'fit', ipa: '/fɪt/', tag: 'desi' }, b: { w: 'feet', ipa: '/fiːt/', tag: 'target' } },
+      { a: { w: 'slip', ipa: '/slɪp/', tag: 'desi' }, b: { w: 'sleep', ipa: '/sliːp/', tag: 'target' } },
+      { a: { w: 'bit', ipa: '/bɪt/', tag: 'desi' }, b: { w: 'beat', ipa: '/biːt/', tag: 'target' } },
+      { a: { w: 'fill', ipa: '/fɪl/', tag: 'desi' }, b: { w: 'feel', ipa: '/fiːl/', tag: 'target' } },
+      { a: { w: 'chip', ipa: '/tʃɪp/', tag: 'desi' }, b: { w: 'cheap', ipa: '/tʃiːp/', tag: 'target' } },
+      { a: { w: 'court', ipa: '/kɔːrt/', tag: 'desi' }, b: { w: 'coat', ipa: '/koʊt/', tag: 'target' } },
+      { a: { w: 'nought', ipa: '/nɔːt/', tag: 'desi' }, b: { w: 'note', ipa: '/noʊt/', tag: 'target' } },
+      { a: { w: 'saw', ipa: '/sɔː/', tag: 'desi' }, b: { w: 'so', ipa: '/soʊ/', tag: 'target' } },
+      { a: { w: 'get', ipa: '/ɡɛt/', tag: 'desi' }, b: { w: 'gate', ipa: '/ɡeɪt/', tag: 'target' } },
+      { a: { w: 'let', ipa: '/lɛt/', tag: 'desi' }, b: { w: 'late', ipa: '/leɪt/', tag: 'target' } },
+      { a: { w: 'men', ipa: '/mɛn/', tag: 'desi' }, b: { w: 'main', ipa: '/meɪn/', tag: 'target' } }
+    ],
+    sentences: [
+      'Take the late train through the main gate today.',
+      'We hope to show both notes to those folks.',
+      'She sees six sleek sheep sleeping on the hill.',
+      'Fill this dish with crisp fish and green chips.',
+      'Go home slowly and close the old yellow coat.',
+      'Say what they say on this rainy day in May.',
+      'Please leave these three clean keys near the beach.',
+      'The big ship will carry sixty brisk sailors.',
+      'No one knows how cold the snow will grow.',
+      'Stay away from the lake and wait for the train.',
+      'He feels great relief seeing clean green fields.',
+      'It is difficult to fix this quick little glitch.'
+    ]
+  },
+  {
+    id: 'ax-rhythm',
+    title: 'Sentence Rhythm & Connected Speech',
+    ipa: '/ə/ rhythm & chunking',
+    desiTrap: 'Indian languages pronounce every word with nearly equal syllable duration (machine-gun effect). English is stress-timed: function words (to, a, the, of, can) reduce to schwa (/ə/), creating an elastic musical rhythm.',
+    fix: 'Group thoughts into chunks. Whisper and compress grammatical helper words ("can you", "to the", "of a"), then land firmly and slowly on nouns, verbs, and adjectives.',
+    sentences: [
+      { text: 'I want to go to the market on Friday.', stressMark: 'I WANT to GO to the MARket on FRIday.' },
+      { text: 'Could you send me the report by five o\'clock?', stressMark: 'Could you SEND me the rePORT by FIVE o\'CLOCK?' },
+      { text: 'We need to discuss the architecture proposal.', stressMark: 'We NEED to disCUSS the ARchiTECture proPOsal.' },
+      { text: 'She works at an engineering company in Mumbai.', stressMark: 'She WORKS at an ENgiNEERing COMpany in MumBAI.' },
+      { text: 'It was one of the best decisions we made.', stressMark: 'It was ONE of the BEST deCISions we MADE.' },
+      { text: 'Can I talk to you for a couple of minutes?', stressMark: 'Can I TALK to you for a COUPle of MINutes?' },
+      { text: 'The train will arrive at platform number four.', stressMark: 'The TRAIN will arRIVE at PLATform NUMber FOUR.' },
+      { text: 'He told me that he would call back later.', stressMark: 'He TOLD me that he would CALL back LAter.' },
+      { text: 'We are planning to launch the feature next month.', stressMark: 'We are PLANning to LAUNCH the FEAture next MONTH.' },
+      { text: 'I would like to schedule a quick meeting today.', stressMark: 'I would LIKE to SCHEDule a QUICK MEEting toDAY.' },
+      { text: 'Please let me know if you have any questions.', stressMark: 'Please LET me KNOW if you HAVE any QUEStions.' },
+      { text: 'They have already completed the first milestone.', stressMark: 'They have alREA-dy comPLE-ted the FIRST MILEstone.' }
+    ]
+  }
+];
+
+if (typeof window !== 'undefined') { window.ACCENT_PACKS = ACCENT_PACKS; }
+if (typeof global !== 'undefined') { global.ACCENT_PACKS = ACCENT_PACKS; }
+/* =====================================================================
    speech.js — ES5 ONLY
    SPEECH: TTS (voice pick, rate, slow) + SpeechRecognition wrapper
    + error taxonomy + graceful degradation (text fallback when canListen()=false)
@@ -7168,7 +7418,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 7;
+  var VERSION = 8;
 
   var def = {
     version: VERSION,
@@ -7195,7 +7445,11 @@ var STORE = (function () {
       novaTurns: 0,
       srsReviews: 0
     },
-    weeklyHistory: []   /* INV-5: v7 — Weekly progress session history (M17) */
+    weeklyHistory: [],  /* INV-5: v7 — Weekly progress session history (M17) */
+    accent: {           /* INV-5: v8 — Indian Accent Studio (M20) */
+      packs: {},
+      lastXpDate: ''
+    }
   };
 
   function _raw() {
@@ -7255,6 +7509,13 @@ var STORE = (function () {
       if (!data.weeklyHistory) { data.weeklyHistory = []; }
       data.version = 7;
     }
+    // v7 → v8: add accent (M20)
+    if (v < 8) {
+      if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
+      data.version = 8;
+    }
+    if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
+    if (!data.accent.packs) { data.accent.packs = {}; }
     if (!data.weeklyHistory) { data.weeklyHistory = []; }
     if (!data.settings) { data.settings = {}; }
     if (data.settings.honestMode === undefined) { data.settings.honestMode = false; }
@@ -9057,6 +9318,7 @@ var NAV_SECTIONS = [
     title: 'PRACTISE',
     items: [
       {route:'pronunciation', label:'Pronunciation', icon:'🗣️'},
+      {route:'accent',        label:'Accent Studio', icon:'🇮🇳'},
       {route:'spelling',      label:'Spelling',      icon:'🔤'},
       {route:'phrases',       label:'Phrases',       icon:'💬'},
       {route:'idioms',        label:'Idioms',        icon:'📜'},
@@ -9346,6 +9608,738 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
 
 }());
 /* =====================================================================
+   accent-engine.js — Indian Accent Studio Engine & View (M20 ACCENT-UP)
+   ES5 only — zero dependencies, fully offline
+   Speech grading is word-level (SPEECH.listen + U.align).
+   ===================================================================== */
+
+var ACCENT = (function () {
+  'use strict';
+
+  function getPacks() {
+    return (typeof ACCENT_PACKS !== 'undefined') ? ACCENT_PACKS : [];
+  }
+
+  function getPack(id) {
+    var packs = getPacks();
+    for (var i = 0; i < packs.length; i++) {
+      if (packs[i].id === id) { return packs[i]; }
+    }
+    return packs.length > 0 ? packs[0] : null;
+  }
+
+  function getStore() {
+    if (typeof STORE === 'undefined' || !STORE.get) {
+      return { packs: {}, lastXpDate: '' };
+    }
+    var acc = STORE.get('accent');
+    if (!acc || typeof acc !== 'object') {
+      acc = { packs: {}, lastXpDate: '' };
+    }
+    if (!acc.packs) { acc.packs = {}; }
+    return acc;
+  }
+
+  function getPackProgress(id) {
+    var acc = getStore();
+    var p = acc.packs[id];
+    if (!p) {
+      return { listenScore: 0, sayScore: 0, sentenceScore: 0, done: false, lastTs: 0, lastXpDate: '' };
+    }
+    return {
+      listenScore: p.listenScore || 0,
+      sayScore: p.sayScore || 0,
+      sentenceScore: p.sentenceScore || 0,
+      done: !!p.done,
+      lastTs: p.lastTs || 0,
+      lastXpDate: p.lastXpDate || ''
+    };
+  }
+
+  function isUnlocked(id) {
+    var packs = getPacks();
+    if (!packs.length) { return false; }
+    if (packs[0].id === id) { return true; } // Pack 1 is always unlocked
+
+    var idx = -1;
+    for (var i = 0; i < packs.length; i++) {
+      if (packs[i].id === id) { idx = i; break; }
+    }
+    if (idx <= 0) { return idx === 0; }
+
+    // Unlocked if previous pack is done (or >=80% listen and >=75% say)
+    var prevId = packs[idx - 1].id;
+    var prevProg = getPackProgress(prevId);
+    return prevProg.done || (prevProg.listenScore >= 80 && prevProg.sayScore >= 75);
+  }
+
+  function hasNeutralizedBadge() {
+    var packs = getPacks();
+    if (!packs.length) { return false; }
+    for (var i = 0; i < packs.length; i++) {
+      var prog = getPackProgress(packs[i].id);
+      var isDone = prog.done || (prog.listenScore >= 80 && prog.sayScore >= 75);
+      if (!isDone) { return false; }
+    }
+    return true;
+  }
+
+  function saveProgress(id, mode, score) {
+    if (typeof STORE === 'undefined' || !STORE.get || !STORE.set) { return { xpAwarded: 0 }; }
+    var acc = getStore();
+    if (!acc.packs[id]) {
+      acc.packs[id] = { listenScore: 0, sayScore: 0, sentenceScore: 0, done: false, lastTs: 0, lastXpDate: '' };
+    }
+    var p = acc.packs[id];
+    p.lastTs = Date.now();
+
+    if (mode === 'listen') {
+      p.listenScore = Math.max(p.listenScore || 0, Math.round(score));
+    } else if (mode === 'say') {
+      p.sayScore = Math.max(p.sayScore || 0, Math.round(score));
+    } else if (mode === 'sentence') {
+      p.sentenceScore = Math.max(p.sentenceScore || 0, Math.round(score));
+    }
+
+    if (p.listenScore >= 80 && p.sayScore >= 75) {
+      p.done = true;
+    }
+
+    // TRAINER.log pronunciation per drill
+    if (typeof TRAINER !== 'undefined' && TRAINER.log) {
+      TRAINER.log({ skill: 'pronunciation', delta: 2, source: 'accent/' + id, ts: Date.now() });
+    }
+
+    // Daily XP anti-farm: only once per pack per day
+    var today = (new Date()).toISOString().slice(0, 10);
+    var xpAwarded = 0;
+    if (p.lastXpDate !== today && score >= 70) {
+      p.lastXpDate = today;
+      xpAwarded = 20;
+      STORE.addXP(20, 'accent/' + id);
+      if (typeof UI !== 'undefined' && UI.toast) {
+        UI.toast('🎉 +20 XP! Accent drill mastered', 'success');
+      }
+    }
+
+    STORE.set('accent', acc);
+    return { xpAwarded: xpAwarded, prog: p };
+  }
+
+  function buildListenQuiz(packId, itemIdx) {
+    var pack = getPack(packId);
+    if (!pack) { return null; }
+
+    if (pack.pairs && pack.pairs.length > 0) {
+      var pair = pack.pairs[itemIdx % pack.pairs.length];
+      // Alternate between testing target (pair.b) and desi (pair.a)
+      var pickTarget = (itemIdx % 2 === 0);
+      var correctWord = pickTarget ? pair.b.w : pair.a.w;
+      var options = (itemIdx % 2 === 0) ? [pair.a.w, pair.b.w] : [pair.b.w, pair.a.w];
+      return {
+        wordToSpeak: correctWord,
+        correctWord: correctWord,
+        options: options,
+        pair: pair
+      };
+    } else if (pack.words && pack.words.length > 0) {
+      var wObj = pack.words[itemIdx % pack.words.length];
+      var nextObj = pack.words[(itemIdx + 1) % pack.words.length];
+      var opts = [wObj.w, nextObj.w];
+      return {
+        wordToSpeak: wObj.w,
+        correctWord: wObj.w,
+        options: opts,
+        wordObj: wObj
+      };
+    } else if (pack.sentences && pack.sentences.length > 0) {
+      var s = pack.sentences[itemIdx % pack.sentences.length];
+      var sText = (typeof s === 'string') ? s : s.text;
+      return {
+        wordToSpeak: sText,
+        correctWord: sText,
+        options: [sText],
+        sentence: s
+      };
+    }
+    return null;
+  }
+
+  function evaluateSay(packId, itemIdx, spokenText) {
+    var pack = getPack(packId);
+    if (!pack) { return { verdict: 'RETRY', message: 'Pack not found' }; }
+
+    var clean = (spokenText || '').toLowerCase().trim().replace(/[^a-z0-9\s]/g, '');
+
+    if (pack.pairs && pack.pairs.length > 0) {
+      var pair = pack.pairs[itemIdx % pack.pairs.length];
+      var targetWord = pair.b.w.toLowerCase().trim();
+      var desiWord = pair.a.w.toLowerCase().trim();
+
+      // Check if target word is heard
+      var tokens = clean.split(/\s+/).filter(Boolean);
+      var matchedTarget = (clean === targetWord || tokens.indexOf(targetWord) !== -1);
+      var matchedDesi = (clean === desiWord || tokens.indexOf(desiWord) !== -1);
+
+      if (matchedTarget) {
+        return {
+          verdict: 'HIT',
+          word: pair.b.w,
+          targetWord: pair.b.w,
+          desiTwin: pair.a.w,
+          message: 'Excellent! Clear international pronunciation for "' + pair.b.w + '".'
+        };
+      } else if (matchedDesi) {
+        return {
+          verdict: 'MISS',
+          word: pair.b.w,
+          targetWord: pair.b.w,
+          desiTwin: pair.a.w,
+          trap: pack.desiTrap,
+          fix: pack.fix,
+          message: '⚠️ Desi twin detected: you said "' + pair.a.w + '" instead of "' + pair.b.w + '". Focus on: ' + pack.fix
+        };
+      } else {
+        return {
+          verdict: 'RETRY',
+          word: pair.b.w,
+          targetWord: pair.b.w,
+          heard: spokenText || '(no speech detected)',
+          fix: pack.fix,
+          message: 'Heard "' + (spokenText || '...') + '". Try again, focusing on: ' + pack.fix
+        };
+      }
+    } else if (pack.words && pack.words.length > 0) {
+      var wObj = pack.words[itemIdx % pack.words.length];
+      var wNorm = wObj.w.toLowerCase().trim();
+      var tokens2 = clean.split(/\s+/).filter(Boolean);
+      var matchedWord = (clean === wNorm || tokens2.indexOf(wNorm) !== -1);
+
+      if (matchedWord) {
+        return {
+          verdict: 'HIT',
+          word: wObj.w,
+          stressMarked: wObj.stressMarked,
+          message: 'Great job! Correct word and natural stress: ' + wObj.stressMarked + '.'
+        };
+      } else {
+        return {
+          verdict: 'RETRY',
+          word: wObj.w,
+          heard: spokenText || '(no speech detected)',
+          fix: pack.fix,
+          message: 'Try saying "' + wObj.stressMarked + '" again clearly.'
+        };
+      }
+    }
+
+    return { verdict: 'HIT', word: clean, message: 'Done!' };
+  }
+
+  function evaluateSentence(targetSentence, spokenSentence) {
+    var tText = (typeof targetSentence === 'string') ? targetSentence : targetSentence.text;
+    var tTokens = (tText || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    var sTokens = (spokenSentence || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+
+    if (tTokens.length === 0) { return { pass: true, pct: 100, matched: 0, total: 0 }; }
+
+    var matched = 0;
+    for (var i = 0; i < tTokens.length; i++) {
+      if (sTokens.indexOf(tTokens[i]) !== -1) {
+        matched++;
+      }
+    }
+    var pct = matched / tTokens.length;
+    return {
+      pass: pct >= 0.85,
+      pct: Math.round(pct * 100),
+      matched: matched,
+      total: tTokens.length
+    };
+  }
+
+  return {
+    getPacks: getPacks,
+    getPack: getPack,
+    getStore: getStore,
+    getPackProgress: getPackProgress,
+    isUnlocked: isUnlocked,
+    hasNeutralizedBadge: hasNeutralizedBadge,
+    saveProgress: saveProgress,
+    buildListenQuiz: buildListenQuiz,
+    evaluateSay: evaluateSay,
+    evaluateSentence: evaluateSentence
+  };
+})();
+
+/* ══════════════════════════════════════════════════════════════════════
+   VIEWS.accent — Indian Accent Studio (M20 ACCENT-UP)
+   ════════════════════════════════════════════════════════════════════*/
+var VIEWS = (typeof VIEWS !== 'undefined') ? VIEWS : {};
+
+VIEWS.accent = {
+  _mode: 'listen',
+  _quizIdx: 0,
+  _quizScore: 0,
+  _sayIdx: 0,
+  _sayHits: 0,
+  _sentIdx: 0,
+  _sentPasses: 0,
+
+  render: function (el, packId) {
+    'use strict';
+    var self = this;
+    if (!el) { return; }
+
+    var packs = ACCENT.getPacks();
+
+    // ── 1. Accent Studio Home (List of 7 packs) ──
+    if (!packId) {
+      self._renderHome(el, packs);
+      return;
+    }
+
+    // ── 2. Inside a specific pack ──
+    var pack = ACCENT.getPack(packId);
+    if (!pack) {
+      self._renderHome(el, packs);
+      return;
+    }
+    self._renderPack(el, pack);
+  },
+
+  _renderHome: function (el, packs) {
+    var hasBadge = ACCENT.hasNeutralizedBadge();
+
+    // Progress strip
+    var stripHtml = '<div class="accent-progress-strip" style="display:flex;gap:8px;margin:16px 0 24px 0;overflow-x:auto;padding-bottom:6px;">';
+    for (var i = 0; i < packs.length; i++) {
+      var p = packs[i];
+      var prog = ACCENT.getPackProgress(p.id);
+      var unlocked = ACCENT.isUnlocked(p.id);
+      var isDone = prog.done || (prog.listenScore >= 80 && prog.sayScore >= 75);
+      var icon = isDone ? '✅' : (unlocked ? '🔓' : '🔒');
+      var bg = isDone ? 'rgba(52,211,153,0.15)' : (unlocked ? 'rgba(124,92,255,0.15)' : 'var(--bg2)');
+      var border = isDone ? 'var(--ok)' : (unlocked ? 'var(--acc)' : 'var(--line)');
+
+      stripHtml += '<div style="flex:1;min-width:110px;background:' + bg + ';border:1px solid ' + border + ';border-radius:var(--r-sm);padding:8px 10px;text-align:center;">' +
+        '<div style="font-size:0.72rem;color:var(--mut);text-transform:uppercase;">Pack ' + (i + 1) + '</div>' +
+        '<div style="font-size:0.85rem;font-weight:700;margin-top:2px;">' + icon + ' ' + p.id.replace('ax-', '') + '</div>' +
+        '</div>';
+    }
+    stripHtml += '</div>';
+
+    // Badge banner
+    var badgeBanner = '';
+    if (hasBadge) {
+      badgeBanner = '<div class="card" style="background:rgba(52,211,153,0.12);border:1px solid var(--ok);margin-bottom:20px;padding:16px 20px;display:flex;align-items:center;gap:14px;">' +
+        '<span style="font-size:2rem;">🇮🇳✨</span>' +
+        '<div><strong style="color:var(--ok);font-size:1.05rem;">+Accent Neutralized Master Badge Unlocked!</strong>' +
+        '<p style="color:var(--txt);font-size:0.85rem;margin:4px 0 0 0;">You have mastered all 7 Indian-English accent contrast modules. Your speech is crisp, globally intelligible, and authentic.</p></div>' +
+        '</div>';
+    }
+
+    // Grid of pack cards
+    var cardsHtml = '<div class="accent-packs-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;">';
+    for (var j = 0; j < packs.length; j++) {
+      var pk = packs[j];
+      var pr = ACCENT.getPackProgress(pk.id);
+      var isUnl = ACCENT.isUnlocked(pk.id);
+      var pkDone = pr.done || (pr.listenScore >= 80 && pr.sayScore >= 75);
+
+      var statusBadge = pkDone
+        ? '<span class="badge" style="background:rgba(52,211,153,0.2);color:var(--ok);">✅ Mastered</span>'
+        : (isUnl ? '<span class="badge" style="background:rgba(124,92,255,0.2);color:var(--acc2);">🔓 Unlocked</span>'
+                 : '<span class="badge" style="background:rgba(154,166,201,0.2);color:var(--mut);">🔒 Locked</span>');
+
+      cardsHtml += '<div class="card accent-pack-card" data-pack-id="' + pk.id + '" style="cursor:' + (isUnl ? 'pointer' : 'not-allowed') + ';opacity:' + (isUnl ? '1' : '0.65') + ';" onclick="' + (isUnl ? 'navigate(\'accent\',\'' + pk.id + '\')' : '') + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<span class="badge" style="font-size:0.75rem;">' + pk.ipa + '</span>' +
+          statusBadge +
+        '</div>' +
+        '<h3 style="font-size:1.1rem;margin-bottom:6px;">' + (j + 1) + '. ' + pk.title + '</h3>' +
+        '<p style="font-size:0.85rem;color:var(--mut);line-height:1.4;margin-bottom:12px;">' + pk.desiTrap + '</p>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--mut);border-top:1px solid var(--line);padding-top:10px;">' +
+          '<span>Ear: ' + pr.listenScore + '% | Voice: ' + pr.sayScore + '%</span>' +
+          (isUnl ? '<span style="color:var(--acc2);font-weight:600;">Train Pack →</span>' : '<span>Requires Pack ' + j + '</span>') +
+        '</div>' +
+        '</div>';
+    }
+    cardsHtml += '</div>';
+
+    el.innerHTML = '<div class="view-accent" style="max-width:960px;margin:0 auto;padding:10px 0;">' +
+      '<h1>🇮🇳 Indian Accent Studio</h1>' +
+      '<p class="sub">Upgrade from regional Indian phonology to crisp international clarity without erasing your voice. 7 research-backed packs with ear training, word-level contrasts, and stress rhythm.</p>' +
+      badgeBanner +
+      stripHtml +
+      '<div class="section-title">🎙️ Accent Neutralization Curriculum</div>' +
+      cardsHtml +
+      '</div>';
+  },
+
+  _renderPack: function (el, pack) {
+    var self = this;
+    var prog = ACCENT.getPackProgress(pack.id);
+    var mode = self._mode || 'listen';
+
+    var html = '<div class="view-accent-detail" style="max-width:760px;margin:0 auto;padding:10px 0;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">' +
+        '<button class="btn-back" onclick="navigate(\'accent\')">← All Accent Packs</button>' +
+        '<span class="badge" style="font-size:0.82rem;">' + pack.ipa + '</span>' +
+      '</div>' +
+      '<h1>' + pack.title + '</h1>' +
+
+      // Desi trap banner
+      '<div class="accent-trap-box" style="background:rgba(245,158,11,0.12);border:1px solid var(--warn);border-radius:var(--r-md);padding:14px 18px;margin-bottom:16px;">' +
+        '<div style="font-size:0.78rem;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">⚠️ The Indian English Pattern</div>' +
+        '<p style="font-size:0.92rem;line-height:1.45;color:var(--txt);margin:0;">' + pack.desiTrap + '</p>' +
+      '</div>' +
+
+      // Fix card
+      '<div class="accent-fix-box" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 18px;margin-bottom:20px;">' +
+        '<div style="font-size:0.78rem;font-weight:700;color:var(--acc2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">💡 How to Neutralize</div>' +
+        '<p style="font-size:0.92rem;line-height:1.45;color:var(--txt);margin:0;">' + pack.fix + '</p>' +
+      '</div>' +
+
+      // Mode tabs
+      '<div class="coach-modes" style="margin-bottom:20px;">' +
+        '<button class="tab-btn' + (mode === 'listen' ? ' active' : '') + '" id="ax-tab-listen">👂 1. Listen Quiz (' + prog.listenScore + '%)</button>' +
+        '<button class="tab-btn' + (mode === 'say' ? ' active' : '') + '" id="ax-tab-say">🎙️ 2. Say It (' + prog.sayScore + '%)</button>' +
+        '<button class="tab-btn' + (mode === 'sentence' ? ' active' : '') + '" id="ax-tab-sentence">🗣️ 3. Sentence Run (' + prog.sentenceScore + '%)</button>' +
+      '</div>' +
+
+      '<div id="accent-drill-area"></div>' +
+      '</div>';
+
+    el.innerHTML = html;
+
+    // Tab bindings
+    var tListen = document.getElementById('ax-tab-listen');
+    if (tListen) { tListen.addEventListener('click', function () { self._mode = 'listen'; self.render(el, pack.id); }); }
+    var tSay = document.getElementById('ax-tab-say');
+    if (tSay) { tSay.addEventListener('click', function () { self._mode = 'say'; self.render(el, pack.id); }); }
+    var tSent = document.getElementById('ax-tab-sentence');
+    if (tSent) { tSent.addEventListener('click', function () { self._mode = 'sentence'; self.render(el, pack.id); }); }
+
+    var area = document.getElementById('accent-drill-area');
+    if (!area) { return; }
+
+    if (mode === 'listen') {
+      self._renderListenMode(area, pack, el);
+    } else if (mode === 'say') {
+      self._renderSayMode(area, pack, el);
+    } else if (mode === 'sentence') {
+      self._renderSentenceMode(area, pack, el);
+    }
+  },
+
+  _renderListenMode: function (area, pack, rootEl) {
+    var self = this;
+    var quiz = ACCENT.buildListenQuiz(pack.id, self._quizIdx);
+    if (!quiz) {
+      area.innerHTML = '<p>No quiz available for this pack.</p>';
+      return;
+    }
+
+    var totalQs = 6;
+    var curQ = (self._quizIdx % totalQs) + 1;
+
+    var html = '<div class="card" style="padding:22px 20px;text-align:center;">' +
+      '<div style="font-size:0.8rem;color:var(--mut);margin-bottom:12px;">Question ' + curQ + ' of ' + totalQs + ' · Trains Ear Contrast</div>' +
+      '<button class="btn-primary" id="ax-listen-speak-btn" style="padding:12px 26px;font-size:1.1rem;margin-bottom:20px;">🔊 Play Word</button>' +
+      '<div style="font-size:0.85rem;color:var(--mut);margin-bottom:16px;">Which word did you hear?</div>' +
+      '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;">';
+
+    for (var oi = 0; oi < quiz.options.length; oi++) {
+      html += '<button class="btn-secondary ax-listen-opt" data-opt="' + _esc(quiz.options[oi]) + '" style="font-size:1.1rem;padding:12px 28px;min-width:140px;">' + _esc(quiz.options[oi]) + '</button>';
+    }
+    html += '</div><div id="ax-listen-feedback" style="min-height:36px;font-size:0.95rem;font-weight:600;"></div></div>';
+
+    area.innerHTML = html;
+
+    var speakBtn = document.getElementById('ax-listen-speak-btn');
+    if (speakBtn && typeof SPEECH !== 'undefined' && SPEECH.speak) {
+      speakBtn.addEventListener('click', function () {
+        SPEECH.speak(quiz.wordToSpeak);
+      });
+      // Auto-speak once
+      setTimeout(function () { SPEECH.speak(quiz.wordToSpeak); }, 300);
+    }
+
+    var optBtns = area.querySelectorAll('.ax-listen-opt');
+    for (var bi = 0; bi < optBtns.length; bi++) {
+      optBtns[bi].addEventListener('click', function () {
+        var chosen = this.getAttribute('data-opt');
+        var fb = document.getElementById('ax-listen-feedback');
+        var isCorrect = (chosen.toLowerCase() === quiz.correctWord.toLowerCase());
+
+        if (isCorrect) {
+          self._quizScore++;
+          if (fb) { fb.innerHTML = '<span style="color:var(--ok);">✅ Correct! You heard "' + _esc(quiz.correctWord) + '".</span>'; }
+        } else {
+          if (fb) { fb.innerHTML = '<span style="color:var(--bad);">❌ That was "' + _esc(quiz.correctWord) + '", not "' + _esc(chosen) + '".</span>'; }
+        }
+
+        setTimeout(function () {
+          self._quizIdx++;
+          if (self._quizIdx >= totalQs) {
+            var finalScore = Math.round((self._quizScore / totalQs) * 100);
+            ACCENT.saveProgress(pack.id, 'listen', finalScore);
+            self._quizIdx = 0;
+            self._quizScore = 0;
+            self._mode = 'say'; // advance to say mode
+            self.render(rootEl, pack.id);
+          } else {
+            self._renderListenMode(area, pack, rootEl);
+          }
+        }, 1200);
+      });
+    }
+  },
+
+  _renderSayMode: function (area, pack, rootEl) {
+    var self = this;
+    var totalItems = 6;
+    var curIdx = self._sayIdx % totalItems;
+
+    var targetWord = '';
+    var ipa = '';
+    var note = '';
+
+    if (pack.pairs && pack.pairs.length > 0) {
+      var pair = pack.pairs[curIdx % pack.pairs.length];
+      targetWord = pair.b.w;
+      ipa = pair.b.ipa;
+      note = 'Target: ' + pair.b.w + ' · Watch out for desi twin: ' + pair.a.w;
+    } else if (pack.words && pack.words.length > 0) {
+      var wObj = pack.words[curIdx % pack.words.length];
+      targetWord = wObj.w;
+      ipa = wObj.ipa;
+      note = 'Stress pattern: ' + wObj.stressMarked;
+    }
+
+    var html = '<div class="card" style="padding:22px 20px;text-align:center;">' +
+      '<div style="font-size:0.8rem;color:var(--mut);margin-bottom:10px;">Item ' + (curIdx + 1) + ' of ' + totalItems + ' · Word-Level Voice Verification</div>' +
+      '<div style="font-size:2rem;font-weight:800;color:var(--txt);margin-bottom:4px;">' + _esc(targetWord) + '</div>' +
+      '<div style="font-size:1.05rem;color:var(--acc2);margin-bottom:10px;">' + _esc(ipa) + '</div>' +
+      '<div style="font-size:0.85rem;color:var(--mut);margin-bottom:20px;">' + _esc(note) + '</div>' +
+      '<div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:16px;">';
+
+    if (typeof SPEECH !== 'undefined' && SPEECH.canListen && SPEECH.canListen()) {
+      html += '<button class="btn-primary" id="ax-say-mic-btn" style="padding:10px 22px;font-size:1rem;">🎙️ Say Word</button>';
+    }
+    html += '<button class="btn-ghost btn-sm" id="ax-say-listen-btn">🔊 Hear Correct</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;max-width:380px;margin:0 auto 16px auto;">' +
+        '<input type="text" id="ax-say-typed" placeholder="Or type word to test..." style="flex:1;padding:8px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);" />' +
+        '<button class="btn-secondary" id="ax-say-typed-btn">Check</button>' +
+      '</div>' +
+      '<div id="ax-say-verdict" style="min-height:50px;padding:8px 12px;border-radius:var(--r-sm);font-size:0.92rem;line-height:1.4;"></div>' +
+      '</div>';
+
+    area.innerHTML = html;
+
+    var listenBtn = document.getElementById('ax-say-listen-btn');
+    if (listenBtn && typeof SPEECH !== 'undefined' && SPEECH.speak) {
+      listenBtn.addEventListener('click', function () { SPEECH.speak(targetWord); });
+    }
+
+    function handleResult(text) {
+      var verdict = ACCENT.evaluateSay(pack.id, curIdx, text);
+      var vBox = document.getElementById('ax-say-verdict');
+      if (!vBox) { return; }
+
+      if (verdict.verdict === 'HIT') {
+        self._sayHits++;
+        vBox.style.background = 'rgba(52,211,153,0.15)';
+        vBox.style.color = 'var(--ok)';
+        vBox.style.border = '1px solid var(--ok)';
+        vBox.innerHTML = '<strong>🎉 HIT!</strong> ' + _esc(verdict.message);
+
+        setTimeout(function () {
+          self._sayIdx++;
+          if (self._sayIdx >= totalItems) {
+            var finalScore = Math.round((self._sayHits / totalItems) * 100);
+            ACCENT.saveProgress(pack.id, 'say', finalScore);
+            self._sayIdx = 0;
+            self._sayHits = 0;
+            self._mode = 'sentence';
+            self.render(rootEl, pack.id);
+          } else {
+            self._renderSayMode(area, pack, rootEl);
+          }
+        }, 1200);
+      } else if (verdict.verdict === 'MISS') {
+        vBox.style.background = 'rgba(239,68,68,0.15)';
+        vBox.style.color = 'var(--bad)';
+        vBox.style.border = '1px solid var(--bad)';
+        vBox.innerHTML = '<strong>⚠️ MISS (Desi Twin)</strong><br>' + _esc(verdict.message);
+      } else {
+        vBox.style.background = 'rgba(245,158,11,0.15)';
+        vBox.style.color = 'var(--warn)';
+        vBox.style.border = '1px solid var(--warn)';
+        vBox.innerHTML = '<strong>🔁 RETRY</strong><br>' + _esc(verdict.message);
+      }
+    }
+
+    var micBtn = document.getElementById('ax-say-mic-btn');
+    if (micBtn && typeof SPEECH !== 'undefined' && SPEECH.listen) {
+      micBtn.addEventListener('click', function () {
+        micBtn.textContent = '🔴 Listening...';
+        micBtn.disabled = true;
+        SPEECH.listen({
+          onresult: function (t) {
+            micBtn.textContent = '🎙️ Say Word';
+            micBtn.disabled = false;
+            handleResult(t);
+          },
+          onend: function () {
+            micBtn.textContent = '🎙️ Say Word';
+            micBtn.disabled = false;
+          },
+          onerror: function () {
+            micBtn.textContent = '🎙️ Say Word';
+            micBtn.disabled = false;
+          }
+        });
+      });
+    }
+
+    var typedBtn = document.getElementById('ax-say-typed-btn');
+    var typedInput = document.getElementById('ax-say-typed');
+    if (typedBtn && typedInput) {
+      typedBtn.addEventListener('click', function () {
+        var v = typedInput.value.trim();
+        if (v) { handleResult(v); }
+      });
+      typedInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          var val = typedInput.value.trim();
+          if (val) { handleResult(val); }
+        }
+      });
+    }
+  },
+
+  _renderSentenceMode: function (area, pack, rootEl) {
+    var self = this;
+    var totalSentences = 3;
+    var curIdx = self._sentIdx % totalSentences;
+    var sObj = pack.sentences[curIdx % pack.sentences.length];
+    var sText = (typeof sObj === 'string') ? sObj : sObj.text;
+    var stressMark = (typeof sObj === 'object' && sObj.stressMark) ? sObj.stressMark : sText;
+
+    var html = '<div class="card" style="padding:22px 20px;text-align:center;">' +
+      '<div style="font-size:0.8rem;color:var(--mut);margin-bottom:12px;">Sentence ' + (curIdx + 1) + ' of ' + totalSentences + ' · ≥85% Word Alignment Pass Threshold</div>' +
+      '<div style="font-size:1.25rem;font-weight:700;color:var(--txt);margin-bottom:8px;line-height:1.4;">' + _esc(stressMark) + '</div>' +
+      '<p style="font-size:0.85rem;color:var(--mut);margin-bottom:18px;">Read the sentence aloud smoothly, adhering to the accent contrast and rhythm.</p>' +
+      '<div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:16px;">';
+
+    if (typeof SPEECH !== 'undefined' && SPEECH.canListen && SPEECH.canListen()) {
+      html += '<button class="btn-primary" id="ax-sent-mic-btn" style="padding:10px 22px;font-size:1rem;">🎙️ Read Sentence</button>';
+    }
+    html += '<button class="btn-ghost btn-sm" id="ax-sent-listen-btn">🔊 Hear Model</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;max-width:440px;margin:0 auto 16px auto;">' +
+        '<input type="text" id="ax-sent-typed" placeholder="Or type sentence to test..." style="flex:1;padding:8px 12px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);" />' +
+        '<button class="btn-secondary" id="ax-sent-typed-btn">Check</button>' +
+      '</div>' +
+      '<div id="ax-sent-verdict" style="min-height:45px;padding:8px 12px;border-radius:var(--r-sm);font-size:0.92rem;line-height:1.4;"></div>' +
+      '</div>';
+
+    area.innerHTML = html;
+
+    var listenBtn = document.getElementById('ax-sent-listen-btn');
+    if (listenBtn && typeof SPEECH !== 'undefined' && SPEECH.speak) {
+      listenBtn.addEventListener('click', function () { SPEECH.speak(sText); });
+    }
+
+    function handleSentenceResult(spoken) {
+      var res = ACCENT.evaluateSentence(sText, spoken);
+      var vBox = document.getElementById('ax-sent-verdict');
+      if (!vBox) { return; }
+
+      if (res.pass) {
+        self._sentPasses++;
+        vBox.style.background = 'rgba(52,211,153,0.15)';
+        vBox.style.color = 'var(--ok)';
+        vBox.style.border = '1px solid var(--ok)';
+        vBox.innerHTML = '<strong>🎉 PASS (' + res.pct + '%)</strong> ' + res.matched + ' of ' + res.total + ' words verified.';
+
+        setTimeout(function () {
+          self._sentIdx++;
+          if (self._sentIdx >= totalSentences) {
+            var finalScore = Math.round((self._sentPasses / totalSentences) * 100);
+            ACCENT.saveProgress(pack.id, 'sentence', finalScore);
+            self._sentIdx = 0;
+            self._sentPasses = 0;
+            self.render(rootEl, pack.id);
+          } else {
+            self._renderSentenceMode(area, pack, rootEl);
+          }
+        }, 1400);
+      } else {
+        vBox.style.background = 'rgba(239,68,68,0.15)';
+        vBox.style.color = 'var(--bad)';
+        vBox.style.border = '1px solid var(--bad)';
+        vBox.innerHTML = '<strong>❌ Needs Practice (' + res.pct + '%)</strong> Only ' + res.matched + ' of ' + res.total + ' words matched. Minimum 85% required.';
+      }
+    }
+
+    var micBtn = document.getElementById('ax-sent-mic-btn');
+    if (micBtn && typeof SPEECH !== 'undefined' && SPEECH.listen) {
+      micBtn.addEventListener('click', function () {
+        micBtn.textContent = '🔴 Listening...';
+        micBtn.disabled = true;
+        SPEECH.listen({
+          onresult: function (t) {
+            micBtn.textContent = '🎙️ Read Sentence';
+            micBtn.disabled = false;
+            handleSentenceResult(t);
+          },
+          onend: function () {
+            micBtn.textContent = '🎙️ Read Sentence';
+            micBtn.disabled = false;
+          },
+          onerror: function () {
+            micBtn.textContent = '🎙️ Read Sentence';
+            micBtn.disabled = false;
+          }
+        });
+      });
+    }
+
+    var typedBtn = document.getElementById('ax-sent-typed-btn');
+    var typedInput = document.getElementById('ax-sent-typed');
+    if (typedBtn && typedInput) {
+      typedBtn.addEventListener('click', function () {
+        var v = typedInput.value.trim();
+        if (v) { handleSentenceResult(v); }
+      });
+      typedInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          var val = typedInput.value.trim();
+          if (val) { handleSentenceResult(val); }
+        }
+      });
+    }
+  }
+};
+
+function _esc(s) {
+  if (!s) { return ''; }
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+if (typeof window !== 'undefined') {
+  window.ACCENT = ACCENT;
+  window.VIEWS = VIEWS;
+}
+if (typeof global !== 'undefined') {
+  global.ACCENT = ACCENT;
+  global.VIEWS = VIEWS;
+}
+/* =====================================================================
    views-a.js — ES5 ONLY
    VIEWS.home, VIEWS.foundations, VIEWS.pronunciation
    ===================================================================== */
@@ -9545,6 +10539,15 @@ VIEWS.home = {
           '<span class="start-card-action">Continue →</span>' +
         '</div>' +
 
+        '<div class="card start-card" id="home-accent-card" onclick="navigate(\'accent\')">' +
+          '<div class="start-card-icon">🇮🇳</div>' +
+          '<div class="start-card-body">' +
+            '<h3>Accent Studio</h3>' +
+            '<p>Train Indian→neutral, 7 contrast packs</p>' +
+          '</div>' +
+          '<span class="start-card-action">Start Accent →</span>' +
+        '</div>' +
+
         '<div class="card start-card" onclick="navigate(\'coach\')">' +
           '<div class="start-card-icon">🤖</div>' +
           '<div class="start-card-body">' +
@@ -9580,6 +10583,7 @@ VIEWS.home = {
       '</div>' +
 
       '<div class="home-links">' +
+        '<a href="#/accent" class="btn btn-ghost">🇮🇳 Accent Studio</a>' +
         '<a href="#/assessment" class="btn btn-ghost">📋 Speaking Assessment</a>' +
         '<a href="#/trainer" class="btn btn-ghost">📊 My Trainer</a>' +
         '<a href="#/quiz" class="btn btn-ghost">🎓 Level Test</a>' +

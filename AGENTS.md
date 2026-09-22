@@ -76,19 +76,24 @@ src/data.js       → LETTERS, SOUNDS, WORDS, PAIRS, TWISTERS, SPELLING, COACH_R
 src/data2.js      → COURSE, CLARITY_DATA, IDIOMS, PVS, QUOTES, DAILY_SEEDS
 src/data3.js      → ATLAS, PASSAGES, ASSESSMENT_POOLS, SKILL_META
 src/data4.js      → DATA4 (GEN_LESSONS, GEN_SCENARIOS, GEN_PASSAGES)
+src/data5.js      → ACCENT_PACKS (7 Indian English accent neutralization packs)
 src/speech.js     → SPEECH (TTS + STT wrapper)
 src/core.js       → STORE, TRAINER, U, UI, router, nav
+src/accent-engine.js → ACCENT (engine & drills), VIEWS.accent
 src/views-a.js    → VIEWS.home, VIEWS.foundations, VIEWS.pronunciation
 src/views-b.js    → VIEWS.spelling, VIEWS.phrases, VIEWS.scenarios
 src/views-c.js    → VIEWS.coach, VIEWS.quiz, VIEWS.wordbank, VIEWS.settings
 src/views-d.js    → VIEWS.daily, VIEWS.path, VIEWS.lesson, VIEWS.clarity,
                      VIEWS.idioms, VIEWS.doctor, VIEWS.onboarding
 src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.atlas
+src/views-f.js    → VIEWS.docstudio, VIEWS.resume
 ```
 
 ---
 
 ## Mission Backlog & Release Status
+
+- **M20**: Indian Accent Studio (ACCENT-UP), 7 contrast packs, ear quiz, word-level verify, sentence run, badge — **SHIPPED** (2026-09-22)
 
 - **PWA-01**: Offline PWA, Web App Manifest, Service Worker cache-first — **SHIPPED** (2026-09-20 · `e517f27`)
 - **SRS-01**: Spaced repetition schedule (1/3/7/16/35 days), review queue, live nav badge — **SHIPPED** (2026-09-20 · `e517f27`)

@@ -198,6 +198,15 @@ VIEWS.home = {
           '<span class="start-card-action">Continue →</span>' +
         '</div>' +
 
+        '<div class="card start-card" id="home-accent-card" onclick="navigate(\'accent\')">' +
+          '<div class="start-card-icon">🇮🇳</div>' +
+          '<div class="start-card-body">' +
+            '<h3>Accent Studio</h3>' +
+            '<p>Train Indian→neutral, 7 contrast packs</p>' +
+          '</div>' +
+          '<span class="start-card-action">Start Accent →</span>' +
+        '</div>' +
+
         '<div class="card start-card" onclick="navigate(\'coach\')">' +
           '<div class="start-card-icon">🤖</div>' +
           '<div class="start-card-body">' +
@@ -233,6 +242,7 @@ VIEWS.home = {
       '</div>' +
 
       '<div class="home-links">' +
+        '<a href="#/accent" class="btn btn-ghost">🇮🇳 Accent Studio</a>' +
         '<a href="#/assessment" class="btn btn-ghost">📋 Speaking Assessment</a>' +
         '<a href="#/trainer" class="btn btn-ghost">📊 My Trainer</a>' +
         '<a href="#/quiz" class="btn btn-ghost">🎓 Level Test</a>' +

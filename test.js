@@ -52,8 +52,10 @@ loadSrc('src/data.js');
 loadSrc('src/data2.js');
 loadSrc('src/data3.js');
 loadSrc('src/data4.js');
+loadSrc('src/data5.js');
 loadSrc('src/speech.js');
 loadSrc('src/core.js');
+loadSrc('src/accent-engine.js');
 loadSrc('src/views-a.js');
 loadSrc('src/views-b.js');
 loadSrc('src/views-c.js');
@@ -245,7 +247,7 @@ tryv('SPEECH.getVoices returns array', function () { return Array.isArray(SPEECH
 console.log('\n💾 STORE module');
 
 tryv('STORE exists', function () { return typeof STORE === 'object'; });
-tryv('STORE.VERSION is 7 (bumped for weekly progress schema v7 migration)', function () { return STORE.VERSION === 7; });
+tryv('STORE.VERSION is 8 (bumped for accent studio schema v8 migration)', function () { return STORE.VERSION === 8; });
 tryv('STORE.get returns object', function () { return typeof STORE.get() === 'object'; });
 tryv('STORE.get user has name field', function () { return typeof STORE.get('user') === 'object'; });
 tryv('STORE.get srs field exists (INV-5 append)', function () { return STORE.get('srs') !== undefined; });
@@ -2632,6 +2634,194 @@ tryv('M15a: VIEWS.onboarding renders dynamic merged lesson and scenario counts',
 
   VIEWS.onboarding._screen = 0;
   return hasS1Counts && hasS4Counts;
+});
+
+/* ── M20: INDIAN ACCENT STUDIO (ACCENT-UP) ─────────────────────────── */
+console.log('\n🇮🇳 M20 Indian Accent Studio (ACCENT-UP)');
+
+tryv('M20: data5 schema: all 7 packs present with required IDs and fields', function () {
+  if (!Array.isArray(ACCENT_PACKS) || ACCENT_PACKS.length !== 7) { return false; }
+  var expectedIds = ['ax-vw', 'ax-th', 'ax-r', 'ax-td', 'ax-stress', 'ax-diph', 'ax-rhythm'];
+  return ACCENT_PACKS.every(function (p, i) {
+    return p.id === expectedIds[i] &&
+           typeof p.title === 'string' && p.title.length > 0 &&
+           typeof p.desiTrap === 'string' && p.desiTrap.length > 0 &&
+           typeof p.fix === 'string' && p.fix.length > 0 &&
+           typeof p.ipa === 'string' && p.ipa.length > 0 &&
+           Array.isArray(p.sentences) && p.sentences.length === 12;
+  });
+});
+
+tryv('M20: data5 schema: contrast packs carry 12 minimal pairs with valid a/b tags and ipa', function () {
+  var contrastIds = ['ax-vw', 'ax-th', 'ax-r', 'ax-td', 'ax-diph'];
+  return contrastIds.every(function (id) {
+    var pack = ACCENT.getPack(id);
+    if (!pack || !Array.isArray(pack.pairs) || pack.pairs.length !== 12) { return false; }
+    return pack.pairs.every(function (pair) {
+      return pair.a && typeof pair.a.w === 'string' && pair.a.ipa && pair.a.tag === 'desi' &&
+             pair.b && typeof pair.b.w === 'string' && pair.b.ipa && pair.b.tag === 'target';
+    });
+  });
+});
+
+tryv('M20: data5 schema: stress pack has 20 words with stressMarked and rhythm pack has 12 marked sentences', function () {
+  var stressPack = ACCENT.getPack('ax-stress');
+  var rhythmPack = ACCENT.getPack('ax-rhythm');
+  if (!stressPack || !Array.isArray(stressPack.words) || stressPack.words.length !== 20) { return false; }
+  var stressOk = stressPack.words.every(function (w) {
+    return w.w && w.ipa && typeof w.stressMarked === 'string' && w.stressMarked.length > 0;
+  });
+
+  if (!rhythmPack || !Array.isArray(rhythmPack.sentences) || rhythmPack.sentences.length !== 12) { return false; }
+  var rhythmOk = rhythmPack.sentences.every(function (s) {
+    return typeof s === 'object' && s.text && s.stressMark;
+  });
+
+  return stressOk && rhythmOk;
+});
+
+tryv('M20: listen-quiz builder always includes correct word and pair options', function () {
+  var q0 = ACCENT.buildListenQuiz('ax-vw', 0);
+  var q1 = ACCENT.buildListenQuiz('ax-vw', 1);
+  if (!q0 || !q1) { return false; }
+
+  var ok0 = Array.isArray(q0.options) && q0.options.length === 2 &&
+            q0.options.indexOf(q0.correctWord) !== -1 &&
+            q0.wordToSpeak === q0.correctWord;
+
+  var ok1 = Array.isArray(q1.options) && q1.options.length === 2 &&
+            q1.options.indexOf(q1.correctWord) !== -1 &&
+            q1.wordToSpeak === q1.correctWord;
+
+  return ok0 && ok1;
+});
+
+tryv('M20: say-it verdict matrix: target word returns HIT', function () {
+  var resV = ACCENT.evaluateSay('ax-vw', 0, 'vine');
+  var resTh = ACCENT.evaluateSay('ax-th', 0, 'think');
+  return resV.verdict === 'HIT' && resV.word === 'vine' &&
+         resTh.verdict === 'HIT' && resTh.word === 'think';
+});
+
+tryv('M20: say-it verdict matrix: desi twin returns MISS with trap explanation', function () {
+  var resWine = ACCENT.evaluateSay('ax-vw', 0, 'wine');
+  var resTink = ACCENT.evaluateSay('ax-th', 0, 'tink');
+  return resWine.verdict === 'MISS' && resWine.desiTwin === 'wine' && typeof resWine.message === 'string' &&
+         resTink.verdict === 'MISS' && resTink.desiTwin === 'tink' && typeof resTink.message === 'string';
+});
+
+tryv('M20: say-it verdict matrix: unrecognized word returns RETRY', function () {
+  var resUnk = ACCENT.evaluateSay('ax-vw', 0, 'pineapple');
+  var resEmpty = ACCENT.evaluateSay('ax-vw', 0, '');
+  return resUnk.verdict === 'RETRY' && resEmpty.verdict === 'RETRY';
+});
+
+tryv('M20: say-it typed fallback grading functions offline identically', function () {
+  var resTypedHit = ACCENT.evaluateSay('ax-vw', 1, 'vet');
+  var resTypedMiss = ACCENT.evaluateSay('ax-vw', 1, 'wet');
+  return resTypedHit.verdict === 'HIT' && resTypedMiss.verdict === 'MISS';
+});
+
+tryv('M20: unlock math: 79% listen blocks next pack; >=80% listen + >=75% say unlocks next pack', function () {
+  STORE.set('accent', { packs: {}, lastXpDate: '' });
+
+  var p1Unl = ACCENT.isUnlocked('ax-vw');
+  var p2Locked = !ACCENT.isUnlocked('ax-th');
+
+  ACCENT.saveProgress('ax-vw', 'listen', 79);
+  ACCENT.saveProgress('ax-vw', 'say', 90);
+  var p2StillLocked = !ACCENT.isUnlocked('ax-th');
+
+  ACCENT.saveProgress('ax-vw', 'listen', 80);
+  ACCENT.saveProgress('ax-vw', 'say', 75);
+  var p2Unlocked = ACCENT.isUnlocked('ax-th');
+
+  return p1Unl && p2Locked && p2StillLocked && p2Unlocked;
+});
+
+tryv('M20: sentence-run >=85% threshold passes and <85% fails', function () {
+  var target = 'We viewed the vast valley with wonder and awe.';
+  var spokenGood = 'We viewed the vast valley with wonder and';
+  var passRes = ACCENT.evaluateSentence(target, spokenGood);
+
+  var spokenBad = 'We viewed the vast valley something else';
+  var failRes = ACCENT.evaluateSentence(target, spokenBad);
+
+  return passRes.pass === true && passRes.pct >= 85 &&
+         failRes.pass === false && failRes.pct < 85;
+});
+
+tryv('M20: store append-only migration leaves existing store keys untouched', function () {
+  var stored = STORE.get('accent');
+  var user = STORE.get('user');
+  var xp = STORE.get('xp');
+  var weekly = STORE.get('weeklyHistory');
+  return stored && typeof stored.packs === 'object' &&
+         typeof user === 'object' && typeof xp === 'number' &&
+         Array.isArray(weekly);
+});
+
+tryv('M20: badge logic: hasNeutralizedBadge true only when all 7 packs are done', function () {
+  var acc = { packs: {}, lastXpDate: '' };
+  var packIds = ['ax-vw', 'ax-th', 'ax-r', 'ax-td', 'ax-stress', 'ax-diph', 'ax-rhythm'];
+  for (var i = 0; i < 6; i++) {
+    acc.packs[packIds[i]] = { done: true, listenScore: 90, sayScore: 90 };
+  }
+  STORE.set('accent', acc);
+  var badge6 = ACCENT.hasNeutralizedBadge();
+
+  acc.packs[packIds[6]] = { done: true, listenScore: 85, sayScore: 80 };
+  STORE.set('accent', acc);
+  var badge7 = ACCENT.hasNeutralizedBadge();
+
+  return badge6 === false && badge7 === true;
+});
+
+tryv('M20: XP anti-farm: awards +20 XP on first completion today, 0 XP on repeat attempt', function () {
+  STORE.set('accent', { packs: { 'ax-th': { listenScore: 0, sayScore: 0, done: false, lastXpDate: '' } }, lastXpDate: '' });
+  var res1 = ACCENT.saveProgress('ax-th', 'say', 85);
+  var res2 = ACCENT.saveProgress('ax-th', 'say', 90);
+  return res1.xpAwarded === 20 && res2.xpAwarded === 0;
+});
+
+tryv('M20: UI render: VIEWS.accent renders pack list, progress strip, and detail view', function () {
+  var el = document.createElement('div');
+  VIEWS.accent.render(el);
+  var homeHtml = el.innerHTML;
+  var hasTitle = homeHtml.indexOf('Indian Accent Studio') !== -1;
+  var hasPacks = homeHtml.indexOf('data-pack-id="ax-vw"') !== -1 && homeHtml.indexOf('data-pack-id="ax-th"') !== -1;
+  var hasStrip = homeHtml.indexOf('accent-progress-strip') !== -1;
+
+  VIEWS.accent.render(el, 'ax-vw');
+  var detailHtml = el.innerHTML;
+  var hasDetailTitle = detailHtml.indexOf('V vs W') !== -1;
+  var hasTrap = detailHtml.indexOf('The Indian English Pattern') !== -1;
+  var hasTabs = detailHtml.indexOf('ax-tab-listen') !== -1 && detailHtml.indexOf('ax-tab-say') !== -1;
+
+  return hasTitle && hasPacks && hasStrip && hasDetailTitle && hasTrap && hasTabs;
+});
+
+tryv('M20: Nav & Home integration: nav item present in PRACTISE and home card present', function () {
+  var hasNavItem = NAVITEMS.some(function (item) { return item.route === 'accent'; });
+  var el = document.createElement('div');
+  VIEWS.home.render(el);
+  var hasHomeCard = el.innerHTML.indexOf('home-accent-card') !== -1 && el.innerHTML.indexOf('Accent Studio') !== -1;
+  return hasNavItem && hasHomeCard;
+});
+
+tryv('M20: ES5 check: src/data5.js and src/accent-engine.js pass node --check with no ES6 features', function () {
+  var res1 = _cp.spawnSync(process.execPath, ['--check', _path.join(__dirname, 'src', 'data5.js')]);
+  var res2 = _cp.spawnSync(process.execPath, ['--check', _path.join(__dirname, 'src', 'accent-engine.js')]);
+  return res1.status === 0 && res2.status === 0;
+});
+
+tryv('M20: INV-8 check: zero external network calls in data5.js and accent-engine.js', function () {
+  var d5 = _fs.readFileSync(_path.join(__dirname, 'src', 'data5.js'), 'utf8');
+  var ae = _fs.readFileSync(_path.join(__dirname, 'src', 'accent-engine.js'), 'utf8');
+  var hasHttp = /https?:\/\//i.test(d5) || /https?:\/\//i.test(ae);
+  var hasFetch = /\bfetch\s*\(/i.test(d5) || /\bfetch\s*\(/i.test(ae);
+  var hasXhr = /XMLHttpRequest/i.test(d5) || /XMLHttpRequest/i.test(ae);
+  return !hasHttp && !hasFetch && !hasXhr;
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */

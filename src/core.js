@@ -14,7 +14,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 7;
+  var VERSION = 8;
 
   var def = {
     version: VERSION,
@@ -41,7 +41,11 @@ var STORE = (function () {
       novaTurns: 0,
       srsReviews: 0
     },
-    weeklyHistory: []   /* INV-5: v7 — Weekly progress session history (M17) */
+    weeklyHistory: [],  /* INV-5: v7 — Weekly progress session history (M17) */
+    accent: {           /* INV-5: v8 — Indian Accent Studio (M20) */
+      packs: {},
+      lastXpDate: ''
+    }
   };
 
   function _raw() {
@@ -101,6 +105,13 @@ var STORE = (function () {
       if (!data.weeklyHistory) { data.weeklyHistory = []; }
       data.version = 7;
     }
+    // v7 → v8: add accent (M20)
+    if (v < 8) {
+      if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
+      data.version = 8;
+    }
+    if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
+    if (!data.accent.packs) { data.accent.packs = {}; }
     if (!data.weeklyHistory) { data.weeklyHistory = []; }
     if (!data.settings) { data.settings = {}; }
     if (data.settings.honestMode === undefined) { data.settings.honestMode = false; }
@@ -1903,6 +1914,7 @@ var NAV_SECTIONS = [
     title: 'PRACTISE',
     items: [
       {route:'pronunciation', label:'Pronunciation', icon:'🗣️'},
+      {route:'accent',        label:'Accent Studio', icon:'🇮🇳'},
       {route:'spelling',      label:'Spelling',      icon:'🔤'},
       {route:'phrases',       label:'Phrases',       icon:'💬'},
       {route:'idioms',        label:'Idioms',        icon:'📜'},
