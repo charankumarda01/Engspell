@@ -104,8 +104,10 @@ VIEWS.home = {
       if (srs.hasOwnProperty(k) && srs[k] && srs[k].due && srs[k].due <= now) { dueCount++; }
     }
 
-    var totalLessons = (typeof COURSE !== 'undefined' && COURSE.length) ? COURSE.length : 44;
+    var allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined' && COURSE.length) ? COURSE : []);
+    var totalLessons = allLessons.length || 68;
     var remaining = Math.max(0, totalLessons - completed.length);
+
 
     var docs = STORE.get('docs') || [];
     var docSub = '';

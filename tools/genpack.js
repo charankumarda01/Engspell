@@ -1364,7 +1364,9 @@ function serializeData4(pack) {
     '      }\n' +
     '    }\n' +
     '  }\n' +
-    '};\n';
+    '};\n\n' +
+    'if (typeof window !== \'undefined\') { window.DATA4 = DATA4; }\n' +
+    'if (typeof global !== \'undefined\') { global.DATA4 = DATA4; }\n';
 
   return code;
 }

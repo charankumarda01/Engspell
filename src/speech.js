@@ -209,3 +209,7 @@ var SPEECH = (function () {
     isListening: isListening
   };
 }());
+
+if (typeof window !== 'undefined') { window.SPEECH = SPEECH; }
+if (typeof global !== 'undefined') { global.SPEECH = SPEECH; }
+

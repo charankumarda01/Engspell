@@ -274,10 +274,11 @@ VIEWS.path = {
       }
     }
 
-    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${COURSE.length} lessons · 4 stages · grammar through speaking</p>${rollupHtml}`;
+    const allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : COURSE;
+    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${allLessons.length} lessons · 4 stages · grammar through speaking</p>${rollupHtml}`;
 
     for (let stage = 1; stage <= 4; stage++) {
-      const lessons = COURSE.filter(l => l.stage === stage);
+      const lessons = allLessons.filter(l => l.stage === stage);
       const stageComplete = lessons.every(l => completed.indexOf(l.id) !== -1);
       html += `<div class="stage-block">
         <div class="stage-header">
@@ -303,8 +304,10 @@ VIEWS.path = {
 /* ── LESSON PLAYER ──────────────────────────────────────────────────── */
 VIEWS.lesson = {
   render(el, id) {
-    const lesson = COURSE.find(l => l.id === id);
+    const allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : COURSE;
+    const lesson = allLessons.find(l => l.id === id);
     if (!lesson) { el.innerHTML = '<p>Lesson not found.</p>'; return; }
+
 
     const completed = STORE.get('completed') || [];
     const isDone = completed.indexOf(id) !== -1;

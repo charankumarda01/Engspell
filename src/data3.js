@@ -394,3 +394,19 @@ var SKILL_META = {
   writing:       {label:'Writing',       color:'#be185d', icon:'✍️'}
 };
 
+if (typeof window !== 'undefined') {
+  window.ATLAS = ATLAS;
+  window.PASSAGES = PASSAGES;
+  window.ASSESSMENT_POOLS = ASSESSMENT_POOLS;
+  window.SKILL_META = SKILL_META;
+  window.bandOf = bandOf;
+}
+if (typeof global !== 'undefined') {
+  global.ATLAS = ATLAS;
+  global.PASSAGES = PASSAGES;
+  global.ASSESSMENT_POOLS = ASSESSMENT_POOLS;
+  global.SKILL_META = SKILL_META;
+  global.bandOf = bandOf;
+}
+
+

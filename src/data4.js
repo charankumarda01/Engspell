@@ -1,4 +1,4 @@
-/* Content-Hash: 140540fe96270954237447cb05bf72478d7d334291a7ec0388854eb6c04488b8 */
+/* Content-Hash: c92dbeccc1beab9d0ab3ef9a29e7b9e094172e9210021abb6fe27dfd3cdb825a */
 /* =====================================================================
    data4.js — Generated Content Pack (M15 CNT-GEN)
    +24 Lessons (gl-01..24), +12 Scenarios (sc-01..12), +12 Passages (ps-01..12)
@@ -3338,3 +3338,6 @@ var DATA4 = {
     }
   }
 };
+
+if (typeof window !== 'undefined') { window.DATA4 = DATA4; }
+if (typeof global !== 'undefined') { global.DATA4 = DATA4; }

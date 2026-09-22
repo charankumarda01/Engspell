@@ -249,10 +249,11 @@ VIEWS.scenarios = {
   render: function (el, arg) {
     'use strict';
     var self = this;
+    var allScenarios = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allScenarios() : (typeof SCENARIOS !== 'undefined' ? SCENARIOS : []);
     if (arg) {
       var sc = null;
-      for (var i = 0; i < SCENARIOS.length; i++) {
-        if (SCENARIOS[i].id === arg) { sc = SCENARIOS[i]; break; }
+      for (var i = 0; i < allScenarios.length; i++) {
+        if (allScenarios[i].id === arg) { sc = allScenarios[i]; break; }
       }
       if (!sc) { navigate('scenarios'); return; }
       _renderScenario(el, sc);
@@ -260,8 +261,8 @@ VIEWS.scenarios = {
     }
 
     var cards = '';
-    for (var si = 0; si < SCENARIOS.length; si++) {
-      var s = SCENARIOS[si];
+    for (var si = 0; si < allScenarios.length; si++) {
+      var s = allScenarios[si];
       cards += '<div class="scenario-card" onclick="navigate(\'scenarios\',\'' + s.id + '\')">' +
         '<div class="sc-level">' + s.level + '</div>' +
         '<h3>' + s.title + '</h3>' +

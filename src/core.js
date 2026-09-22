@@ -275,6 +275,7 @@ var STORE = (function () {
     get: get,
     set: set,
     load: load,
+    init: load,
     reload: reload,
     save: save,
     addXP: addXP,
@@ -291,6 +292,10 @@ var STORE = (function () {
     computeHonestScore: computeHonestScore
   };
 }());
+
+if (typeof window !== 'undefined') { window.STORE = STORE; }
+if (typeof global !== 'undefined') { global.STORE = STORE; }
+
 
 /* ══════════════════════════════════════════════════════════════════════
    TRAINER — skill event bus + radar aggregator
@@ -438,6 +443,10 @@ var TRAINER = (function () {
   };
 }());
 
+if (typeof window !== 'undefined') { window.TRAINER = TRAINER; }
+if (typeof global !== 'undefined') { global.TRAINER = TRAINER; }
+
+
 /* ══════════════════════════════════════════════════════════════════════
    U — text utility belt
    norm, contractions, LCS word-align, verdict
@@ -574,6 +583,10 @@ var U = (function () {
     dailyPickN: dailyPickN
   };
 }());
+
+if (typeof window !== 'undefined') { window.U = U; }
+if (typeof global !== 'undefined') { global.U = U; }
+
 
 /* ══════════════════════════════════════════════════════════════════════
    FLOW — Enforced Daily Structure (M6)
@@ -1662,6 +1675,62 @@ var WEEKLY = (function () {
 })();
 
 /* ══════════════════════════════════════════════════════════════════════
+   DATA_MERGE — content merge helper (M15 CNT-GEN)
+   Merges generated content packs (DATA4) into core data collections
+   ════════════════════════════════════════════════════════════════════*/
+var DATA_MERGE = (function () {
+  'use strict';
+  var _merged = false;
+
+  function mergeAll() {
+    if (_merged) { return; }
+    if (typeof DATA4 !== 'undefined' && DATA4 && typeof DATA4.merge === 'function') {
+      DATA4.merge();
+    }
+    _merged = true;
+  }
+
+  function allLessons() {
+    mergeAll();
+    return (typeof COURSE !== 'undefined') ? COURSE : [];
+  }
+
+  function allScenarios() {
+    mergeAll();
+    return (typeof SCENARIOS !== 'undefined') ? SCENARIOS : [];
+  }
+
+  function allPassages() {
+    mergeAll();
+    return (typeof PASSAGES !== 'undefined') ? PASSAGES : [];
+  }
+
+  // Attempt merge on load if DATA4 is available
+  mergeAll();
+
+  return {
+    merged: true,
+    mergeAll: mergeAll,
+    allLessons: allLessons,
+    allScenarios: allScenarios,
+    allPassages: allPassages
+  };
+}());
+
+if (typeof window !== 'undefined') {
+  window.DATA_MERGE = DATA_MERGE;
+  window.allLessons = DATA_MERGE.allLessons;
+  window.allScenarios = DATA_MERGE.allScenarios;
+  window.allPassages = DATA_MERGE.allPassages;
+}
+if (typeof global !== 'undefined') {
+  global.DATA_MERGE = DATA_MERGE;
+  global.allLessons = DATA_MERGE.allLessons;
+  global.allScenarios = DATA_MERGE.allScenarios;
+  global.allPassages = DATA_MERGE.allPassages;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -1795,10 +1864,17 @@ var UI = (function () {
   };
 }());
 
+if (typeof window !== 'undefined') { window.UI = UI; }
+if (typeof global !== 'undefined') { global.UI = UI; }
+
 /* ══════════════════════════════════════════════════════════════════════
    VIEWS namespace (populated by views-*.js)
    ════════════════════════════════════════════════════════════════════*/
 var VIEWS = {};
+
+if (typeof window !== 'undefined') { window.VIEWS = VIEWS; }
+if (typeof global !== 'undefined') { global.VIEWS = VIEWS; }
+
 
 /* ══════════════════════════════════════════════════════════════════════
    ROUTER + NAV
@@ -2090,6 +2166,10 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.llmAsk = llmAsk;
   window.REMINDERS = REMINDERS;
   window.WEEKLY = WEEKLY;
+  window.DATA_MERGE = DATA_MERGE;
+  window.allLessons = DATA_MERGE.allLessons;
+  window.allScenarios = DATA_MERGE.allScenarios;
+  window.allPassages = DATA_MERGE.allPassages;
   window.isHonest = STORE.isHonest;
   window.computeHonestScore = STORE.computeHonestScore;
 
@@ -2102,7 +2182,12 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     global.llmAsk = llmAsk;
     global.REMINDERS = REMINDERS;
     global.WEEKLY = WEEKLY;
+    global.DATA_MERGE = DATA_MERGE;
+    global.allLessons = DATA_MERGE.allLessons;
+    global.allScenarios = DATA_MERGE.allScenarios;
+    global.allPassages = DATA_MERGE.allPassages;
     global.isHonest = STORE.isHonest;
     global.computeHonestScore = STORE.computeHonestScore;
   }
+
 }());

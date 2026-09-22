@@ -943,3 +943,21 @@ var POWER_WORDS = [
   {w:'tangible', ipa:'/ˈtændʒəbl/', meaning:'Perceptible by touch; clear and definite', eg:'Daily speaking yields tangible results.'},
   {w:'zeal', ipa:'/ziːl/', meaning:'Great energy or enthusiasm in pursuit of a cause or objective', eg:'She approaches language learning with real zeal.'}
 ];
+
+if (typeof window !== 'undefined') {
+  window.COURSE = COURSE;
+  window.CLARITY_DATA = CLARITY_DATA;
+  window.IDIOMS = IDIOMS;
+  window.PVS = PVS;
+  window.QUOTES = QUOTES;
+  window.POWER_WORDS = POWER_WORDS;
+}
+if (typeof global !== 'undefined') {
+  global.COURSE = COURSE;
+  global.CLARITY_DATA = CLARITY_DATA;
+  global.IDIOMS = IDIOMS;
+  global.PVS = PVS;
+  global.QUOTES = QUOTES;
+  global.POWER_WORDS = POWER_WORDS;
+}
+

@@ -527,3 +527,35 @@ var COACH_INTERVIEW = [
   'How do you prioritise when you have multiple deadlines?',
   'Do you have any questions for me?'
 ];
+
+if (typeof window !== 'undefined') {
+  window.LETTERS = LETTERS;
+  window.SOUNDS = SOUNDS;
+  window.WORDS = WORDS;
+  window.PAIRS = PAIRS;
+  window.TWISTERS = TWISTERS;
+  window.SPELLING = SPELLING;
+  window.SCENARIOS = SCENARIOS;
+  window.QUIZ_BANK = QUIZ_BANK;
+  window.COACH_RULES = COACH_RULES;
+  window.COACH_INTENTS = COACH_INTENTS;
+  window.COACH_UPGRADES = COACH_UPGRADES;
+  window.COACH_VOCAB = (typeof COACH_VOCAB !== 'undefined') ? COACH_VOCAB : COACH_UPGRADES;
+  window.COACH_INTERVIEW = COACH_INTERVIEW;
+}
+if (typeof global !== 'undefined') {
+  global.LETTERS = LETTERS;
+  global.SOUNDS = SOUNDS;
+  global.WORDS = WORDS;
+  global.PAIRS = PAIRS;
+  global.TWISTERS = TWISTERS;
+  global.SPELLING = SPELLING;
+  global.SCENARIOS = SCENARIOS;
+  global.QUIZ_BANK = QUIZ_BANK;
+  global.COACH_RULES = COACH_RULES;
+  global.COACH_INTENTS = COACH_INTENTS;
+  global.COACH_UPGRADES = COACH_UPGRADES;
+  global.COACH_VOCAB = (typeof COACH_VOCAB !== 'undefined') ? COACH_VOCAB : COACH_UPGRADES;
+  global.COACH_INTERVIEW = COACH_INTERVIEW;
+}
+

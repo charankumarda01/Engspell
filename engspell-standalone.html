@@ -2187,6 +2187,38 @@ var COACH_INTERVIEW = [
   'How do you prioritise when you have multiple deadlines?',
   'Do you have any questions for me?'
 ];
+
+if (typeof window !== 'undefined') {
+  window.LETTERS = LETTERS;
+  window.SOUNDS = SOUNDS;
+  window.WORDS = WORDS;
+  window.PAIRS = PAIRS;
+  window.TWISTERS = TWISTERS;
+  window.SPELLING = SPELLING;
+  window.SCENARIOS = SCENARIOS;
+  window.QUIZ_BANK = QUIZ_BANK;
+  window.COACH_RULES = COACH_RULES;
+  window.COACH_INTENTS = COACH_INTENTS;
+  window.COACH_UPGRADES = COACH_UPGRADES;
+  window.COACH_VOCAB = (typeof COACH_VOCAB !== 'undefined') ? COACH_VOCAB : COACH_UPGRADES;
+  window.COACH_INTERVIEW = COACH_INTERVIEW;
+}
+if (typeof global !== 'undefined') {
+  global.LETTERS = LETTERS;
+  global.SOUNDS = SOUNDS;
+  global.WORDS = WORDS;
+  global.PAIRS = PAIRS;
+  global.TWISTERS = TWISTERS;
+  global.SPELLING = SPELLING;
+  global.SCENARIOS = SCENARIOS;
+  global.QUIZ_BANK = QUIZ_BANK;
+  global.COACH_RULES = COACH_RULES;
+  global.COACH_INTENTS = COACH_INTENTS;
+  global.COACH_UPGRADES = COACH_UPGRADES;
+  global.COACH_VOCAB = (typeof COACH_VOCAB !== 'undefined') ? COACH_VOCAB : COACH_UPGRADES;
+  global.COACH_INTERVIEW = COACH_INTERVIEW;
+}
+
 /* =====================================================================
    data2.js — ES5 ONLY
    COURSE (44 lessons · 4 stages), CLARITY_DATA, IDIOMS (48), PVS (48),
@@ -3132,6 +3164,24 @@ var POWER_WORDS = [
   {w:'tangible', ipa:'/ˈtændʒəbl/', meaning:'Perceptible by touch; clear and definite', eg:'Daily speaking yields tangible results.'},
   {w:'zeal', ipa:'/ziːl/', meaning:'Great energy or enthusiasm in pursuit of a cause or objective', eg:'She approaches language learning with real zeal.'}
 ];
+
+if (typeof window !== 'undefined') {
+  window.COURSE = COURSE;
+  window.CLARITY_DATA = CLARITY_DATA;
+  window.IDIOMS = IDIOMS;
+  window.PVS = PVS;
+  window.QUOTES = QUOTES;
+  window.POWER_WORDS = POWER_WORDS;
+}
+if (typeof global !== 'undefined') {
+  global.COURSE = COURSE;
+  global.CLARITY_DATA = CLARITY_DATA;
+  global.IDIOMS = IDIOMS;
+  global.PVS = PVS;
+  global.QUOTES = QUOTES;
+  global.POWER_WORDS = POWER_WORDS;
+}
+
 /* =====================================================================
    data3.js — ES5 ONLY
    ATLAS (12 tenses), PASSAGES (12 listening), ASSESSMENT_POOLS, SKILL_META
@@ -3528,7 +3578,23 @@ var SKILL_META = {
   writing:       {label:'Writing',       color:'#be185d', icon:'✍️'}
 };
 
-/* Content-Hash: 140540fe96270954237447cb05bf72478d7d334291a7ec0388854eb6c04488b8 */
+if (typeof window !== 'undefined') {
+  window.ATLAS = ATLAS;
+  window.PASSAGES = PASSAGES;
+  window.ASSESSMENT_POOLS = ASSESSMENT_POOLS;
+  window.SKILL_META = SKILL_META;
+  window.bandOf = bandOf;
+}
+if (typeof global !== 'undefined') {
+  global.ATLAS = ATLAS;
+  global.PASSAGES = PASSAGES;
+  global.ASSESSMENT_POOLS = ASSESSMENT_POOLS;
+  global.SKILL_META = SKILL_META;
+  global.bandOf = bandOf;
+}
+
+
+/* Content-Hash: c92dbeccc1beab9d0ab3ef9a29e7b9e094172e9210021abb6fe27dfd3cdb825a */
 /* =====================================================================
    data4.js — Generated Content Pack (M15 CNT-GEN)
    +24 Lessons (gl-01..24), +12 Scenarios (sc-01..12), +12 Passages (ps-01..12)
@@ -6868,6 +6934,9 @@ var DATA4 = {
     }
   }
 };
+
+if (typeof window !== 'undefined') { window.DATA4 = DATA4; }
+if (typeof global !== 'undefined') { global.DATA4 = DATA4; }
 /* =====================================================================
    speech.js — ES5 ONLY
    SPEECH: TTS (voice pick, rate, slow) + SpeechRecognition wrapper
@@ -7079,6 +7148,10 @@ var SPEECH = (function () {
     isListening: isListening
   };
 }());
+
+if (typeof window !== 'undefined') { window.SPEECH = SPEECH; }
+if (typeof global !== 'undefined') { global.SPEECH = SPEECH; }
+
 /* =====================================================================
    core.js — ES5 ONLY
    STORE (localStorage, schema v3, migrations), TRAINER (events/radar),
@@ -7356,6 +7429,7 @@ var STORE = (function () {
     get: get,
     set: set,
     load: load,
+    init: load,
     reload: reload,
     save: save,
     addXP: addXP,
@@ -7372,6 +7446,10 @@ var STORE = (function () {
     computeHonestScore: computeHonestScore
   };
 }());
+
+if (typeof window !== 'undefined') { window.STORE = STORE; }
+if (typeof global !== 'undefined') { global.STORE = STORE; }
+
 
 /* ══════════════════════════════════════════════════════════════════════
    TRAINER — skill event bus + radar aggregator
@@ -7519,6 +7597,10 @@ var TRAINER = (function () {
   };
 }());
 
+if (typeof window !== 'undefined') { window.TRAINER = TRAINER; }
+if (typeof global !== 'undefined') { global.TRAINER = TRAINER; }
+
+
 /* ══════════════════════════════════════════════════════════════════════
    U — text utility belt
    norm, contractions, LCS word-align, verdict
@@ -7655,6 +7737,10 @@ var U = (function () {
     dailyPickN: dailyPickN
   };
 }());
+
+if (typeof window !== 'undefined') { window.U = U; }
+if (typeof global !== 'undefined') { global.U = U; }
+
 
 /* ══════════════════════════════════════════════════════════════════════
    FLOW — Enforced Daily Structure (M6)
@@ -8743,6 +8829,62 @@ var WEEKLY = (function () {
 })();
 
 /* ══════════════════════════════════════════════════════════════════════
+   DATA_MERGE — content merge helper (M15 CNT-GEN)
+   Merges generated content packs (DATA4) into core data collections
+   ════════════════════════════════════════════════════════════════════*/
+var DATA_MERGE = (function () {
+  'use strict';
+  var _merged = false;
+
+  function mergeAll() {
+    if (_merged) { return; }
+    if (typeof DATA4 !== 'undefined' && DATA4 && typeof DATA4.merge === 'function') {
+      DATA4.merge();
+    }
+    _merged = true;
+  }
+
+  function allLessons() {
+    mergeAll();
+    return (typeof COURSE !== 'undefined') ? COURSE : [];
+  }
+
+  function allScenarios() {
+    mergeAll();
+    return (typeof SCENARIOS !== 'undefined') ? SCENARIOS : [];
+  }
+
+  function allPassages() {
+    mergeAll();
+    return (typeof PASSAGES !== 'undefined') ? PASSAGES : [];
+  }
+
+  // Attempt merge on load if DATA4 is available
+  mergeAll();
+
+  return {
+    merged: true,
+    mergeAll: mergeAll,
+    allLessons: allLessons,
+    allScenarios: allScenarios,
+    allPassages: allPassages
+  };
+}());
+
+if (typeof window !== 'undefined') {
+  window.DATA_MERGE = DATA_MERGE;
+  window.allLessons = DATA_MERGE.allLessons;
+  window.allScenarios = DATA_MERGE.allScenarios;
+  window.allPassages = DATA_MERGE.allPassages;
+}
+if (typeof global !== 'undefined') {
+  global.DATA_MERGE = DATA_MERGE;
+  global.allLessons = DATA_MERGE.allLessons;
+  global.allScenarios = DATA_MERGE.allScenarios;
+  global.allPassages = DATA_MERGE.allPassages;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -8876,10 +9018,17 @@ var UI = (function () {
   };
 }());
 
+if (typeof window !== 'undefined') { window.UI = UI; }
+if (typeof global !== 'undefined') { global.UI = UI; }
+
 /* ══════════════════════════════════════════════════════════════════════
    VIEWS namespace (populated by views-*.js)
    ════════════════════════════════════════════════════════════════════*/
 var VIEWS = {};
+
+if (typeof window !== 'undefined') { window.VIEWS = VIEWS; }
+if (typeof global !== 'undefined') { global.VIEWS = VIEWS; }
+
 
 /* ══════════════════════════════════════════════════════════════════════
    ROUTER + NAV
@@ -9171,6 +9320,10 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.llmAsk = llmAsk;
   window.REMINDERS = REMINDERS;
   window.WEEKLY = WEEKLY;
+  window.DATA_MERGE = DATA_MERGE;
+  window.allLessons = DATA_MERGE.allLessons;
+  window.allScenarios = DATA_MERGE.allScenarios;
+  window.allPassages = DATA_MERGE.allPassages;
   window.isHonest = STORE.isHonest;
   window.computeHonestScore = STORE.computeHonestScore;
 
@@ -9183,9 +9336,14 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     global.llmAsk = llmAsk;
     global.REMINDERS = REMINDERS;
     global.WEEKLY = WEEKLY;
+    global.DATA_MERGE = DATA_MERGE;
+    global.allLessons = DATA_MERGE.allLessons;
+    global.allScenarios = DATA_MERGE.allScenarios;
+    global.allPassages = DATA_MERGE.allPassages;
     global.isHonest = STORE.isHonest;
     global.computeHonestScore = STORE.computeHonestScore;
   }
+
 }());
 /* =====================================================================
    views-a.js — ES5 ONLY
@@ -9293,8 +9451,10 @@ VIEWS.home = {
       if (srs.hasOwnProperty(k) && srs[k] && srs[k].due && srs[k].due <= now) { dueCount++; }
     }
 
-    var totalLessons = (typeof COURSE !== 'undefined' && COURSE.length) ? COURSE.length : 44;
+    var allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined' && COURSE.length) ? COURSE : []);
+    var totalLessons = allLessons.length || 68;
     var remaining = Math.max(0, totalLessons - completed.length);
+
 
     var docs = STORE.get('docs') || [];
     var docSub = '';
@@ -9808,10 +9968,11 @@ VIEWS.scenarios = {
   render: function (el, arg) {
     'use strict';
     var self = this;
+    var allScenarios = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allScenarios() : (typeof SCENARIOS !== 'undefined' ? SCENARIOS : []);
     if (arg) {
       var sc = null;
-      for (var i = 0; i < SCENARIOS.length; i++) {
-        if (SCENARIOS[i].id === arg) { sc = SCENARIOS[i]; break; }
+      for (var i = 0; i < allScenarios.length; i++) {
+        if (allScenarios[i].id === arg) { sc = allScenarios[i]; break; }
       }
       if (!sc) { navigate('scenarios'); return; }
       _renderScenario(el, sc);
@@ -9819,8 +9980,8 @@ VIEWS.scenarios = {
     }
 
     var cards = '';
-    for (var si = 0; si < SCENARIOS.length; si++) {
-      var s = SCENARIOS[si];
+    for (var si = 0; si < allScenarios.length; si++) {
+      var s = allScenarios[si];
       cards += '<div class="scenario-card" onclick="navigate(\'scenarios\',\'' + s.id + '\')">' +
         '<div class="sc-level">' + s.level + '</div>' +
         '<h3>' + s.title + '</h3>' +
@@ -11848,10 +12009,11 @@ VIEWS.path = {
       }
     }
 
-    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${COURSE.length} lessons · 4 stages · grammar through speaking</p>${rollupHtml}`;
+    const allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : COURSE;
+    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${allLessons.length} lessons · 4 stages · grammar through speaking</p>${rollupHtml}`;
 
     for (let stage = 1; stage <= 4; stage++) {
-      const lessons = COURSE.filter(l => l.stage === stage);
+      const lessons = allLessons.filter(l => l.stage === stage);
       const stageComplete = lessons.every(l => completed.indexOf(l.id) !== -1);
       html += `<div class="stage-block">
         <div class="stage-header">
@@ -11877,8 +12039,10 @@ VIEWS.path = {
 /* ── LESSON PLAYER ──────────────────────────────────────────────────── */
 VIEWS.lesson = {
   render(el, id) {
-    const lesson = COURSE.find(l => l.id === id);
+    const allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : COURSE;
+    const lesson = allLessons.find(l => l.id === id);
     if (!lesson) { el.innerHTML = '<p>Lesson not found.</p>'; return; }
+
 
     const completed = STORE.get('completed') || [];
     const isDone = completed.indexOf(id) !== -1;
