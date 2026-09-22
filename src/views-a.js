@@ -13,16 +13,18 @@ VIEWS.home = {
     var completed = STORE.get('completed') || [];
     var name = user.name || 'Learner';
     var goal = STORE.get('settings') ? (STORE.get('settings').dailyGoal || 10) : 10;
-    var weak = TRAINER.weakestFirst();
+    var weak = TRAINER.weakestFirst ? TRAINER.weakestFirst() : [];
     var nextSkill = weak.length ? weak[0].skill : 'pronunciation';
+    var level = user.cefr || (xp >= 3000 ? 'B2' : xp >= 1500 ? 'B1' : xp >= 500 ? 'A2' : 'A1');
 
     var routeMap = {
       pronunciation: 'pronunciation', grammar: 'atlas', vocab: 'idioms',
-      spelling: 'spelling', fluency: 'path', listening: 'listening'
+      spelling: 'spelling', fluency: 'path', listening: 'listening',
+      reading: 'read', writing: 'resume'
     };
     var nextRoute = routeMap[nextSkill] || 'daily';
 
-    var history = TRAINER.xpHistory();
+    var history = TRAINER.xpHistory ? TRAINER.xpHistory() : [];
     var chartBars = '';
     var maxXP = 1;
     for (var h = 0; h < history.length; h++) { if (history[h].xp > maxXP) { maxXP = history[h].xp; } }
@@ -36,43 +38,90 @@ VIEWS.home = {
     var srs = STORE.get('srs') || {};
     var now = Date.now();
     for (var k in srs) {
-      if (srs.hasOwnProperty(k) && srs[k].due && srs[k].due <= now) { dueCount++; }
+      if (srs.hasOwnProperty(k) && srs[k] && srs[k].due && srs[k].due <= now) { dueCount++; }
     }
 
-    el.innerHTML = '<div class="view-home">' +
-      '<div class="home-header">' +
-      '<div class="greeting"><h1>Hello, ' + name + '! 👋</h1><p class="sub">Your English gym is ready.</p></div>' +
-      '<div class="stat-pills">' +
-      '<div class="stat-pill xp-pill">⚡ ' + U.fmtXP(xp) + ' XP</div>' +
-      '<div class="stat-pill streak-pill">🔥 ' + streak + ' day streak</div>' +
-      (dueCount > 0 ? '<a class="stat-pill due-pill" href="#/review">🔁 ' + dueCount + ' due</a>' : '') +
-      '</div></div>' +
-      '<div class="cards-row">' +
-      '<div class="card card-next" onclick="navigate(\'' + nextRoute + '\')">' +
-      '<div class="card-icon">' + (SKILL_META[nextSkill] ? SKILL_META[nextSkill].icon : '🎯') + '</div>' +
-      '<div class="card-body"><h3>Next up</h3><p>Work on your <strong>' + nextSkill + '</strong> — your weakest skill right now.</p></div>' +
-      '<div class="card-arrow">→</div>' +
+    var totalLessons = (typeof COURSE !== 'undefined' && COURSE.length) ? COURSE.length : 44;
+    var remaining = Math.max(0, totalLessons - completed.length);
+
+    var html = '<div class="view-home">' +
+      '<div class="card home-greeting-band">' +
+        '<div class="greeting-content">' +
+          '<h1>Hello, ' + name + '! 👋</h1>' +
+          '<p class="sub">Your English mastery studio is ready.</p>' +
+        '</div>' +
+        '<div class="stat-pills">' +
+          '<div class="stat-pill xp-pill" title="Experience Points">⚡ ' + U.fmtXP(xp) + ' XP</div>' +
+          '<div class="stat-pill streak-pill" title="Daily Streak">🔥 ' + streak + ' day' + (streak === 1 ? '' : 's') + '</div>' +
+          '<div class="stat-pill level-pill" title="Target / CEFR Level">🎓 Level ' + level + '</div>' +
+          (dueCount > 0 ? '<a class="stat-pill due-pill" href="#/review" title="SRS Review Items Due">🔁 ' + dueCount + ' due</a>' : '') +
+        '</div>' +
       '</div>' +
-      '<div class="card card-daily" onclick="navigate(\'daily\')">' +
-      '<div class="card-icon">☀️</div>' +
-      '<div class="card-body"><h3>Today\'s Dose</h3><p>Twister · Power Word · Idiom · Quote</p></div>' +
-      '<div class="card-arrow">→</div>' +
+
+      '<div class="section-title">🚀 Start Here</div>' +
+      '<div class="start-here-grid">' +
+        '<div class="card start-card" onclick="navigate(\'daily\')">' +
+          '<div class="start-card-icon">☀️</div>' +
+          '<div class="start-card-body">' +
+            '<h3>Today\'s Dose</h3>' +
+            '<p>Twister · Power Word · Idiom · Quote</p>' +
+          '</div>' +
+          '<span class="start-card-action">Daily Ritual →</span>' +
+        '</div>' +
+
+        '<div class="card start-card" onclick="navigate(\'' + nextRoute + '\')">' +
+          '<div class="start-card-icon">' + ((typeof SKILL_META !== 'undefined' && SKILL_META[nextSkill]) ? SKILL_META[nextSkill].icon : '📖') + '</div>' +
+          '<div class="start-card-body">' +
+            '<h3>Next Lesson</h3>' +
+            '<p>Level up <strong>' + nextSkill + '</strong> (weakest skill)</p>' +
+          '</div>' +
+          '<span class="start-card-action">Continue →</span>' +
+        '</div>' +
+
+        '<div class="card start-card" onclick="navigate(\'coach\')">' +
+          '<div class="start-card-icon">🤖</div>' +
+          '<div class="start-card-body">' +
+            '<h3>Nova AI Coach</h3>' +
+            '<p>Voice & chat interactive conversational coaching</p>' +
+          '</div>' +
+          '<span class="start-card-action">Talk to Nova →</span>' +
+        '</div>' +
+
+        '<div class="card start-card" onclick="navigate(\'review\')">' +
+          '<div class="start-card-icon">🔁</div>' +
+          '<div class="start-card-body">' +
+            '<h3>Spaced Review</h3>' +
+            '<p>' + (dueCount > 0 ? '<strong>' + dueCount + '</strong> cards due for retention review' : 'All reviews current! Practice memory retention') + '</p>' +
+          '</div>' +
+          '<span class="start-card-action">' + (dueCount > 0 ? dueCount + ' Due →' : 'Review →') + '</span>' +
+        '</div>' +
       '</div>' +
+
+      '<div class="home-analytics-row">' +
+        '<div class="card analytics-card">' +
+          '<div class="section-title" style="margin-top:0">📊 XP Last 7 Days</div>' +
+          '<div class="week-chart">' + (chartBars || '<p class="muted">Start practising to see your progress here.</p>') + '</div>' +
+        '</div>' +
+        '<div class="card analytics-card">' +
+          '<div class="section-title" style="margin-top:0">📈 Learning Stats</div>' +
+          '<div class="progress-row">' +
+            '<div class="prog-item"><span class="prog-num">' + completed.length + '</span><span class="prog-label">Lessons Done</span></div>' +
+            '<div class="prog-item"><span class="prog-num">' + remaining + '</span><span class="prog-label">Remaining</span></div>' +
+            '<div class="prog-item"><span class="prog-num">' + streak + '</span><span class="prog-label">Day Streak</span></div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
-      '<div class="section-title">📊 XP Last 7 Days</div>' +
-      '<div class="week-chart">' + (chartBars || '<p class="muted">Start practising to see your progress here.</p>') + '</div>' +
-      '<div class="section-title">📈 Progress</div>' +
-      '<div class="progress-row">' +
-      '<div class="prog-item"><span class="prog-num">' + completed.length + '</span><span class="prog-label">Lessons Done</span></div>' +
-      '<div class="prog-item"><span class="prog-num">' + (32 - completed.length) + '</span><span class="prog-label">Remaining</span></div>' +
-      '<div class="prog-item"><span class="prog-num">' + streak + '</span><span class="prog-label">Day Streak</span></div>' +
-      '</div>' +
+
       '<div class="home-links">' +
-      '<a href="#/assessment" class="btn-link">📋 Speaking Assessment</a>' +
-      '<a href="#/trainer" class="btn-link">📊 My Trainer</a>' +
-      '<a href="#/quiz" class="btn-link">🎓 Level Test</a>' +
+        '<a href="#/assessment" class="btn btn-ghost">📋 Speaking Assessment</a>' +
+        '<a href="#/trainer" class="btn btn-ghost">📊 My Trainer</a>' +
+        '<a href="#/quiz" class="btn btn-ghost">🎓 Level Test</a>' +
+        '<a href="#/docstudio" class="btn btn-ghost">📄 Doc Studio</a>' +
+        '<a href="#/resume" class="btn btn-ghost">📝 Resume Analyzer</a>' +
       '</div>' +
-      '</div>';
+    '</div>';
+
+    el.innerHTML = html;
   }
 };
 

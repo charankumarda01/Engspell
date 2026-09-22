@@ -605,31 +605,63 @@ var VIEWS = {};
 /* ══════════════════════════════════════════════════════════════════════
    ROUTER + NAV
    ════════════════════════════════════════════════════════════════════*/
-var NAVITEMS = [
-  {route:'home',    label:'Home',       icon:'🏠'},
-  {route:'daily',   label:'Daily',      icon:'☀️'},
-  {route:'path',    label:'Learn',      icon:'📖'},
-  {route:'coach',   label:'Nova',       icon:'🤖'},
-  {route:'docstudio',label:'Doc Studio',icon:'📄'},
-  {route:'resume',   label:'Resume',    icon:'📝'},
-  {route:'trainer', label:'Trainer',    icon:'📊'},
-  {route:'review',  label:'Review',     icon:'🔁'},
-  {route:'read',    label:'Read',       icon:'📚'},
-  {route:'pronunciation', label:'Sounds', icon:'🗣️'},
-  {route:'spelling', label:'Spelling',  icon:'🔤'},
-  {route:'phrases',  label:'Phrases',   icon:'💬'},
-  {route:'idioms',   label:'Idioms',    icon:'📜'},
-  {route:'clarity',  label:'Clarity',   icon:'🎯'},
-  {route:'listening',label:'Listen',    icon:'👂'},
-  {route:'doctor',   label:'Doctor',    icon:'🩺'},
-  {route:'scenarios',label:'Chat',      icon:'🎭'},
-  {route:'atlas',    label:'Grammar',   icon:'📐'},
-  {route:'assessment',label:'Assess',   icon:'🏆'},
-  {route:'quiz',     label:'Level Test',icon:'🎓'},
-  {route:'wordbank', label:'Words',     icon:'📖'},
-  {route:'foundations',label:'Basics',  icon:'🔡'},
-  {route:'settings', label:'Settings',  icon:'⚙️'}
+var NAV_SECTIONS = [
+  {
+    title: 'TODAY',
+    items: [
+      {route:'home',          label:'Home',          icon:'🏠'},
+      {route:'daily',         label:'Daily',         icon:'☀️'},
+      {route:'coach',         label:'Nova',          icon:'🤖'}
+    ]
+  },
+  {
+    title: 'LEARN',
+    items: [
+      {route:'path',          label:'Path',          icon:'📖'},
+      {route:'foundations',   label:'Foundations',   icon:'🔡'},
+      {route:'atlas',         label:'Atlas',         icon:'📐'},
+      {route:'read',          label:'Read',          icon:'📚'},
+      {route:'listening',     label:'Listen',        icon:'👂'},
+      {route:'docstudio',     label:'Doc Studio',    icon:'📄'}
+    ]
+  },
+  {
+    title: 'PRACTISE',
+    items: [
+      {route:'pronunciation', label:'Pronunciation', icon:'🗣️'},
+      {route:'spelling',      label:'Spelling',      icon:'🔤'},
+      {route:'phrases',       label:'Phrases',       icon:'💬'},
+      {route:'idioms',        label:'Idioms',        icon:'📜'},
+      {route:'clarity',       label:'Clarity',       icon:'🎯'},
+      {route:'doctor',        label:'Doctor',        icon:'🩺'},
+      {route:'scenarios',     label:'Scenarios',     icon:'🎭'}
+    ]
+  },
+  {
+    title: 'PROGRESS',
+    items: [
+      {route:'trainer',       label:'Trainer',       icon:'📊'},
+      {route:'review',        label:'Review',        icon:'🔁'},
+      {route:'assessment',    label:'Assessment',    icon:'🏆'},
+      {route:'wordbank',      label:'Wordbank',      icon:'📖'},
+      {route:'quiz',          label:'Level Test',    icon:'🎓'}
+    ]
+  },
+  {
+    title: 'TOOLS',
+    items: [
+      {route:'resume',        label:'Resume',        icon:'📝'},
+      {route:'settings',      label:'Settings',      icon:'⚙️'}
+    ]
+  }
 ];
+
+var NAVITEMS = [];
+for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
+  for (var _it = 0; _it < NAV_SECTIONS[_s].items.length; _it++) {
+    NAVITEMS.push(NAV_SECTIONS[_s].items[_it]);
+  }
+}
 
 (function () {
   'use strict';
@@ -643,20 +675,29 @@ var NAVITEMS = [
   function _buildNav() {
     if (!navEl) { return; }
     var html = '';
-    for (var i = 0; i < NAVITEMS.length; i++) {
-      var item = NAVITEMS[i];
-      html += '<a class="nav-item" href="#/' + item.route + '" data-route="' + item.route + '" id="nav-' + item.route + '">';
-      html += '<span class="nav-icon">' + item.icon + '</span>';
-      html += '<span class="nav-label">' + item.label + '</span>';
-      html += '</a>';
+    for (var s = 0; s < NAV_SECTIONS.length; s++) {
+      var sec = NAV_SECTIONS[s];
+      html += '<div class="nav-section">';
+      html += '<div class="nav-section-label">' + sec.title + '</div>';
+      html += '<div class="nav-section-body">';
+      for (var i = 0; i < sec.items.length; i++) {
+        var item = sec.items[i];
+        html += '<a class="nav-item" href="#/' + item.route + '" data-route="' + item.route + '" id="nav-' + item.route + '">';
+        html += '<span class="nav-icon">' + item.icon + '</span>';
+        html += '<span class="nav-label">' + item.label + '</span>';
+        html += '</a>';
+      }
+      html += '</div></div>';
     }
     navEl.innerHTML = html;
     updateReviewBadge();
   }
 
   function updateReviewBadge() {
-    var navItem = document.getElementById('nav-review');
-    if (!navItem) { return; }
+    var targets = [
+      document.getElementById('nav-review'),
+      document.getElementById('mob-nav-review')
+    ];
     var srs = (typeof STORE !== 'undefined' && STORE.get) ? (STORE.get('srs') || {}) : {};
     var now = Date.now();
     var count = 0;
@@ -665,13 +706,17 @@ var NAVITEMS = [
         count++;
       }
     }
-    var existing = navItem.querySelector ? navItem.querySelector('.nav-badge') : null;
-    if (existing && navItem.removeChild) { navItem.removeChild(existing); }
-    if (count > 0 && document.createElement) {
-      var badge = document.createElement('span');
-      badge.className = 'nav-badge';
-      badge.textContent = count;
-      if (navItem.appendChild) { navItem.appendChild(badge); }
+    for (var t = 0; t < targets.length; t++) {
+      var navItem = targets[t];
+      if (!navItem) { continue; }
+      var existing = navItem.querySelector ? navItem.querySelector('.nav-badge') : null;
+      if (existing && navItem.removeChild) { navItem.removeChild(existing); }
+      if (count > 0 && document.createElement) {
+        var badge = document.createElement('span');
+        badge.className = 'nav-badge';
+        badge.textContent = count;
+        if (navItem.appendChild) { navItem.appendChild(badge); }
+      }
     }
   }
 
@@ -681,6 +726,13 @@ var NAVITEMS = [
       items[i].classList.remove('active');
       if (items[i].getAttribute('data-route') === route) {
         items[i].classList.add('active');
+      }
+    }
+    var mobSlots = document.querySelectorAll ? document.querySelectorAll('.mob-slot') : [];
+    for (var m = 0; m < mobSlots.length; m++) {
+      mobSlots[m].classList.remove('active');
+      if (mobSlots[m].getAttribute('data-route') === route) {
+        mobSlots[m].classList.add('active');
       }
     }
   }
@@ -693,6 +745,68 @@ var NAVITEMS = [
 
   function navigate(route, arg) {
     window.location.hash = '#/' + route + (arg ? '/' + arg : '');
+  }
+
+  function _initMobileBar() {
+    var moreBtn = document.getElementById('mob-more-btn');
+    var sheet = document.getElementById('nav-more-sheet');
+    var backdrop = document.getElementById('sheet-backdrop');
+    var closeBtn = document.getElementById('sheet-close-btn');
+    var sheetContent = document.getElementById('sheet-content');
+
+    if (sheetContent && !sheetContent.hasChildNodes()) {
+      var sHtml = '';
+      for (var s = 0; s < NAV_SECTIONS.length; s++) {
+        var sec = NAV_SECTIONS[s];
+        sHtml += '<div class="sheet-section">';
+        sHtml += '<div class="sheet-sec-label">' + sec.title + '</div>';
+        sHtml += '<div class="sheet-grid">';
+        for (var i = 0; i < sec.items.length; i++) {
+          var it = sec.items[i];
+          sHtml += '<a class="sheet-item" href="#/' + it.route + '">';
+          sHtml += '<span>' + it.icon + '</span>';
+          sHtml += '<span>' + it.label + '</span>';
+          sHtml += '</a>';
+        }
+        sHtml += '</div></div>';
+      }
+      sheetContent.innerHTML = sHtml;
+    }
+
+    function closeSheet() {
+      if (sheet && sheet.classList) {
+        sheet.classList.remove('open');
+      }
+    }
+
+    function openSheet() {
+      if (sheet && sheet.classList) {
+        sheet.classList.add('open');
+      }
+    }
+
+    if (moreBtn && !moreBtn._bound) {
+      moreBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        openSheet();
+      });
+      moreBtn._bound = true;
+    }
+    if (backdrop && !backdrop._bound) {
+      backdrop.addEventListener('click', closeSheet);
+      backdrop._bound = true;
+    }
+    if (closeBtn && !closeBtn._bound) {
+      closeBtn.addEventListener('click', closeSheet);
+      closeBtn._bound = true;
+    }
+    if (sheetContent && !sheetContent._bound) {
+      sheetContent.addEventListener('click', function (e) {
+        var a = e.target.closest ? e.target.closest('a') : null;
+        if (a) { closeSheet(); }
+      });
+      sheetContent._bound = true;
+    }
   }
 
   function _route() {
@@ -715,12 +829,21 @@ var NAVITEMS = [
     }
     // Scroll to top
     if (viewEl.scrollTop !== undefined) { viewEl.scrollTop = 0; }
+
+    // Smooth transition
+    if (viewEl.classList && viewEl.classList.add) {
+      viewEl.classList.add('view-entering');
+      if (viewEl.offsetWidth !== undefined) { void viewEl.offsetWidth; }
+      viewEl.classList.remove('view-entering');
+    }
+
     updateReviewBadge();
   }
 
   window.addEventListener('hashchange', _route);
   window.addEventListener('load', function () {
     _buildNav();
+    _initMobileBar();
     /* FIX-3: bind data-say delegation once on viewEl, not inside _route() */
     if (viewEl && !_saySbound) {
       viewEl.addEventListener('click', function (e) {
@@ -735,6 +858,8 @@ var NAVITEMS = [
   });
 
   /* Expose globally */
+  window.NAV_SECTIONS = NAV_SECTIONS;
+  window.NAVITEMS = NAVITEMS;
   window.navigate = navigate;
   window.updateReviewBadge = updateReviewBadge;
 }());

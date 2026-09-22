@@ -56,6 +56,38 @@ cat >> "$OUT" <<'BODYSTART'
   </div>
 </div>
 <div id="toast" class="toast"></div>
+<nav id="mobile-bar" class="mobile-bar" role="navigation" aria-label="Mobile navigation">
+  <a class="mob-slot" href="#/home" data-route="home" id="mob-nav-home">
+    <span class="mob-icon">🏠</span>
+    <span class="mob-label">Home</span>
+  </a>
+  <a class="mob-slot" href="#/path" data-route="path" id="mob-nav-path">
+    <span class="mob-icon">📖</span>
+    <span class="mob-label">Learn</span>
+  </a>
+  <a class="mob-slot" href="#/coach" data-route="coach" id="mob-nav-coach">
+    <span class="mob-icon">🤖</span>
+    <span class="mob-label">Nova</span>
+  </a>
+  <a class="mob-slot" href="#/review" data-route="review" id="mob-nav-review">
+    <span class="mob-icon">🔁</span>
+    <span class="mob-label">Review</span>
+  </a>
+  <button type="button" class="mob-slot mob-fab" id="mob-more-btn" aria-label="More navigation options">
+    <span class="mob-icon">✨</span>
+    <span class="mob-label">More</span>
+  </button>
+</nav>
+<div id="nav-more-sheet" class="nav-more-sheet" aria-hidden="true">
+  <div class="sheet-backdrop" id="sheet-backdrop"></div>
+  <div class="sheet-panel">
+    <div class="sheet-header">
+      <div class="sheet-title">All Sections</div>
+      <button type="button" class="sheet-close" id="sheet-close-btn" aria-label="Close sheet">✕</button>
+    </div>
+    <div class="sheet-content" id="sheet-content"></div>
+  </div>
+</div>
 <script>
 BODYSTART
 

@@ -959,6 +959,53 @@ tryv('NOVA Gemini failure path rejects → offline fallback runs, no exception e
   }
 });
 
+/* ── M8: UI Polish (Design tokens, Grouped nav, Mobile bar) ────────── */
+console.log('\n🎨 M8 UI Polish & Design System');
+
+tryv('M8: Design tokens declared in index.html :root (--bg0 through --sp)', function () {
+  var html = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
+  var tokens = ['--bg0', '--bg1', '--bg2', '--bg3', '--line', '--txt', '--mut', '--acc', '--acc2', '--gold', '--ok', '--warn', '--bad', '--grad', '--r-sm', '--r-md', '--r-lg', '--sh1', '--sh2', '--sp'];
+  for (var i = 0; i < tokens.length; i++) {
+    if (html.indexOf(tokens[i]) === -1) { return false; }
+  }
+  return true;
+});
+
+tryv('M8: Design tokens used at least 20 times via var(--...) across styles in index.html', function () {
+  var html = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
+  var matches = html.match(/var\(--[a-zA-Z0-9_-]+\)/g) || [];
+  return matches.length >= 20;
+});
+
+tryv('M8: 5 structured nav sections exist in source and built nav markup', function () {
+  if (!Array.isArray(NAV_SECTIONS) || NAV_SECTIONS.length !== 5) { return false; }
+  var expected = ['TODAY', 'LEARN', 'PRACTISE', 'PROGRESS', 'TOOLS'];
+  for (var i = 0; i < expected.length; i++) {
+    if (NAV_SECTIONS[i].title !== expected[i]) { return false; }
+  }
+  var coreSrc = _fs.readFileSync(_path.join(__dirname, 'src/core.js'), 'utf8');
+  return coreSrc.indexOf('nav-section') !== -1 && coreSrc.indexOf('nav-section-label') !== -1;
+});
+
+tryv('M8: Mobile bar markup present with 5 slots including badge-capable Review and More FAB', function () {
+  var html = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
+  return (html.indexOf('id="mobile-bar"') !== -1 || html.indexOf('class="mobile-bar"') !== -1) &&
+         html.indexOf('mob-nav-home') !== -1 &&
+         html.indexOf('mob-nav-path') !== -1 &&
+         html.indexOf('mob-nav-coach') !== -1 &&
+         html.indexOf('mob-nav-review') !== -1 &&
+         html.indexOf('mob-more-btn') !== -1 &&
+         html.indexOf('nav-more-sheet') !== -1;
+});
+
+tryv('M8: Standalone build (engspell-standalone.html) contains tokens and mobile bar', function () {
+  var standalonePath = _path.join(__dirname, 'engspell-standalone.html');
+  if (!_fs.existsSync(standalonePath)) { return false; }
+  var sHtml = _fs.readFileSync(standalonePath, 'utf8');
+  return sHtml.indexOf('--bg1') !== -1 &&
+         sHtml.indexOf('--grad') !== -1 &&
+         sHtml.indexOf('id="mobile-bar"') !== -1;
+});
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
