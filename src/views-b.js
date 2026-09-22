@@ -368,4 +368,7 @@ function _showScResult(el, sc, scores) {
     '</div></div>';
   STORE.addXP(20);
   UI.toast('Scenario complete! +20 XP', 'success');
+  if (typeof FLOW !== 'undefined' && FLOW.mark) {
+    FLOW.mark(4);
+  }
 }

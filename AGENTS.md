@@ -89,6 +89,8 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **SRS-01**: Spaced repetition schedule (1/3/7/16/35 days), review queue, live nav badge — **SHIPPED** (2026-09-20 · `e517f27`)
 - **CNT-1**: Content expansion (+12 lessons, +6 scenarios, +10 passages, +30 power words) — **SHIPPED** (2026-09-21 · `e517f27`)
 - **READ-01**: Reading Corner, interactive IPA word chips, audio, vocab saves — **SHIPPED** (2026-09-21 · `d916c81`)
+- **M8**: UI Polish & Design Tokens, structured nav groupings, mobile bar — **SHIPPED** (2026-09-22 · `927d86d`)
+- **M6**: Today's Flow, 5-step sequence lock, streak retrofix, global chip — **SHIPPED** (2026-09-22)
 
 ---
 

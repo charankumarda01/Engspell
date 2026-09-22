@@ -14,7 +14,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 3;
+  var VERSION = 4;
 
   var def = {
     version: VERSION,
@@ -33,7 +33,14 @@ var STORE = (function () {
     srs: {},  /* INV-5: MISSION 2 SRS */
     docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
     novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
-    resumeReports: []   /* INV-5: v3 — Resume analysis report history */
+    resumeReports: [],  /* INV-5: v3 — Resume analysis report history */
+    flow: {             /* INV-5: v4 — Today's Flow enforced 5-step daily sequence */
+      date: '',
+      steps: [false, false, false, false, false],
+      streakRewarded: false,
+      novaTurns: 0,
+      srsReviews: 0
+    }
   };
 
   function _raw() {
@@ -61,6 +68,19 @@ var STORE = (function () {
       if (!data.novaHistory) { data.novaHistory = []; }
       if (!data.resumeReports) { data.resumeReports = []; }
       data.version = 3;
+    }
+    // v3 → v4: add flow
+    if (v < 4) {
+      if (!data.flow || !Array.isArray(data.flow.steps)) {
+        data.flow = {
+          date: '',
+          steps: [false, false, false, false, false],
+          streakRewarded: false,
+          novaTurns: 0,
+          srsReviews: 0
+        };
+      }
+      data.version = 4;
     }
     return data;
   }
@@ -117,15 +137,30 @@ var STORE = (function () {
   function touchStreak() {
     if (!_data) { load(); }
     var today = new Date().toISOString().slice(0, 10);
-    if (_data.lastLogin === today) { return _data.streak; }
-    var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    if (_data.lastLogin === yesterday) {
-      _data.streak = (_data.streak || 0) + 1;
-    } else if (_data.lastLogin !== today) {
-      _data.streak = 1;
-    }
     _data.lastLogin = today;
+    if (!_data.days) { _data.days = []; }
     if (_data.days.indexOf(today) === -1) { _data.days.push(today); }
+    save();
+    return _data.streak || 0;
+  }
+
+  function _rewardFlowStreak(dateStr) {
+    if (!_data) { load(); }
+    var today = dateStr || new Date().toISOString().slice(0, 10);
+    if (!_data.flow) {
+      _data.flow = {
+        date: today,
+        steps: [false, false, false, false, false],
+        streakRewarded: false,
+        novaTurns: 0,
+        srsReviews: 0
+      };
+    }
+    if (_data.flow.streakRewarded) {
+      return _data.streak || 0;
+    }
+    _data.flow.streakRewarded = true;
+    _data.streak = (_data.streak || 0) + 1;
     save();
     return _data.streak;
   }
@@ -155,6 +190,9 @@ var STORE = (function () {
     if (!_data) { load(); }
     if (_data.completed.indexOf(id) === -1) { _data.completed.push(id); }
     save();
+    if (typeof FLOW !== 'undefined' && FLOW.mark) {
+      FLOW.mark(2);
+    }
   }
 
   function isCompleted(id) {
@@ -166,6 +204,9 @@ var STORE = (function () {
     if (!_data) { load(); }
     _data.assessments.push(report);
     save();
+    if (typeof FLOW !== 'undefined' && FLOW.mark) {
+      FLOW.mark(5);
+    }
   }
 
   function resetAll() {
@@ -192,6 +233,7 @@ var STORE = (function () {
     save: save,
     addXP: addXP,
     touchStreak: touchStreak,
+    _rewardFlowStreak: _rewardFlowStreak,
     master: master,
     getMastery: getMastery,
     completeLesson: completeLesson,
@@ -243,6 +285,28 @@ var TRAINER = (function () {
     events.push(ev);
     if (events.length > MAX_EVENTS) { events = events.slice(-MAX_EVENTS); }
     _saveEvents(events);
+
+    /* M6 Daily Flow: drill completion hook */
+    if (typeof FLOW !== 'undefined' && FLOW.mark && ev.delta > 0) {
+      var drillSources = [
+        'spelling/correct', 'listening/comp', 'listening/dict',
+        'atlas/detective', 'idioms/', 'doctor/clean', 'practiceBar',
+        'daily/twister', 'daily/word', 'daily/idiom', 'daily/quote',
+        'docstudio/train', 'resume/analyze', 'phrases/blank'
+      ];
+      var isDrill = false;
+      for (var d = 0; d < drillSources.length; d++) {
+        if (ev.source.indexOf(drillSources[d]) !== -1) { isDrill = true; break; }
+      }
+      if (isDrill) {
+        var f = FLOW.get();
+        if (!f.steps[0]) {
+          FLOW.mark(1);
+        } else if (f.steps[1] && !f.steps[2]) {
+          FLOW.mark(3);
+        }
+      }
+    }
   }
 
   /** Returns {skill: cumulativeScore} capped 0–100 */
@@ -462,6 +526,253 @@ var U = (function () {
     dailyPickN: dailyPickN
   };
 }());
+
+/* ══════════════════════════════════════════════════════════════════════
+   FLOW — Enforced Daily Structure (M6)
+   5 steps in sequence: Diagnose → Learn → Drill → Apply → Prove
+   ════════════════════════════════════════════════════════════════════*/
+var FLOW = (function () {
+  'use strict';
+
+  var STEP_DEFS = [
+    {
+      id: 1,
+      key: 'diagnose',
+      label: 'Diagnose',
+      title: 'Placement Quiz or Weakest Drill',
+      desc: 'Test your baseline or re-assess your weakest skill',
+      route: 'quiz',
+      getRoute: function () {
+        var user = STORE.get('user');
+        if (!user || !user.placementTag) { return 'quiz'; }
+        var weak = (typeof TRAINER !== 'undefined' && TRAINER.weakestFirst) ? TRAINER.weakestFirst() : [];
+        var skill = weak.length ? weak[0].skill : 'pronunciation';
+        var map = {
+          pronunciation: 'pronunciation', grammar: 'atlas', vocab: 'idioms',
+          spelling: 'spelling', fluency: 'clarity', listening: 'listening',
+          reading: 'read', writing: 'resume'
+        };
+        return map[skill] || 'quiz';
+      },
+      reason: 'Start your daily flow here.'
+    },
+    {
+      id: 2,
+      key: 'learn',
+      label: 'Learn',
+      title: 'Next Learn Path Lesson',
+      desc: 'Work through the structured course step by step',
+      route: 'path',
+      getRoute: function () { return 'path'; },
+      reason: 'Complete Step 1 (Diagnose) first.'
+    },
+    {
+      id: 3,
+      key: 'drill',
+      label: 'Drill',
+      title: 'Weakest Skill Drill',
+      desc: 'Targeted practice in your lowest-scoring skill lab',
+      route: 'trainer',
+      getRoute: function () {
+        var weak = (typeof TRAINER !== 'undefined' && TRAINER.weakestFirst) ? TRAINER.weakestFirst() : [];
+        var skill = weak.length ? weak[0].skill : 'pronunciation';
+        var map = {
+          pronunciation: 'pronunciation', grammar: 'atlas', vocab: 'idioms',
+          spelling: 'spelling', fluency: 'clarity', listening: 'listening',
+          reading: 'read', writing: 'resume'
+        };
+        return map[skill] || 'trainer';
+      },
+      reason: 'Complete Step 2 (Learn) first.'
+    },
+    {
+      id: 4,
+      key: 'apply',
+      label: 'Apply',
+      title: 'Scenario or 3 Nova Turns',
+      desc: 'Put English to work in real-world dialogue or AI conversation',
+      route: 'scenarios',
+      getRoute: function () { return 'scenarios'; },
+      reason: 'Complete Step 3 (Drill) first.'
+    },
+    {
+      id: 5,
+      key: 'prove',
+      label: 'Prove',
+      title: 'Assessment or 5 SRS Reviews',
+      desc: 'Prove retention through speaking test or spaced flashcards',
+      route: 'review',
+      getRoute: function () {
+        var srs = STORE.get('srs') || {};
+        var due = 0;
+        var now = Date.now();
+        for (var k in srs) {
+          if (srs[k] && srs[k].due && srs[k].due <= now) { due++; }
+        }
+        return due >= 5 ? 'review' : 'assessment';
+      },
+      reason: 'Complete Step 4 (Apply) first.'
+    }
+  ];
+
+  var _fixtureDate = null;
+
+  function setDate(d) {
+    _fixtureDate = d || null;
+  }
+
+  function checkRollover(optDate) {
+    if (optDate) { _fixtureDate = optDate; }
+    var today = optDate || _fixtureDate || new Date().toISOString().slice(0, 10);
+    var flow = STORE.get('flow');
+    if (!flow || typeof flow !== 'object' || !Array.isArray(flow.steps)) {
+      flow = {
+        date: today,
+        steps: [false, false, false, false, false],
+        streakRewarded: false,
+        novaTurns: 0,
+        srsReviews: 0
+      };
+      STORE.set('flow', flow);
+      return flow;
+    }
+    if (flow.date !== today) {
+      flow.date = today;
+      flow.steps = [false, false, false, false, false];
+      flow.streakRewarded = false;
+      flow.novaTurns = 0;
+      flow.srsReviews = 0;
+      STORE.set('flow', flow);
+    }
+    return flow;
+  }
+
+  function get(optDate) {
+    return checkRollover(optDate);
+  }
+
+  function isStepUnlocked(step, optDate) {
+    var idx = (step >= 1 && step <= 5) ? (step - 1) : (step === 0 ? 0 : -1);
+    if (idx < 0 || idx > 4) { return false; }
+    if (idx === 0) { return true; }
+    var flow = checkRollover(optDate);
+    return !!flow.steps[idx - 1];
+  }
+
+  function current(optDate) {
+    var flow = checkRollover(optDate);
+    for (var i = 0; i < flow.steps.length; i++) {
+      if (!flow.steps[i]) {
+        var def = STEP_DEFS[i];
+        return {
+          id: def.id,
+          key: def.key,
+          label: def.label,
+          title: def.title,
+          desc: def.desc,
+          route: def.getRoute(),
+          allDone: false
+        };
+      }
+    }
+    var last = STEP_DEFS[4];
+    return {
+      id: last.id,
+      key: last.key,
+      label: last.label,
+      title: last.title,
+      desc: last.desc,
+      route: last.getRoute(),
+      allDone: true
+    };
+  }
+
+  function mark(step, optDate) {
+    var idx = (step >= 1 && step <= 5) ? (step - 1) : (step === 0 ? 0 : -1);
+    if (idx < 0 || idx > 4) { return false; }
+    var flow = checkRollover(optDate);
+    if (flow.steps[idx]) { return true; }
+    // Enforce sequence: step idx cannot complete if previous step not complete
+    if (idx > 0 && !flow.steps[idx - 1]) {
+      return false;
+    }
+    flow.steps[idx] = true;
+    var allDone = true;
+    for (var i = 0; i < flow.steps.length; i++) {
+      if (!flow.steps[i]) { allDone = false; break; }
+    }
+    if (allDone && !flow.streakRewarded) {
+      if (STORE._rewardFlowStreak) {
+        STORE._rewardFlowStreak(flow.date);
+      }
+      flow.streakRewarded = true;
+    }
+    STORE.set('flow', flow);
+    if (typeof updateFlowChip === 'function') {
+      updateFlowChip();
+    } else if (typeof window !== 'undefined' && typeof window.updateFlowChip === 'function') {
+      window.updateFlowChip();
+    }
+    return true;
+  }
+
+  function openStep(step) {
+    var idx = (step >= 1 && step <= 5) ? (step - 1) : (step === 0 ? 0 : -1);
+    if (idx < 0 || idx > 4) { return; }
+    var def = STEP_DEFS[idx];
+    if (!isStepUnlocked(idx + 1)) {
+      if (typeof UI !== 'undefined' && UI.toast) {
+        UI.toast('🔒 Step ' + (idx + 1) + ' locked: ' + def.reason, 'warning');
+      }
+      return;
+    }
+    var r = def.getRoute();
+    if (typeof navigate === 'function') {
+      navigate(r);
+    } else if (typeof window !== 'undefined' && window.location) {
+      window.location.hash = '#/' + r;
+    }
+  }
+
+  function openCurrent() {
+    var cur = current();
+    openStep(cur.id);
+  }
+
+  function recordNovaTurn() {
+    var flow = checkRollover();
+    flow.novaTurns = (flow.novaTurns || 0) + 1;
+    STORE.set('flow', flow);
+    if (flow.novaTurns >= 3) {
+      mark(4);
+    }
+    return flow.novaTurns;
+  }
+
+  function recordSrsReview() {
+    var flow = checkRollover();
+    flow.srsReviews = (flow.srsReviews || 0) + 1;
+    STORE.set('flow', flow);
+    if (flow.srsReviews >= 5) {
+      mark(5);
+    }
+    return flow.srsReviews;
+  }
+
+  return {
+    stepDefs: STEP_DEFS,
+    checkRollover: checkRollover,
+    setDate: setDate,
+    get: get,
+    isStepUnlocked: isStepUnlocked,
+    current: current,
+    mark: mark,
+    openStep: openStep,
+    openCurrent: openCurrent,
+    recordNovaTurn: recordNovaTurn,
+    recordSrsReview: recordSrsReview
+  };
+})();
 
 /* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
@@ -838,6 +1149,25 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     }
 
     updateReviewBadge();
+    updateFlowChip();
+  }
+
+  function updateFlowChip() {
+    var chip = document.getElementById('flow-chip');
+    if (!chip || typeof FLOW === 'undefined' || !FLOW.get) { return; }
+    var flow = FLOW.get();
+    var cur = FLOW.current();
+    var doneCount = 0;
+    for (var i = 0; i < flow.steps.length; i++) {
+      if (flow.steps[i]) { doneCount++; }
+    }
+    if (doneCount === 5) {
+      chip.className = 'flow-chip all-done';
+      chip.innerHTML = '<span class="chip-spark">🌟</span><span class="chip-text">Flow 5/5</span><span class="chip-next"> · All Done! 🎉</span><span class="chip-arrow">✓</span>';
+    } else {
+      chip.className = 'flow-chip';
+      chip.innerHTML = '<span class="chip-spark">⚡</span><span class="chip-text">Flow ' + doneCount + '/5</span><span class="chip-next"> · Next: ' + (cur.label || 'Diagnose') + '</span><span class="chip-arrow">▸</span>';
+    }
   }
 
   window.addEventListener('hashchange', _route);
@@ -855,6 +1185,7 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
       _saySbound = true;
     }
     _route();
+    updateFlowChip();
   });
 
   /* Expose globally */
@@ -862,4 +1193,12 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.NAVITEMS = NAVITEMS;
   window.navigate = navigate;
   window.updateReviewBadge = updateReviewBadge;
+  window.updateFlowChip = updateFlowChip;
+  window.FLOW = FLOW;
+
+  if (typeof global !== 'undefined') {
+    global.updateFlowChip = updateFlowChip;
+    global.updateReviewBadge = updateReviewBadge;
+    global.FLOW = FLOW;
+  }
 }());

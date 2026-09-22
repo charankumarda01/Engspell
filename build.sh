@@ -50,6 +50,14 @@ cat >> "$OUT" <<'BODYSTART'
       <span id="streak-display">🔥 0</span>
     </div>
   </header>
+  <div id="flow-strip" class="flow-strip">
+    <button type="button" id="flow-chip" class="flow-chip" onclick="FLOW.openCurrent()" aria-label="Today's Flow progress">
+      <span class="chip-spark">⚡</span>
+      <span class="chip-text">Flow 0/5</span>
+      <span class="chip-next"> · Next: Diagnose</span>
+      <span class="chip-arrow">▸</span>
+    </button>
+  </div>
   <div id="layout">
     <nav id="sidebar"><nav id="nav"></nav></nav>
     <main id="view"></main>

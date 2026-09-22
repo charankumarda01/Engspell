@@ -241,13 +241,14 @@ tryv('SPEECH.getVoices returns array', function () { return Array.isArray(SPEECH
 console.log('\n💾 STORE module');
 
 tryv('STORE exists', function () { return typeof STORE === 'object'; });
-tryv('STORE.VERSION is 3', function () { return STORE.VERSION === 3; });
+tryv('STORE.VERSION is 4', function () { return STORE.VERSION === 4; });
 tryv('STORE.get returns object', function () { return typeof STORE.get() === 'object'; });
 tryv('STORE.get user has name field', function () { return typeof STORE.get('user') === 'object'; });
 tryv('STORE.get srs field exists (INV-5 append)', function () { return STORE.get('srs') !== undefined; });
 tryv('STORE v3: docs field is array (INV-5)', function () { return Array.isArray(STORE.get('docs')); });
 tryv('STORE v3: novaHistory field is array (INV-5)', function () { return Array.isArray(STORE.get('novaHistory')); });
 tryv('STORE v3: resumeReports field is array (INV-5)', function () { return Array.isArray(STORE.get('resumeReports')); });
+tryv('STORE v4: flow field exists (INV-5)', function () { return typeof STORE.get('flow') === 'object'; });
 tryv('VIEWS.docstudio exists and has render', function () { return typeof VIEWS.docstudio === 'object' && typeof VIEWS.docstudio.render === 'function'; });
 tryv('VIEWS.resume exists and has render', function () { return typeof VIEWS.resume === 'object' && typeof VIEWS.resume.render === 'function'; });
 tryv('VIEWS.coach._getHistory returns array', function () { VIEWS.coach._history = null; STORE.set('novaHistory', []); return Array.isArray(VIEWS.coach._getHistory()); });
@@ -1005,6 +1006,225 @@ tryv('M8: Standalone build (engspell-standalone.html) contains tokens and mobile
   return sHtml.indexOf('--bg1') !== -1 &&
          sHtml.indexOf('--grad') !== -1 &&
          sHtml.indexOf('id="mobile-bar"') !== -1;
+});
+
+/* ── M6: TODAY'S FLOW ─────────────────────────────────────────────── */
+console.log('\n🧭 M6 Today\'s Flow — Enforced Daily Structure');
+
+tryv('M6: FLOW.mark order enforcement — step 2 cannot complete before step 1', function () {
+  var date = '2026-09-22';
+  STORE.set('flow', {
+    date: date,
+    steps: [false, false, false, false, false],
+    streakRewarded: false,
+    novaTurns: 0,
+    srsReviews: 0
+  });
+
+  // Attempting step 2 while step 1 is false must fail
+  var res2 = FLOW.mark(2, date);
+  var f = FLOW.get(date);
+  if (res2 !== false || f.steps[1] !== false) { return false; }
+
+  // Step 1 completes
+  var res1 = FLOW.mark(1, date);
+  f = FLOW.get(date);
+  if (res1 !== true || f.steps[0] !== true) { return false; }
+
+  // Now step 2 can complete
+  res2 = FLOW.mark(2, date);
+  f = FLOW.get(date);
+  if (res2 !== true || f.steps[1] !== true) { return false; }
+
+  // Step 4 cannot complete before step 3
+  var res4 = FLOW.mark(4, date);
+  f = FLOW.get(date);
+  if (res4 !== false || f.steps[3] !== false) { return false; }
+
+  return true;
+});
+
+tryv('M6: Day rollover resets steps exactly once for a fixture date change', function () {
+  var day1 = '2026-09-20';
+  var day2 = '2026-09-21';
+
+  STORE.set('flow', {
+    date: day1,
+    steps: [true, true, true, false, false],
+    streakRewarded: false,
+    novaTurns: 1,
+    srsReviews: 2
+  });
+
+  // Rollover to day2
+  var fDay2 = FLOW.checkRollover(day2);
+  if (fDay2.date !== day2) { return false; }
+  if (fDay2.steps.some(function (s) { return s !== false; })) { return false; }
+  if (fDay2.novaTurns !== 0 || fDay2.srsReviews !== 0) { return false; }
+
+  // Complete step 1 on day2
+  FLOW.mark(1, day2);
+  var fAfterMark = FLOW.get(day2);
+  if (fAfterMark.steps[0] !== true) { return false; }
+
+  // Calling checkRollover / get again on day2 must NOT reset steps
+  var fCheckAgain = FLOW.checkRollover(day2);
+  if (fCheckAgain.steps[0] !== true) { return false; }
+
+  return true;
+});
+
+tryv('M6: Streak increments ONLY after step 5 completes today, and only once', function () {
+  var date = '2026-09-22';
+  STORE.set('streak', 7);
+  STORE.set('flow', {
+    date: date,
+    steps: [false, false, false, false, false],
+    streakRewarded: false,
+    novaTurns: 0,
+    srsReviews: 0
+  });
+
+  // 1. Bare login (touchStreak) must NOT increment streak
+  STORE.touchStreak();
+  if (STORE.get('streak') !== 7) { return false; }
+
+  // 2. Completing steps 1..4 must NOT increment streak
+  FLOW.mark(1, date);
+  FLOW.mark(2, date);
+  FLOW.mark(3, date);
+  FLOW.mark(4, date);
+  if (STORE.get('streak') !== 7) { return false; }
+
+  // 3. Completing step 5 must increment streak from 7 to 8
+  var ok5 = FLOW.mark(5, date);
+  if (!ok5) { return false; }
+  if (STORE.get('streak') !== 8) { return false; }
+  var f = FLOW.get(date);
+  if (!f.streakRewarded) { return false; }
+
+  // 4. Calling mark(5) again or touchStreak on same day must NOT increment streak again
+  FLOW.mark(5, date);
+  STORE.touchStreak();
+  if (STORE.get('streak') !== 8) { return false; }
+
+  return true;
+});
+
+tryv('M6: Waitless detection — calling real completion hooks marks the right step', function () {
+  var today = new Date().toISOString().slice(0, 10);
+  STORE.set('flow', {
+    date: today,
+    steps: [false, false, false, false, false],
+    streakRewarded: false,
+    novaTurns: 0,
+    srsReviews: 0
+  });
+
+  // Step 1: Quiz completion hook (_renderQuizResult)
+  FLOW.mark(1);
+  var f = FLOW.get();
+  if (!f.steps[0]) { return false; }
+
+  // Step 2: Lesson completion hook (STORE.completeLesson)
+  STORE.completeLesson('lsn_fixtures_test_01');
+  f = FLOW.get();
+  if (!f.steps[1]) { return false; }
+
+  // Step 3: Drill completion hook (TRAINER.log with drill source)
+  TRAINER.log({ skill: 'spelling', delta: 2, source: 'spelling/correct' });
+  f = FLOW.get();
+  if (!f.steps[2]) { return false; }
+
+  // Step 4: 3 Nova turns (FLOW.recordNovaTurn)
+  FLOW.recordNovaTurn();
+  FLOW.recordNovaTurn();
+  FLOW.recordNovaTurn();
+  f = FLOW.get();
+  if (!f.steps[3]) { return false; }
+
+  // Step 5: Assessment completion hook (STORE.addAssessment)
+  STORE.addAssessment({ score: 90, band: 'B2', ts: Date.now() });
+  f = FLOW.get();
+  if (!f.steps[4]) { return false; }
+
+  return true;
+});
+
+tryv('M6: Home view + chip render in all three states (fresh / mid / complete)', function () {
+  var date = '2026-09-22';
+
+  // Setup DOM stub for flow-chip
+  var chipEl = {
+    className: '',
+    innerHTML: '',
+    textContent: ''
+  };
+  var oldGetById = document.getElementById;
+  document.getElementById = function (id) {
+    if (id === 'flow-chip') { return chipEl; }
+    return oldGetById(id);
+  };
+
+  var el = { innerHTML: '' };
+
+  try {
+    // State 1: Fresh (0/5 complete)
+    STORE.set('flow', {
+      date: date,
+      steps: [false, false, false, false, false],
+      streakRewarded: false,
+      novaTurns: 0,
+      srsReviews: 0
+    });
+    updateFlowChip();
+    if (chipEl.innerHTML.indexOf('Flow 0/5') === -1) { return false; }
+    VIEWS.home.render(el);
+    if (el.innerHTML.indexOf('flow-card') === -1 ||
+        el.innerHTML.indexOf('0/5 Complete') === -1 ||
+        el.innerHTML.indexOf('Start →') === -1 ||
+        el.innerHTML.indexOf('Locked 🔒') === -1) {
+      return false;
+    }
+
+    // State 2: Mid (2/5 complete)
+    STORE.set('flow', {
+      date: date,
+      steps: [true, true, false, false, false],
+      streakRewarded: false,
+      novaTurns: 0,
+      srsReviews: 0
+    });
+    updateFlowChip();
+    if (chipEl.innerHTML.indexOf('Flow 2/5') === -1) { return false; }
+    VIEWS.home.render(el);
+    if (el.innerHTML.indexOf('2/5 Complete') === -1 ||
+        el.innerHTML.indexOf('Review ✓') === -1) {
+      return false;
+    }
+
+    // State 3: Complete (5/5 complete)
+    STORE.set('flow', {
+      date: date,
+      steps: [true, true, true, true, true],
+      streakRewarded: true,
+      novaTurns: 3,
+      srsReviews: 5
+    });
+    updateFlowChip();
+    if (chipEl.className.indexOf('all-done') === -1 || chipEl.innerHTML.indexOf('Flow 5/5') === -1) {
+      return false;
+    }
+    VIEWS.home.render(el);
+    if (el.innerHTML.indexOf("Today's Flow Complete!") === -1 ||
+        el.innerHTML.indexOf('Daily Star Earned') === -1) {
+      return false;
+    }
+
+    return true;
+  } finally {
+    document.getElementById = oldGetById;
+  }
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */

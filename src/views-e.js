@@ -134,6 +134,7 @@ VIEWS.review = {
         TRAINER.log({skill: skill, delta: 2, source: 'review/correct'});
         STORE.addXP(3);
         if (typeof updateReviewBadge === 'function') { updateReviewBadge(); }
+        if (typeof FLOW !== 'undefined' && FLOW.recordSrsReview) { FLOW.recordSrsReview(); }
         self._idx++;
         self.render(el);
       });
@@ -147,6 +148,7 @@ VIEWS.review = {
         const skill = item.key.startsWith('spell_') ? 'spelling' : 'vocab';
         TRAINER.log({skill: skill, delta: -1, source: 'review/hard'});
         if (typeof updateReviewBadge === 'function') { updateReviewBadge(); }
+        if (typeof FLOW !== 'undefined' && FLOW.recordSrsReview) { FLOW.recordSrsReview(); }
         self._idx++;
         self.render(el);
       });

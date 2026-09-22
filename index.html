@@ -1250,6 +1250,236 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 .word-popup-close { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 5px 12px; cursor: pointer; font-size: 0.8rem; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   M6: TODAY'S FLOW — GLOBAL STRIP, CHIP & HOME STEPPER
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.flow-strip {
+  background: var(--bg1);
+  border-bottom: 1px solid var(--line);
+  padding: 6px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 90;
+  flex-shrink: 0;
+}
+.flow-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--txt);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.flow-chip:hover {
+  background: rgba(124,92,255,0.15);
+  border-color: var(--acc);
+  transform: translateY(-1px);
+}
+.flow-chip .chip-spark {
+  color: var(--gold);
+}
+.flow-chip.all-done {
+  border-color: rgba(52,211,153,0.4);
+  background: rgba(52,211,153,0.1);
+  color: var(--ok);
+}
+.flow-chip.all-done .chip-spark {
+  color: var(--ok);
+}
+.flow-chip .chip-arrow {
+  color: var(--mut);
+  font-size: 11px;
+}
+@media (max-width: 880px) {
+  .flow-strip {
+    padding: 4px 14px;
+  }
+  .flow-chip .chip-next {
+    display: none;
+  }
+}
+
+.flow-card {
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--sh2);
+  position: relative;
+  overflow: hidden;
+}
+.flow-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--grad);
+}
+.flow-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.flow-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flow-card-badge {
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  background: rgba(124,92,255,0.15);
+  color: var(--acc);
+  border: 1px solid rgba(124,92,255,0.3);
+}
+.flow-card-badge.complete {
+  background: rgba(52,211,153,0.15);
+  color: var(--ok);
+  border-color: rgba(52,211,153,0.3);
+}
+.flow-steps {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .flow-steps {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+.flow-step {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: all 0.2s ease;
+  min-height: 120px;
+}
+.flow-step.active {
+  border-color: var(--acc);
+  background: rgba(124,92,255,0.08);
+  box-shadow: 0 0 0 1px var(--acc);
+}
+.flow-step.done {
+  border-color: rgba(52,211,153,0.3);
+  background: rgba(52,211,153,0.05);
+}
+.flow-step.locked {
+  opacity: 0.6;
+  background: rgba(10,15,30,0.6);
+  cursor: not-allowed;
+}
+.flow-step-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.flow-step-num {
+  font-size: 0.75rem;
+  font-weight: 800;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg3);
+  color: var(--mut);
+}
+.flow-step.active .flow-step-num {
+  background: var(--acc);
+  color: #fff;
+}
+.flow-step.done .flow-step-num {
+  background: var(--ok);
+  color: #070b16;
+}
+.flow-step.locked .flow-step-num {
+  background: rgba(255,255,255,0.05);
+  color: var(--mut);
+}
+.flow-step-status {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.flow-step.done .flow-step-status {
+  color: var(--ok);
+}
+.flow-step.active .flow-step-status {
+  color: var(--acc);
+}
+.flow-step.locked .flow-step-status {
+  color: var(--mut);
+}
+.flow-step-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--txt);
+}
+.flow-step-desc {
+  font-size: 0.76rem;
+  color: var(--mut);
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.flow-step-btn {
+  margin-top: auto;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+.flow-step.active .flow-step-btn {
+  background: var(--acc);
+  color: #fff;
+}
+.flow-step.active .flow-step-btn:hover {
+  background: #6d28d9;
+}
+.flow-step.done .flow-step-btn {
+  background: rgba(52,211,153,0.15);
+  color: var(--ok);
+  border: 1px solid rgba(52,211,153,0.3);
+}
+.flow-step.locked .flow-step-btn {
+  background: transparent;
+  color: var(--mut);
+  border: 1px dashed var(--line);
+  cursor: not-allowed;
+}
+
 </style>
 </head>
 <body>
@@ -1261,6 +1491,14 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
       <span id="streak-display">🔥 0</span>
     </div>
   </header>
+  <div id="flow-strip" class="flow-strip">
+    <button type="button" id="flow-chip" class="flow-chip" onclick="FLOW.openCurrent()" aria-label="Today's Flow progress">
+      <span class="chip-spark">⚡</span>
+      <span class="chip-text">Flow 0/5</span>
+      <span class="chip-next"> · Next: Diagnose</span>
+      <span class="chip-arrow">▸</span>
+    </button>
+  </div>
   <div id="layout">
     <nav id="sidebar"><nav id="nav"></nav></nav>
     <main id="view" role="main" aria-live="polite"></main>

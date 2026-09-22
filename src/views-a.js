@@ -4,6 +4,65 @@
    ===================================================================== */
 
 /* ── HOME ──────────────────────────────────────────────────────────── */
+function _renderFlowCard() {
+  if (typeof FLOW === 'undefined' || !FLOW.get) { return ''; }
+  var flow = FLOW.get();
+  var cur = FLOW.current();
+  var defs = FLOW.stepDefs;
+  var doneCount = 0;
+  for (var d = 0; d < flow.steps.length; d++) {
+    if (flow.steps[d]) { doneCount++; }
+  }
+  var isAllDone = (doneCount === 5);
+
+  var h = '<div class="flow-card">' +
+    '<div class="flow-card-header">' +
+      '<div class="flow-card-title">' +
+        (isAllDone ? '🌟 <span>Today\'s Flow Complete!</span>' : '⚡ <span>Today\'s Flow</span>') +
+      '</div>' +
+      '<div class="flow-card-badge' + (isAllDone ? ' complete' : '') + '">' +
+        (isAllDone ? '5/5 Done · Daily Star Earned 🔥' : doneCount + '/5 Complete · Next: ' + cur.label) +
+      '</div>' +
+    '</div>' +
+    '<div class="flow-steps">';
+
+  for (var i = 0; i < defs.length; i++) {
+    var stepDef = defs[i];
+    var isDone = !!flow.steps[i];
+    var isUnlocked = FLOW.isStepUnlocked(i + 1);
+    var isActive = (!isDone && isUnlocked);
+    var isLocked = !isUnlocked;
+
+    var stepCls = 'flow-step';
+    if (isDone) { stepCls += ' done'; }
+    else if (isActive) { stepCls += ' active'; }
+    else if (isLocked) { stepCls += ' locked'; }
+
+    var numText = isDone ? '✓' : (isLocked ? '🔒' : String(i + 1));
+    var actionHtml = '';
+    if (isDone) {
+      actionHtml = '<button type="button" class="flow-step-btn" onclick="FLOW.openStep(' + (i + 1) + ')">Review ✓</button>';
+    } else if (isActive) {
+      actionHtml = '<button type="button" class="flow-step-btn" onclick="FLOW.openStep(' + (i + 1) + ')">Start →</button>';
+    } else {
+      actionHtml = '<button type="button" class="flow-step-btn" onclick="FLOW.openStep(' + (i + 1) + ')" title="' + stepDef.reason + '">Locked 🔒</button>';
+    }
+
+    h += '<div class="' + stepCls + '" data-step="' + (i + 1) + '">' +
+      '<div class="flow-step-top">' +
+        '<div class="flow-step-num">' + numText + '</div>' +
+        '<div class="flow-step-status">' + (isDone ? '✅ Done' : (isActive ? '▶ Next' : '🔒 Locked')) + '</div>' +
+      '</div>' +
+      '<div class="flow-step-title">' + (i + 1) + '. ' + stepDef.label + '</div>' +
+      '<div class="flow-step-desc">' + (isLocked ? stepDef.reason : stepDef.title) + '</div>' +
+      actionHtml +
+    '</div>';
+  }
+
+  h += '</div></div>';
+  return h;
+}
+
 VIEWS.home = {
   render: function (el) {
     'use strict';
@@ -57,7 +116,7 @@ VIEWS.home = {
           (dueCount > 0 ? '<a class="stat-pill due-pill" href="#/review" title="SRS Review Items Due">🔁 ' + dueCount + ' due</a>' : '') +
         '</div>' +
       '</div>' +
-
+      _renderFlowCard() +
       '<div class="section-title">🚀 Start Here</div>' +
       '<div class="start-here-grid">' +
         '<div class="card start-card" onclick="navigate(\'daily\')">' +

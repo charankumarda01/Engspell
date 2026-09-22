@@ -229,6 +229,9 @@ function _novaRespond(userText, self, el) {
     STORE.get('coachStats').messages = (STORE.get('coachStats').messages || 0) + 1;
     STORE.save();
     TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/chat'});
+    if (typeof FLOW !== 'undefined' && FLOW.recordNovaTurn) {
+      FLOW.recordNovaTurn();
+    }
     SPEECH.speak(reply);
     self.render(el);
   }
@@ -344,6 +347,9 @@ function _novaGemini(userText, self, el, key) {
       h.push({role: 'nova', text: _esc(reply)});
       self._saveHistory();
       TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
+      if (typeof FLOW !== 'undefined' && FLOW.recordNovaTurn) {
+        FLOW.recordNovaTurn();
+      }
       STORE.save();
       SPEECH.speak(reply);
       self.render(el);
@@ -370,6 +376,9 @@ function _novaGemini(userText, self, el, key) {
     h.push({role: 'nova', text: _esc(reply)});
     self._saveHistory();
     TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
+    if (typeof FLOW !== 'undefined' && FLOW.recordNovaTurn) {
+      FLOW.recordNovaTurn();
+    }
     STORE.save();
     SPEECH.speak(reply);
     self.render(el);
@@ -503,6 +512,9 @@ function _renderQuizResult(el, answers, questions) {
   STORE.set('user', user);
   STORE.addXP(20);
   UI.toast('Level Test complete! You are ' + cefr + '. +20 XP', 'success');
+  if (typeof FLOW !== 'undefined' && FLOW.mark) {
+    FLOW.mark(1);
+  }
 }
 
 /* ── WORD BANK ─────────────────────────────────────────────────────── */
