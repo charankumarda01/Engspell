@@ -851,12 +851,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 @keyframes dot-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
 .word-popup { animation: fadeInUp 0.2s ease; }
 .word-popup .ipa { color: var(--accent3); font-family: monospace; font-size: 0.85rem; }
-.word-popup .word-pos { color: var(--muted); font-size: 0.78rem; font-style: italic; }
-.word-popup .word-def { font-size: 0.88rem; }
+.word-popup .word-lvl { background: rgba(124,58,237,0.15); color: var(--accent3); border-radius: 4px; padding: 1px 6px; font-size: 0.75rem; font-weight: 700; }
 .word-popup-actions { display: flex; gap: 8px; margin-top: 10px; }
 .word-popup-say { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 0.8rem; }
 .word-popup-close { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 5px 12px; cursor: pointer; font-size: 0.8rem; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
 </style>
 </head>
 <body>

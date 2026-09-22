@@ -1,4 +1,4 @@
-﻿/* =====================================================================
+/* =====================================================================
    views-f.js -- ES6 allowed (same rule as views-d/e)
    VIEWS.docstudio -- Document Studio: upload, read, study
    VIEWS.resume    -- Resume / Writing Analyzer
@@ -40,7 +40,7 @@ VIEWS.docstudio = {
           "<p class=\"sub\">Upload any text file or paste content &mdash; then read, study, and ask Nova about it.</p></div>" +
           "<label class=\"btn-primary ds-upload-btn\" for=\"ds-file-input\">" +
             "&#8679; Upload File" +
-            "<input type=\"file\" id=\"ds-file-input\" accept=\".txt,.md,.csv,.js,.html,.py,.json\" style=\"display:none\">" +
+            "<input type=\"file\" id=\"ds-file-input\" accept=\".txt,.md,.csv,.js,.html,.py,.json,.pdf\" style=\"display:none\">" +
           "</label>" +
         "</div>" +
         "<div class=\"ds-layout\">" +
@@ -70,12 +70,27 @@ VIEWS.docstudio = {
       fileInput.addEventListener("change", function(e) {
         var file = e.target.files[0];
         if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-          self._saveDoc(file.name.replace(/\.[^/.]+$/, ""), ev.target.result, el);
-        };
-        reader.readAsText(file, "UTF-8");
+        var title = file.name.replace(/\.[^/.]+$/, "");
+        var isPdf = file.name.toLowerCase().endsWith(".pdf");
         fileInput.value = "";
+
+        if (isPdf) {
+          /* FIX-4: Lazy-load local vendored pdf.js, then extract text */
+          UI.toast("📄 Loading PDF…", "info");
+          _loadPdfJs(function(err) {
+            if (err) { UI.toast("❌ PDF engine failed to load: " + err, "error"); return; }
+            _extractPdfText(file, function(text, extractErr) {
+              if (extractErr) { UI.toast("❌ Could not read PDF: " + extractErr, "error"); return; }
+              self._saveDoc(title, text, el);
+            });
+          });
+        } else {
+          var reader = new FileReader();
+          reader.onload = function(ev) {
+            self._saveDoc(title, ev.target.result, el);
+          };
+          reader.readAsText(file, "UTF-8");
+        }
       });
     }
 
@@ -115,7 +130,28 @@ VIEWS.docstudio = {
 
     var readerEl = el.querySelector("#ds-reader");
     if (readerEl) {
+      /* dblclick — desktop word lookup */
       readerEl.addEventListener("dblclick", function() {
+        var sel = window.getSelection ? window.getSelection().toString().trim() : "";
+        if (!sel || sel.indexOf(" ") !== -1) return;
+        var word = sel.toLowerCase().replace(/[^a-z]/g, "");
+        if (!word) return;
+        _showWordPopup(sel, word);
+      });
+      /* FIX-5: single-tap word lookup for touch devices — pointerup within 300ms */
+      var _tapStart = 0;
+      var _tapX0 = 0;
+      var _tapY0 = 0;
+      readerEl.addEventListener("pointerdown", function(e) {
+        _tapStart = Date.now();
+        _tapX0 = e.clientX;
+        _tapY0 = e.clientY;
+      });
+      readerEl.addEventListener("pointerup", function(e) {
+        var dt = Date.now() - _tapStart;
+        var dx = Math.abs(e.clientX - _tapX0);
+        var dy = Math.abs(e.clientY - _tapY0);
+        if (dt > 300 || dx > 10 || dy > 10) return; /* not a quick tap */
         var sel = window.getSelection ? window.getSelection().toString().trim() : "";
         if (!sel || sel.indexOf(" ") !== -1) return;
         var word = sel.toLowerCase().replace(/[^a-z]/g, "");
@@ -150,7 +186,27 @@ VIEWS.docstudio = {
   },
 
   _saveDoc: function(title, text, el) {
+    var CHAR_LIMIT = 400000;
+    var SIZE_LIMIT = 3 * 1024 * 1024; /* 3 MB in bytes */
+    var truncated = false;
+
+    /* FIX-2: hard cap per document */
+    if (text.length > CHAR_LIMIT) {
+      text = text.slice(0, CHAR_LIMIT);
+      truncated = true;
+    }
+
+    /* FIX-2: check total stored size before saving */
     var docs = STORE.get("docs") || [];
+    var existingSize = 0;
+    for (var di = 0; di < docs.length; di++) {
+      existingSize += (docs[di].text || "").length;
+    }
+    if (existingSize + text.length > SIZE_LIMIT) {
+      UI.toast("❌ Storage full (3 MB limit). Delete some documents first, then retry.", "error");
+      return;
+    }
+
     var sections = _splitSections(text);
     var wc = text.split(/\s+/).length;
     var doc = { title: title, text: text, sections: sections, added: Date.now(), active: true, wordCount: wc };
@@ -159,12 +215,79 @@ VIEWS.docstudio = {
     STORE.set("docs", docs);
     this._activeIdx = docs.length - 1;
     TRAINER.log({skill: "reading", delta: 1, source: "docstudio/upload"});
-    UI.toast("✅ \"" + _truncate(title, 28) + "\" saved — " + wc.toLocaleString() + " words", "success");
+    if (truncated) {
+      UI.toast("⚠️ \"" + _truncate(title, 22) + "\" truncated to 400k chars — first portion saved.", "info");
+    } else {
+      UI.toast("✅ \"" + _truncate(title, 28) + "\" saved — " + wc.toLocaleString() + " words", "success");
+    }
     this.render(el);
   }
+
 };
 
+/* FIX-4: PDF.js lazy-loader — injects local vendored scripts only when first PDF is picked.
+   Paths are relative; works via file:// and any static server.
+   INV-2 / INV-8: no CDN, no remote URL — src/vendor/ files are committed. */
+var _pdfJsLoaded = false;
+
+function _loadPdfJs(cb) {
+  if (_pdfJsLoaded && typeof pdfjsLib !== "undefined") { cb(null); return; }
+  if (typeof document === "undefined") { cb("no DOM"); return; }
+
+  /* Inject pdf.min.js (the API wrapper) */
+  var script = document.createElement("script");
+  /* Path is relative to index.html which is at root */
+  script.src = "src/vendor/pdf.min.js";
+  script.onload = function() {
+    /* Point worker to the local vendored copy — no CDN */
+    if (typeof pdfjsLib !== "undefined") {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "src/vendor/pdf.worker.min.js";
+      _pdfJsLoaded = true;
+      cb(null);
+    } else {
+      cb("pdfjsLib not defined after load");
+    }
+  };
+  script.onerror = function() { cb("failed to load src/vendor/pdf.min.js"); };
+  document.head.appendChild(script);
+}
+
+function _extractPdfText(file, cb) {
+  /* Read file as ArrayBuffer, then parse page-by-page via pdf.js */
+  var fr = new FileReader();
+  fr.onload = function(ev) {
+    var typedArr = new Uint8Array(ev.target.result);
+    pdfjsLib.getDocument({data: typedArr}).promise.then(function(pdfDoc) {
+      var totalPages = pdfDoc.numPages;
+      var pageTexts = [];
+      var pagesRead = 0;
+
+      function readPage(n) {
+        pdfDoc.getPage(n).then(function(page) {
+          page.getTextContent().then(function(tc) {
+            var pageText = tc.items.map(function(item) {
+              return item.str;
+            }).join(" ");
+            pageTexts[n - 1] = pageText;
+            pagesRead++;
+            if (pagesRead < totalPages) {
+              readPage(n + 1);
+            } else {
+              cb(pageTexts.join("\n\n"), null);
+            }
+          }).catch(function(e) { cb(null, String(e)); });
+        }).catch(function(e) { cb(null, String(e)); });
+      }
+
+      if (totalPages === 0) { cb("", null); } else { readPage(1); }
+    }).catch(function(e) { cb(null, String(e)); });
+  };
+  fr.onerror = function() { cb(null, "FileReader error"); };
+  fr.readAsArrayBuffer(file);
+}
+
 function _renderDocReader(doc) {
+
   var sections = (doc.sections && doc.sections.length) ? doc.sections : [{heading: "", body: doc.text}];
   var readTime = Math.max(1, Math.round(doc.wordCount / 200));
   var html =
@@ -226,23 +349,33 @@ function _showWordPopup(sel, word) {
   }
   var popup = document.createElement("div");
   popup.className = "word-popup";
+  /* FIX-5: WORDS schema only has {w, ipa, lvl} — render only those fields */
   if (found) {
-    popup.innerHTML = "<strong>" + _escF(found.w) + "</strong> <span class=\"ipa\">" + (found.ipa || "") + "</span><br>" +
-      "<span class=\"word-pos\">" + (found.pos || "") + "</span> <span class=\"word-def\">" + _escF(found.def || "") + "</span>" +
+    popup.innerHTML =
+      "<strong>" + _escF(found.w) + "</strong>" +
+      (found.ipa ? " <span class=\"ipa\">" + _escF(found.ipa) + "</span>" : "") +
+      (found.lvl ? " <span class=\"word-lvl\">[" + _escF(found.lvl) + "]</span>" : "") +
       "<div class=\"word-popup-actions\">" +
-        "<button class=\"word-popup-say\" onclick=\"SPEECH.speak('" + _escF(found.w) + "')\">🔊 Hear it</button>" +
+        "<button class=\"word-popup-say\">🔊 Hear it</button>" +
         "<button class=\"word-popup-close\">&#215; Close</button>" +
       "</div>";
   } else {
-    popup.innerHTML = "<strong>" + _escF(sel) + "</strong><br>" +
+    popup.innerHTML =
+      "<strong>" + _escF(sel) + "</strong><br>" +
       "<span class=\"word-def muted\">Not in word bank &mdash; ask Nova!</span>" +
       "<div class=\"word-popup-actions\">" +
-        "<button class=\"word-popup-say\" onclick=\"SPEECH.speak('" + _escF(sel) + "')\">🔊 Hear it</button>" +
+        "<button class=\"word-popup-say\">🔊 Hear it</button>" +
         "<button class=\"word-popup-close\">&#215; Close</button>" +
       "</div>";
   }
   popup.style.cssText = "position:fixed;bottom:140px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid rgba(124,58,237,0.5);border-radius:14px;padding:16px 20px;z-index:600;font-size:0.9rem;min-width:240px;box-shadow:0 8px 40px rgba(0,0,0,0.5);";
   document.body.appendChild(popup);
+  /* FIX-5: addEventListener instead of inline onclick */
+  var sayBtn = popup.querySelector(".word-popup-say");
+  if (sayBtn) {
+    var wordToSay = found ? found.w : sel;
+    sayBtn.addEventListener("click", function() { if (typeof SPEECH !== "undefined") { SPEECH.speak(wordToSay); } });
+  }
   var closeBtn = popup.querySelector(".word-popup-close");
   if (closeBtn) closeBtn.addEventListener("click", function() { if (popup.parentNode) popup.parentNode.removeChild(popup); });
   setTimeout(function() { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 6000);

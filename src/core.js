@@ -209,7 +209,11 @@ var STORE = (function () {
 var TRAINER = (function () {
   'use strict';
 
-  var SKILLS = ['pronunciation', 'grammar', 'vocab', 'spelling', 'fluency', 'listening'];
+  var SKILLS = ['pronunciation', 'grammar', 'vocab', 'spelling', 'fluency', 'listening', 'reading', 'writing'];
+  /* INV-7: reading fires from docstudio (read_ mastery prefix, already in keysFor).
+     writing fires from resume analyzer. No write_ mastery prefix exists yet in STORE
+     because writing quality is assessed holistically (resume reports), not per-item.
+     When per-word writing mastery is added, add 'write_' prefix here. */
   var EVENTS_KEY = 'engspell_trainer_events';
   var MAX_EVENTS = 500;
 
@@ -269,13 +273,17 @@ var TRAINER = (function () {
   /** Returns mastery keys for a given skill prefix */
   function keysFor(skill, mastery) {
     var map = {
-      spelling: 'spell_',
-      vocab: ['idn_', 'pv_', 'read_'],
+      spelling:  'spell_',
+      vocab:     ['idn_', 'pv_', 'read_'],
       listening: 'lsn_',
-      reading: 'read_'
+      reading:   'read_',
+      /* writing: no per-item mastery prefix yet — holistic score only via resume reports */
+      writing:   []
     };
     var prefix = map[skill];
-    if (!prefix) { return []; }
+    if (prefix === undefined || prefix === null) { return []; }
+    /* Empty-array shorthand for skills with no mastery prefix */
+    if (Array.isArray(prefix) && prefix.length === 0) { return []; }
     var prefixes = Array.isArray(prefix) ? prefix : [prefix];
     var keys = [];
     for (var k in mastery) {
@@ -629,6 +637,8 @@ var NAVITEMS = [
   var viewEl = document.getElementById('view');
   var navEl = document.getElementById('nav');
   var sidebarEl = document.getElementById('sidebar');
+  /* FIX-3: guard so data-say delegation is bound exactly once, not per _route() call */
+  var _saySbound = false;
 
   function _buildNav() {
     if (!navEl) { return; }
@@ -703,13 +713,6 @@ var NAVITEMS = [
     } else {
       viewEl.innerHTML = '<div class="not-found"><h2>Page not found</h2><p>Route: #/' + p.route + '</p></div>';
     }
-    // data-say delegation
-    viewEl.addEventListener('click', function _say(e) {
-      var t = e.target;
-      if (t && t.getAttribute && t.getAttribute('data-say')) {
-        SPEECH.speakSlow(t.getAttribute('data-say'));
-      }
-    });
     // Scroll to top
     if (viewEl.scrollTop !== undefined) { viewEl.scrollTop = 0; }
     updateReviewBadge();
@@ -718,6 +721,16 @@ var NAVITEMS = [
   window.addEventListener('hashchange', _route);
   window.addEventListener('load', function () {
     _buildNav();
+    /* FIX-3: bind data-say delegation once on viewEl, not inside _route() */
+    if (viewEl && !_saySbound) {
+      viewEl.addEventListener('click', function (e) {
+        var t = e.target;
+        if (t && t.getAttribute && t.getAttribute('data-say')) {
+          SPEECH.speakSlow(t.getAttribute('data-say'));
+        }
+      });
+      _saySbound = true;
+    }
     _route();
   });
 

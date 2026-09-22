@@ -389,5 +389,8 @@ var SKILL_META = {
   vocab:         {label:'Vocabulary',    color:'#059669', icon:'📚'},
   spelling:      {label:'Spelling',      color:'#d97706', icon:'🔤'},
   fluency:       {label:'Fluency',       color:'#dc2626', icon:'💬'},
-  listening:     {label:'Listening',     color:'#7c3aed', icon:'👂'}
+  listening:     {label:'Listening',     color:'#0891b2', icon:'👂'},
+  reading:       {label:'Reading',       color:'#7c3aed', icon:'📖'},
+  writing:       {label:'Writing',       color:'#be185d', icon:'✍️'}
 };
+

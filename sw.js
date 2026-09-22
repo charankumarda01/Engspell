@@ -20,6 +20,8 @@ var ASSETS = [
   './src/views-d.js',
   './src/views-e.js',
   './src/views-f.js',
+  './src/vendor/pdf.min.js',
+  './src/vendor/pdf.worker.min.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'

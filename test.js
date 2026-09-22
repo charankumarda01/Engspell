@@ -212,8 +212,8 @@ tryv('bandOf exists and calibrates CEFR band', function () {
          bandOf(70, 0.08) === 'A2' &&
          bandOf(40, 0.20) === 'A1';
 });
-tryv('SKILL_META has all 6 skills', function () {
-  return ['pronunciation','grammar','vocab','spelling','fluency','listening'].every(function(s){ return SKILL_META[s]; });
+tryv('SKILL_META has all 8 skills', function () {
+  return ['pronunciation','grammar','vocab','spelling','fluency','listening','reading','writing'].every(function(s){ return SKILL_META[s]; });
 });
 
 /* ── SPEECH CHECKS ─────────────────────────────────────────────────── */
@@ -258,6 +258,50 @@ tryv('VIEWS.coach._saveHistory caps at 50 turns', function () {
   for (var i = 0; i < 60; i++) { h.push({role: 'user', text: 'msg' + i}); }
   VIEWS.coach._saveHistory();
   return STORE.get('novaHistory').length <= 50;
+});
+tryv('FIX-2: _saveDoc truncates text >400k chars and does not throw', function () {
+  STORE.set('docs', []);
+  VIEWS.docstudio._activeIdx = -1;
+  var bigText = 'x'.repeat(500000); /* 500k chars */
+  var toastMsg = '';
+  var origToast = UI.toast;
+  UI.toast = function(m) { toastMsg = m; };
+  var elStub = {innerHTML:'', querySelector:function(){return null;}, querySelectorAll:function(){return [];}};
+  VIEWS.docstudio._saveDoc('BigDoc', bigText, elStub);
+  UI.toast = origToast;
+  var saved = STORE.get('docs');
+  STORE.set('docs', []);
+  return Array.isArray(saved) && saved.length === 1 &&
+         saved[0].text.length === 400000 &&
+         toastMsg.indexOf('truncated') !== -1;
+});
+tryv('FIX-2: _saveDoc refuses save when total stored size >3 MB', function () {
+  /* Pre-fill docs to ~3MB */
+  var bigDoc = {title:'big', text: 'y'.repeat(3 * 1024 * 1024), sections:[], added:0, active:false, wordCount:1};
+  STORE.set('docs', [bigDoc]);
+  VIEWS.docstudio._activeIdx = -1;
+  var toastMsg2 = '';
+  var origToast2 = UI.toast;
+  UI.toast = function(m) { toastMsg2 = m; };
+  var elStub2 = {innerHTML:'', querySelector:function(){return null;}, querySelectorAll:function(){return [];}};
+  VIEWS.docstudio._saveDoc('NewDoc', 'some content', elStub2);
+  UI.toast = origToast2;
+  STORE.set('docs', []);
+  return toastMsg2.indexOf('Storage full') !== -1;
+});
+
+
+tryv('FIX-3: _route() contains no addEventListener for data-say (single-bind invariant)', function () {
+  var coreCode = _fs.readFileSync(_path.join(__dirname, 'src/core.js'), 'utf8');
+  /* Extract only the _route function body */
+  var routeIdx = coreCode.indexOf('function _route()');
+  var routeEnd = coreCode.indexOf('\n  }\n\n  window.addEventListener', routeIdx);
+  var routeBody = coreCode.slice(routeIdx, routeEnd);
+  /* data-say listener must NOT appear inside _route(); it must only appear in the once-bind block */
+  var hasLeak = routeBody.indexOf('data-say') !== -1 && routeBody.indexOf('addEventListener') !== -1;
+  /* The once-bind flag must exist */
+  var hasGuard = coreCode.indexOf('_saySbound') !== -1;
+  return !hasLeak && hasGuard;
 });
 
 tryv('STORE.addXP increases xp', function () {
@@ -313,7 +357,7 @@ tryv('STORE.exportJSON returns valid JSON', function () {
 console.log('\n📊 TRAINER module');
 
 tryv('TRAINER exists', function () { return typeof TRAINER === 'object'; });
-tryv('TRAINER.SKILLS has 6 entries', function () { return TRAINER.SKILLS.length === 6; });
+tryv('TRAINER.SKILLS has 8 entries', function () { return TRAINER.SKILLS.length === 8; });
 tryv('TRAINER.log accepts valid event', function () {
   TRAINER.clearEvents();
   TRAINER.log({skill: 'grammar', delta: 2, source: 'test'});
@@ -326,9 +370,26 @@ tryv('TRAINER.log rejects unknown skill', function () {
   var scores = TRAINER.aggregate();
   return scores.grammar === 50; // unchanged
 });
-tryv('TRAINER.aggregate returns all 6 skills', function () {
+tryv('TRAINER.aggregate returns all 8 skills', function () {
   var scores = TRAINER.aggregate();
   return TRAINER.SKILLS.every(function(s){ return typeof scores[s] === 'number'; });
+});
+tryv('TRAINER.log reading increases aggregate().reading', function () {
+  TRAINER.clearEvents();
+  TRAINER.log({skill: 'reading', delta: 5, source: 'test'});
+  return TRAINER.aggregate().reading > 50;
+});
+tryv('TRAINER.log writing increases aggregate().writing', function () {
+  TRAINER.clearEvents();
+  TRAINER.log({skill: 'writing', delta: 5, source: 'test'});
+  return TRAINER.aggregate().writing > 50;
+});
+tryv('TRAINER.log unknown skill is silently ignored', function () {
+  TRAINER.clearEvents();
+  TRAINER.log({skill: 'nonexistent_xyz', delta: 99, source: 'test'});
+  var scores = TRAINER.aggregate();
+  /* All known skills should still be at default 50 */
+  return TRAINER.SKILLS.every(function(s){ return scores[s] === 50; });
 });
 tryv('TRAINER.weakestFirst returns sorted array', function () {
   TRAINER.clearEvents();
@@ -628,8 +689,107 @@ viewsToTest.forEach(function(name) {
   });
 });
 
+/* ── FIX-4: PDF / CDN scan ──────────────────────────────────────────── */
+console.log('\nFIX-4 PDF support & CDN invariant');
+
+tryv('FIX-4: src/vendor/pdf.min.js exists (vendored locally)', function () {
+  return _fs.existsSync(_path.join(__dirname, 'src', 'vendor', 'pdf.min.js'));
+});
+tryv('FIX-4: src/vendor/pdf.worker.min.js exists (vendored locally)', function () {
+  return _fs.existsSync(_path.join(__dirname, 'src', 'vendor', 'pdf.worker.min.js'));
+});
+tryv('FIX-4: _loadPdfJs function exists in views-f.js', function () {
+  var code = _fs.readFileSync(_path.join(__dirname, 'src', 'views-f.js'), 'utf8');
+  return code.indexOf('function _loadPdfJs') !== -1;
+});
+tryv('FIX-4: _extractPdfText function exists in views-f.js', function () {
+  var code = _fs.readFileSync(_path.join(__dirname, 'src', 'views-f.js'), 'utf8');
+  return code.indexOf('function _extractPdfText') !== -1;
+});
+tryv('FIX-4: _splitSections pipeline works on multi-page PDF text fixture', function () {
+  /* Simulate extracted text from two PDF pages joined by double newline */
+  var page1 = 'Introduction\nThis is the first page of the document. It contains important information.';
+  var page2 = 'Methodology\nThis is the second page. It describes the research approach.';
+  var fullText = page1 + '\n\n' + page2;
+  /* _splitSections is a module-level function loaded from views-f.js */
+  var sections = _splitSections(fullText);
+  return Array.isArray(sections) && sections.length >= 1;
+});
+tryv('FIX-4: INV-8 CDN scan — no external script/asset/fetch URLs in app src (only Gemini endpoint allowed)', function () {
+  var srcDir = _path.join(__dirname, 'src');
+  var appFiles = ['data.js','data2.js','data3.js','speech.js','core.js',
+                  'views-a.js','views-b.js','views-c.js','views-d.js','views-e.js','views-f.js'];
+  var rootFiles = ['index.html', 'sw.js'];
+  /* Look only for patterns that load external resources: script src, link href (stylesheet),
+     fetch(), import(), new Worker(), XMLHttpRequest.open GET/POST to external.
+     Simple heuristic: look for http(s):// NOT preceded by href=" or target= or '(sharing)
+     and NOT one of the explicitly allowed URLs. */
+  var ALLOWED_HOSTS = [
+    'generativelanguage.googleapis.com', /* INV-8: the single allowed fetch endpoint */
+    'aistudio.google.com',               /* href help link in settings UI only */
+    'wa.me'                              /* WhatsApp share href only */
+  ];
+  /* Patterns that indicate actual resource loading (not href navigation) */
+  var LOAD_PAT = /(?:src\s*=\s*["']|fetch\s*\(|import\s*\(|new\s+Worker\s*\(|addAll\s*\()([^"'\)]*https?:\/\/[^"'\)]+)/gi;
+  var violations = [];
+
+  function scanFile(code, fname) {
+    var m;
+    while ((m = LOAD_PAT.exec(code)) !== null) {
+      var url = m[1];
+      var allowed = ALLOWED_HOSTS.some(function(h) { return url.indexOf(h) !== -1; });
+      if (!allowed) { violations.push(fname + ': ' + url.slice(0, 60)); }
+    }
+    LOAD_PAT.lastIndex = 0;
+  }
+
+  appFiles.forEach(function(f) { scanFile(_fs.readFileSync(_path.join(srcDir, f), 'utf8'), f); });
+  rootFiles.forEach(function(f) { scanFile(_fs.readFileSync(_path.join(__dirname, f), 'utf8'), f); });
+
+  if (violations.length > 0) { throw new Error('External resource loads: ' + violations.join(' | ')); }
+  return true;
+});
+
+/* ── FIX-5: Word popup correctness ──────────────────────────────────── */
+console.log('\nFIX-5 Word popup');
+
+tryv('FIX-5: _showWordPopup exists', function () {
+  return typeof _showWordPopup === 'function';
+});
+tryv('FIX-5: views-f.js has no inline onclick= in popup HTML', function () {
+  var code = _fs.readFileSync(_path.join(__dirname, 'src', 'views-f.js'), 'utf8');
+  /* Find _showWordPopup body and check it has no onclick= attribute string in innerHTML */
+  var popupIdx = code.indexOf('function _showWordPopup');
+  var popupEnd = code.indexOf('\nfunction ', popupIdx + 1);
+  var popupBody = code.slice(popupIdx, popupEnd > popupIdx ? popupEnd : popupIdx + 2000);
+  return popupBody.indexOf('onclick=') === -1;
+});
+tryv('FIX-5: _showWordPopup popup uses WORDS fields w/ipa/lvl, not pos/def', function () {
+  var code = _fs.readFileSync(_path.join(__dirname, 'src', 'views-f.js'), 'utf8');
+  var popupIdx = code.indexOf('function _showWordPopup');
+  var popupEnd = code.indexOf('\nfunction ', popupIdx + 1);
+  var popupBody = code.slice(popupIdx, popupEnd > popupIdx ? popupEnd : popupIdx + 2000);
+  var hasPos = popupBody.indexOf('found.pos') !== -1;
+  var hasDef = popupBody.indexOf('found.def') !== -1;
+  var hasLvl = popupBody.indexOf('found.lvl') !== -1 || popupBody.indexOf('found.ipa') !== -1;
+  return !hasPos && !hasDef && hasLvl;
+});
+tryv('FIX-5: touch pointerdown/pointerup handlers exist in _bindEvents', function () {
+  var code = _fs.readFileSync(_path.join(__dirname, 'src', 'views-f.js'), 'utf8');
+  return code.indexOf('pointerdown') !== -1 && code.indexOf('pointerup') !== -1;
+});
+tryv('FIX-5: _showWordPopup constructs popup with addEventListener for say button', function () {
+  var code = _fs.readFileSync(_path.join(__dirname, 'src', 'views-f.js'), 'utf8');
+  var popupIdx = code.indexOf('function _showWordPopup');
+  var popupEnd = code.indexOf('\nfunction ', popupIdx + 1);
+  var popupBody = code.slice(popupIdx, popupEnd > popupIdx ? popupEnd : popupIdx + 2000);
+  return popupBody.indexOf('addEventListener') !== -1 && popupBody.indexOf('word-popup-say') !== -1;
+});
+
 /* ── MANIFEST (MISSION 1) ───────────────────────────────────────────── */
 console.log('\n📱 PWA manifest (Mission 1)');
+
+
 
 tryv('manifest.webmanifest exists', function () {
   return _fs.existsSync(_path.join(__dirname, 'manifest.webmanifest'));

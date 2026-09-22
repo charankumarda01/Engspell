@@ -753,6 +753,106 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   .trainer-grid { grid-template-columns: 1fr; }
   .home-header { flex-direction: column; }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   DOCUMENT STUDIO
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.view-docstudio { display: flex; flex-direction: column; gap: 20px; }
+.ds-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ds-upload-btn { cursor: pointer; }
+.ds-layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; min-height: 520px; }
+.ds-sidebar { display: flex; flex-direction: column; gap: 8px; background: var(--bg2); border-radius: 14px; padding: 16px; border: 1px solid var(--border); overflow-y: auto; max-height: 640px; }
+.ds-sidebar-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent3); margin-bottom: 4px; }
+.ds-doc-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; }
+.ds-doc-item:hover { background: var(--bg3); }
+.ds-doc-item.active { background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(109,40,217,0.15)); border-color: rgba(124,58,237,0.4); }
+.ds-doc-name { flex: 1; font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-doc-delete { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.1rem; padding: 0 4px; border-radius: 4px; transition: color 0.15s; }
+.ds-doc-delete:hover { color: var(--red); }
+.ds-empty { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+.ds-paste-section { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+.ds-paste-section textarea { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); padding: 10px; font-size: 0.85rem; resize: vertical; font-family: inherit; }
+.ds-paste-row { display: flex; gap: 8px; }
+.ds-paste-row input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 0.85rem; }
+.ds-reader { background: var(--bg2); border-radius: 14px; border: 1px solid var(--border); padding: 24px; overflow-y: auto; max-height: 640px; }
+.ds-no-doc { text-align: center; padding: 60px 20px; color: var(--muted); }
+.ds-no-doc-icon { font-size: 3rem; margin-bottom: 16px; }
+.ds-reader-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.ds-reader-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+.ds-reader-meta { color: var(--muted); font-size: 0.8rem; }
+.ds-reader-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.ds-doc-tip { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2); border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: var(--accent3); margin-bottom: 16px; }
+.ds-sections { display: flex; flex-direction: column; gap: 20px; }
+.ds-section-heading { font-size: 1rem; font-weight: 700; color: var(--accent3); margin-bottom: 8px; padding-top: 4px; border-top: 1px solid var(--border); }
+.ds-para { color: var(--text); line-height: 1.85; font-size: 0.95rem; margin-bottom: 8px; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RESUME ANALYZER
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.view-resume { display: flex; flex-direction: column; gap: 20px; }
+.resume-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.resume-input-panel { display: flex; flex-direction: column; gap: 10px; background: var(--bg2); border-radius: 14px; padding: 20px; border: 1px solid var(--border); }
+.resume-input-header { display: flex; align-items: center; gap: 10px; }
+.resume-input-header label.section-title { flex: 1; }
+.resume-input-panel textarea { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); padding: 12px; font-size: 0.9rem; resize: vertical; font-family: inherit; line-height: 1.7; }
+.resume-actions { display: flex; gap: 10px; align-items: center; }
+.resume-select { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 0.85rem; flex: 1; }
+.resume-report-panel { background: var(--bg2); border-radius: 14px; padding: 20px; border: 1px solid var(--border); overflow-y: auto; max-height: 640px; }
+.resume-empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+.resume-empty-icon { font-size: 2.8rem; margin-bottom: 16px; }
+.resume-report { display: flex; flex-direction: column; gap: 20px; }
+.resume-score-header { text-align: center; padding: 16px; background: var(--bg3); border-radius: 12px; }
+.resume-overall-score { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+.resume-score-max { font-size: 1.2rem; opacity: 0.6; }
+.resume-score-label { font-size: 1rem; font-weight: 600; margin: 4px 0; }
+.resume-word-count { font-size: 0.8rem; color: var(--muted); }
+.resume-score-bars { display: flex; flex-direction: column; gap: 10px; }
+.resume-bar-row { display: flex; align-items: center; gap: 10px; }
+.resume-bar-label { width: 90px; font-size: 0.82rem; font-weight: 600; }
+.resume-bar-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.resume-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.resume-bar-val { width: 80px; font-size: 0.82rem; font-weight: 600; }
+.resume-bar-val small { color: var(--muted); font-weight: 400; }
+.resume-issues-section { display: flex; flex-direction: column; gap: 8px; }
+.resume-issue-group { background: var(--bg3); border-radius: 10px; padding: 12px; }
+.resume-issue-cat { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent3); margin-bottom: 8px; }
+.resume-issue-item { font-size: 0.85rem; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; }
+.sev-high { background: rgba(239,68,68,0.12); border-left: 3px solid var(--red); }
+.sev-medium { background: rgba(245,158,11,0.12); border-left: 3px solid var(--gold); }
+.sev-low { background: rgba(124,58,237,0.1); border-left: 3px solid var(--accent); }
+.resume-no-issues { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 14px; color: var(--green); font-weight: 500; }
+.resume-gemini-block, .resume-gemini-pending { background: var(--bg3); border-radius: 10px; padding: 16px; }
+.resume-gemini-text { font-size: 0.9rem; line-height: 1.8; white-space: pre-wrap; }
+.resume-history { margin-top: 8px; }
+.resume-history-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.resume-score-pill { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; font-weight: 700; font-size: 0.8rem; margin-left: auto; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   NOVA UPGRADES: doc banner, word popup, typing dots, clear button
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.nova-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.nova-header h1 { margin-bottom: 0; }
+.nova-doc-banner { display: flex; align-items: center; gap: 10px; background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.88rem; }
+.doc-banner-icon { font-size: 1.1rem; }
+.doc-banner-title { flex: 1; }
+.doc-banner-clear { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; padding: 3px 10px; font-size: 0.8rem; transition: all 0.15s; }
+.doc-banner-clear:hover { color: var(--red); border-color: var(--red); }
+.doc-hint { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: var(--green); margin-bottom: 10px; }
+.btn-ghost { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+.btn-ghost:hover { border-color: var(--accent3); color: var(--text); }
+.btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+.q-num { background: var(--accent); color: white; border-radius: 6px; padding: 1px 8px; font-size: 0.8rem; font-weight: 700; margin-right: 6px; }
+.typing-dots span { display: inline-block; animation: dot-bounce 1.2s infinite; font-size: 1.4rem; line-height: 1; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
+.word-popup { animation: fadeInUp 0.2s ease; }
+.word-popup .ipa { color: var(--accent3); font-family: monospace; font-size: 0.85rem; }
+.word-popup .word-lvl { background: rgba(124,58,237,0.15); color: var(--accent3); border-radius: 4px; padding: 1px 6px; font-size: 0.75rem; font-weight: 700; }
+.word-popup-actions { display: flex; gap: 8px; margin-top: 10px; }
+.word-popup-say { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 0.8rem; }
+.word-popup-close { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 5px 12px; cursor: pointer; font-size: 0.8rem; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 </style>
 </head>
 <body>
@@ -2636,8 +2736,11 @@ var SKILL_META = {
   vocab:         {label:'Vocabulary',    color:'#059669', icon:'📚'},
   spelling:      {label:'Spelling',      color:'#d97706', icon:'🔤'},
   fluency:       {label:'Fluency',       color:'#dc2626', icon:'💬'},
-  listening:     {label:'Listening',     color:'#7c3aed', icon:'👂'}
+  listening:     {label:'Listening',     color:'#0891b2', icon:'👂'},
+  reading:       {label:'Reading',       color:'#7c3aed', icon:'📖'},
+  writing:       {label:'Writing',       color:'#be185d', icon:'✍️'}
 };
+
 /* =====================================================================
    speech.js — ES5 ONLY
    SPEECH: TTS (voice pick, rate, slow) + SpeechRecognition wrapper
@@ -2851,7 +2954,7 @@ var SPEECH = (function () {
 }());
 /* =====================================================================
    core.js — ES5 ONLY
-   STORE (localStorage, schema v2, migrations), TRAINER (events/radar),
+   STORE (localStorage, schema v3, migrations), TRAINER (events/radar),
    U (text utilities: norm, contractions, LCS align, verdict),
    UI (toast, practiceBar, scoreHTML), router, nav
    ===================================================================== */
@@ -2865,7 +2968,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 2;
+  var VERSION = 3;
 
   var def = {
     version: VERSION,
@@ -2881,7 +2984,10 @@ var STORE = (function () {
     assessments: [],
     coachStats: {messages: 0, corrections: 0, sessions: 0},
     settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: ''},
-    srs: {}   /* INV-5: new key for MISSION 2 SRS — appended, not replacing */
+    srs: {},  /* INV-5: MISSION 2 SRS */
+    docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
+    novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
+    resumeReports: []   /* INV-5: v3 — Resume analysis report history */
   };
 
   function _raw() {
@@ -2902,6 +3008,13 @@ var STORE = (function () {
       if (!data.srs) { data.srs = {}; }
       if (data.user && !data.user.placementTag) { data.user.placementTag = ''; }
       data.version = 2;
+    }
+    // v2 → v3: add docs, novaHistory, resumeReports
+    if (v < 3) {
+      if (!data.docs) { data.docs = []; }
+      if (!data.novaHistory) { data.novaHistory = []; }
+      if (!data.resumeReports) { data.resumeReports = []; }
+      data.version = 3;
     }
     return data;
   }
@@ -3050,7 +3163,11 @@ var STORE = (function () {
 var TRAINER = (function () {
   'use strict';
 
-  var SKILLS = ['pronunciation', 'grammar', 'vocab', 'spelling', 'fluency', 'listening'];
+  var SKILLS = ['pronunciation', 'grammar', 'vocab', 'spelling', 'fluency', 'listening', 'reading', 'writing'];
+  /* INV-7: reading fires from docstudio (read_ mastery prefix, already in keysFor).
+     writing fires from resume analyzer. No write_ mastery prefix exists yet in STORE
+     because writing quality is assessed holistically (resume reports), not per-item.
+     When per-word writing mastery is added, add 'write_' prefix here. */
   var EVENTS_KEY = 'engspell_trainer_events';
   var MAX_EVENTS = 500;
 
@@ -3110,13 +3227,17 @@ var TRAINER = (function () {
   /** Returns mastery keys for a given skill prefix */
   function keysFor(skill, mastery) {
     var map = {
-      spelling: 'spell_',
-      vocab: ['idn_', 'pv_', 'read_'],
+      spelling:  'spell_',
+      vocab:     ['idn_', 'pv_', 'read_'],
       listening: 'lsn_',
-      reading: 'read_'
+      reading:   'read_',
+      /* writing: no per-item mastery prefix yet — holistic score only via resume reports */
+      writing:   []
     };
     var prefix = map[skill];
-    if (!prefix) { return []; }
+    if (prefix === undefined || prefix === null) { return []; }
+    /* Empty-array shorthand for skills with no mastery prefix */
+    if (Array.isArray(prefix) && prefix.length === 0) { return []; }
     var prefixes = Array.isArray(prefix) ? prefix : [prefix];
     var keys = [];
     for (var k in mastery) {
@@ -3443,6 +3564,8 @@ var NAVITEMS = [
   {route:'daily',   label:'Daily',      icon:'☀️'},
   {route:'path',    label:'Learn',      icon:'📖'},
   {route:'coach',   label:'Nova',       icon:'🤖'},
+  {route:'docstudio',label:'Doc Studio',icon:'📄'},
+  {route:'resume',   label:'Resume',    icon:'📝'},
   {route:'trainer', label:'Trainer',    icon:'📊'},
   {route:'review',  label:'Review',     icon:'🔁'},
   {route:'read',    label:'Read',       icon:'📚'},
@@ -3468,6 +3591,8 @@ var NAVITEMS = [
   var viewEl = document.getElementById('view');
   var navEl = document.getElementById('nav');
   var sidebarEl = document.getElementById('sidebar');
+  /* FIX-3: guard so data-say delegation is bound exactly once, not per _route() call */
+  var _saySbound = false;
 
   function _buildNav() {
     if (!navEl) { return; }
@@ -3542,13 +3667,6 @@ var NAVITEMS = [
     } else {
       viewEl.innerHTML = '<div class="not-found"><h2>Page not found</h2><p>Route: #/' + p.route + '</p></div>';
     }
-    // data-say delegation
-    viewEl.addEventListener('click', function _say(e) {
-      var t = e.target;
-      if (t && t.getAttribute && t.getAttribute('data-say')) {
-        SPEECH.speakSlow(t.getAttribute('data-say'));
-      }
-    });
     // Scroll to top
     if (viewEl.scrollTop !== undefined) { viewEl.scrollTop = 0; }
     updateReviewBadge();
@@ -3557,6 +3675,16 @@ var NAVITEMS = [
   window.addEventListener('hashchange', _route);
   window.addEventListener('load', function () {
     _buildNav();
+    /* FIX-3: bind data-say delegation once on viewEl, not inside _route() */
+    if (viewEl && !_saySbound) {
+      viewEl.addEventListener('click', function (e) {
+        var t = e.target;
+        if (t && t.getAttribute && t.getAttribute('data-say')) {
+          SPEECH.speakSlow(t.getAttribute('data-say'));
+        }
+      });
+      _saySbound = true;
+    }
     _route();
   });
 
@@ -4150,63 +4278,147 @@ function _showScResult(el, sc, scores) {
    VIEWS.coach, VIEWS.quiz, VIEWS.wordbank, VIEWS.settings, VIEWS.onboarding
    ===================================================================== */
 
-/* ── NOVA COACH ─────────────────────────────────────────────────────── */
+/* ── NOVA COACH ─────────────────────────────────────────────────────────────── */
 VIEWS.coach = {
-  _history: [],
-  _mode: 'chat',   /* chat | interview */
+  _history: null, /* loaded lazily from STORE */
+  _mode: 'chat',  /* chat | interview | document */
   _interviewQ: 0,
+  _activeDoc: null, /* {title, text} when in document mode */
+
+  _getHistory: function () {
+    if (!this._history) {
+      this._history = STORE.get('novaHistory') || [];
+    }
+    return this._history;
+  },
+
+  _saveHistory: function () {
+    var h = this._getHistory();
+    /* Cap at 50 turns */
+    if (h.length > 50) { h = h.slice(h.length - 50); }
+    this._history = h;
+    STORE.set('novaHistory', h);
+  },
+
+  _clearHistory: function () {
+    this._history = [];
+    STORE.set('novaHistory', []);
+  },
+
   render: function (el) {
     'use strict';
     var self = this;
     var settings = STORE.get('settings') || {};
     var hasKey = !!(settings.geminiKey && settings.geminiKey.trim().length > 10);
+    var history = self._getHistory();
+
+    /* Active document from Doc Studio */
+    var docs = STORE.get('docs') || [];
+    var activeDoc = null;
+    for (var di = 0; di < docs.length; di++) {
+      if (docs[di].active) { activeDoc = docs[di]; break; }
+    }
+    self._activeDoc = activeDoc;
+
+    var docBanner = '';
+    if (activeDoc) {
+      docBanner = '<div class="nova-doc-banner">'
+        + '<span class="doc-banner-icon">📄</span>'
+        + '<span class="doc-banner-title">Reading: <strong>' + _esc(activeDoc.title) + '</strong></span>'
+        + '<button class="doc-banner-clear" id="nova-clear-doc">× Clear</button>'
+        + '</div>';
+    }
+
+    var modeDocBtn = activeDoc
+      ? '<button class="tab-btn' + (self._mode === 'document' ? ' active' : '') + '" id="mode-document">📄 Doc Agent</button>'
+      : '';
 
     var html = '<div class="view-coach">' +
+      '<div class="nova-header">' +
       '<h1>🤖 Nova — AI Coach</h1>' +
-      '<p class="sub">' + (hasKey ? '✅ Gemini connected — real AI active.' : '⚠️ No API key — using rule engine. Add key in <a href="#/settings">Settings</a>.') + '</p>' +
+      '<button class="btn-ghost btn-sm" id="nova-clear-history" title="Clear conversation">Clear chat</button>' +
+      '</div>' +
+      '<p class="sub">' + (hasKey
+        ? '✅ Gemini connected — real AI active.'
+        : '⚠️ No key — rule engine only. Add your free Gemini key in <a href="#/settings">Settings</a>.'
+      ) + '</p>' +
+      docBanner +
       '<div class="coach-modes">' +
       '<button class="tab-btn' + (self._mode === 'chat' ? ' active' : '') + '" id="mode-chat">💬 Chat</button>' +
       '<button class="tab-btn' + (self._mode === 'interview' ? ' active' : '') + '" id="mode-interview">🎤 Mock Interview</button>' +
+      modeDocBtn +
       '</div>' +
       '<div class="chat-window" id="chat-window">';
 
-    if (self._history.length === 0) {
-      html += '<div class="bubble nova"><div class="bubble-label">Nova</div><div class="bubble-text">Hello! I\'m Nova, your English speaking coach. Ask me to check your grammar, explain a word, or just have a conversation. What would you like to practise today?</div></div>';
+    if (history.length === 0) {
+      html += '<div class="bubble nova"><div class="bubble-label">Nova</div>'
+        + '<div class="bubble-text">Hi! I\'m Nova, your English coach. I remember our conversations, so we can pick up right where we left off. Ask me to check grammar, explain vocabulary, or chat naturally. What would you like to work on?</div></div>';
     } else {
-      for (var i = 0; i < self._history.length; i++) {
-        var msg = self._history[i];
+      for (var i = 0; i < history.length; i++) {
+        var msg = history[i];
         var cls = msg.role === 'user' ? 'user' : 'nova';
         html += '<div class="bubble ' + cls + '"><div class="bubble-label">' + (msg.role === 'user' ? 'You' : 'Nova') + '</div><div class="bubble-text">' + msg.text + '</div></div>';
       }
     }
-    html += '</div>'; // chat-window
+    html += '</div>'; /* chat-window */
 
     if (self._mode === 'interview') {
       var q = COACH_INTERVIEW[self._interviewQ % COACH_INTERVIEW.length];
-      html += '<div class="interview-q"><strong>Q' + (self._interviewQ + 1) + ':</strong> ' + q + '</div>';
+      html += '<div class="interview-q"><span class="q-num">Q' + (self._interviewQ + 1) + '</span> ' + q + '</div>';
+    }
+    if (self._mode === 'document' && activeDoc) {
+      html += '<div class="doc-hint">💡 Ask: "What does X mean here?", "Summarize this section", or "Check my understanding: …"</div>';
     }
 
     html += '<div class="chat-input-row">';
     if (SPEECH.canListen()) {
       html += '<button class="btn-mic" id="nova-mic">🎤</button>';
     }
-    html += '<input type="text" id="nova-input" placeholder="Type or speak to Nova..." />';
+    html += '<input type="text" id="nova-input" placeholder="' +
+      (self._mode === 'document' ? 'Ask Nova about this document…' : 'Type or speak to Nova…') +
+      '" />';
     html += '<button class="btn-primary" id="nova-send">Send</button>';
     html += '</div></div>';
 
     el.innerHTML = html;
 
-    // scroll chat to bottom
+    /* Scroll chat to bottom */
     var chatWin = document.getElementById('chat-window');
     if (chatWin) { chatWin.scrollTop = chatWin.scrollHeight; }
 
+    /* Mode tabs */
     document.getElementById('mode-chat').addEventListener('click', function () {
       self._mode = 'chat'; self.render(el);
     });
     document.getElementById('mode-interview').addEventListener('click', function () {
       self._mode = 'interview'; self._interviewQ = 0; self.render(el);
     });
+    var docModeBtn = document.getElementById('mode-document');
+    if (docModeBtn) {
+      docModeBtn.addEventListener('click', function () {
+        self._mode = 'document'; self.render(el);
+      });
+    }
 
+    /* Clear doc */
+    var clearDocBtn = document.getElementById('nova-clear-doc');
+    if (clearDocBtn) {
+      clearDocBtn.addEventListener('click', function () {
+        var docs2 = STORE.get('docs') || [];
+        for (var di2 = 0; di2 < docs2.length; di2++) { docs2[di2].active = false; }
+        STORE.set('docs', docs2);
+        self._mode = 'chat';
+        self.render(el);
+      });
+    }
+
+    /* Clear history */
+    document.getElementById('nova-clear-history').addEventListener('click', function () {
+      self._clearHistory();
+      self.render(el);
+    });
+
+    /* Mic */
     var micBtn = document.getElementById('nova-mic');
     if (micBtn) {
       micBtn.addEventListener('click', function () {
@@ -4224,12 +4436,46 @@ VIEWS.coach = {
       });
     }
 
+    /* Word lookup on double-click */
+    if (chatWin) {
+      chatWin.addEventListener('dblclick', function (e) {
+        var sel = window.getSelection ? window.getSelection().toString().trim() : '';
+        if (!sel || sel.indexOf(' ') !== -1) { return; } /* single word only */
+        var word = sel.toLowerCase().replace(/[^a-z]/g, '');
+        if (!word) { return; }
+        /* Look up in WORDS data */
+        var found = null;
+        if (typeof WORDS !== 'undefined') {
+          for (var wi = 0; wi < WORDS.length; wi++) {
+            if (WORDS[wi].w && WORDS[wi].w.toLowerCase() === word) { found = WORDS[wi]; break; }
+          }
+        }
+        var popup = document.createElement('div');
+        popup.className = 'word-popup';
+        if (found) {
+          popup.innerHTML = '<strong>' + _esc(found.w) + '</strong> <span class="ipa">' + (found.ipa || '') + '</span><br><span class="word-def">' + _esc(found.def || found.pos || '') + '</span>'
+            + '<button class="word-popup-say" onclick="SPEECH.speak(\'' + _esc(found.w) + '\')">🔊</button>'
+            + '<button class="word-popup-close">×</button>';
+        } else {
+          popup.innerHTML = '<strong>' + _esc(sel) + '</strong><br><span class="word-def">Not in word bank — ask Nova!</span>'
+            + '<button class="word-popup-close">×</button>';
+        }
+        popup.style.cssText = 'position:fixed;bottom:140px;left:50%;transform:translateX(-50%);background:#1e2a3a;border:1px solid rgba(124,58,237,0.5);border-radius:12px;padding:14px 18px;z-index:500;font-size:0.9rem;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,0.4);';
+        document.body.appendChild(popup);
+        var closeBtn = popup.querySelector('.word-popup-close');
+        if (closeBtn) { closeBtn.addEventListener('click', function () { document.body.removeChild(popup); }); }
+        setTimeout(function () { if (popup.parentNode) { popup.parentNode.removeChild(popup); } }, 5000);
+      });
+    }
+
     function _send() {
       var input = document.getElementById('nova-input');
       var text = input.value.trim();
       if (!text) { return; }
       input.value = '';
-      self._history.push({role: 'user', text: _esc(text)});
+      var h = self._getHistory();
+      h.push({role: 'user', text: _esc(text)});
+      self._saveHistory();
       _novaRespond(text, self, el);
     }
 
@@ -4241,7 +4487,7 @@ VIEWS.coach = {
 };
 
 function _esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function _novaRespond(userText, self, el) {
@@ -4249,12 +4495,12 @@ function _novaRespond(userText, self, el) {
   var key = settings.geminiKey || '';
 
   if (key && key.trim().length > 10) {
-    // Gemini API call — INV-8
     _novaGemini(userText, self, el, key.trim());
   } else {
-    // Rule engine fallback
     var reply = _novaRules(userText);
-    self._history.push({role: 'nova', text: _esc(reply)});
+    var h = self._getHistory();
+    h.push({role: 'nova', text: _esc(reply)});
+    self._saveHistory();
     STORE.get('coachStats').messages = (STORE.get('coachStats').messages || 0) + 1;
     STORE.save();
     TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/chat'});
@@ -4266,14 +4512,14 @@ function _novaRespond(userText, self, el) {
 function _novaRules(text) {
   var t = text.toLowerCase();
 
-  // Grammar rule checks
+  /* Grammar rule checks */
   for (var ri = 0; ri < COACH_RULES.length; ri++) {
     if (COACH_RULES[ri].pat.test(text)) {
       return '⚠️ Grammar note: ' + COACH_RULES[ri].fix;
     }
   }
 
-  // Vocabulary upgrade
+  /* Vocabulary upgrade */
   for (var ui = 0; ui < COACH_UPGRADES.length; ui++) {
     var up = COACH_UPGRADES[ui];
     if (t.indexOf(up.basic.toLowerCase()) !== -1) {
@@ -4281,7 +4527,7 @@ function _novaRules(text) {
     }
   }
 
-  // Intent matching
+  /* Intent matching */
   for (var ii = 0; ii < COACH_INTENTS.length; ii++) {
     var intent = COACH_INTENTS[ii];
     var keys = intent.k.split('|');
@@ -4292,25 +4538,57 @@ function _novaRules(text) {
     }
   }
 
-  return 'That\'s good! Keep practising. If you\'d like grammar feedback, try saying a full sentence and I\'ll check it for you. For real AI conversation, add your Gemini key in Settings.';
+  return 'Good effort! Keep practising. For real AI feedback on grammar, pronunciation, and more — add your free Gemini key in Settings. Double-click any word in my replies to look it up instantly.';
+}
+
+function _novaBuildSystemPrompt(self) {
+  'use strict';
+  var user = STORE.get('user') || {};
+  var settings = STORE.get('settings') || {};
+  var radar = (typeof TRAINER !== 'undefined' && TRAINER.radar) ? TRAINER.radar() : [];
+
+  /* Find weakest skill */
+  var weakSkill = 'fluency';
+  var weakScore = 100;
+  for (var ri = 0; ri < radar.length; ri++) {
+    if (radar[ri].val < weakScore) { weakScore = radar[ri].val; weakSkill = radar[ri].skill; }
+  }
+
+  var name = user.name ? user.name : 'the learner';
+  var level = user.level || 'A2';
+  var mode = self._mode || 'chat';
+
+  var base = 'You are Nova, an expert English speaking coach specialising in helping Indian learners.' +
+    ' The student\'s name is ' + name + ' and their current CEFR level is ' + level + '.' +
+    ' Their weakest skill right now is ' + weakSkill + ' — prioritise that in your coaching.' +
+    ' Mode: ' + mode + '.' +
+    ' Rules: correct grammar gently by quoting the error then giving the fix; suggest vocabulary upgrades when appropriate;' +
+    ' be warm, direct, and concise (2–4 sentences unless asked for more).' +
+    ' Never say you are an AI. You are Nova.';
+
+  /* Document context */
+  if (mode === 'document' && self._activeDoc) {
+    var excerpt = self._activeDoc.text ? self._activeDoc.text.slice(0, 1200) : '';
+    base += ' The student is currently reading a document titled "' + self._activeDoc.title + '".' +
+      ' Here is an excerpt for context:\n---\n' + excerpt + '\n---' +
+      ' When the student asks about a word or phrase, quote the surrounding sentence from the excerpt before explaining.' +
+      ' When asked to summarise, produce a 3-bullet summary of the excerpt.';
+  }
+
+  return base;
 }
 
 function _novaGemini(userText, self, el, key) {
-  var hist = self._history.slice(-10);
+  var hist = self._getHistory().slice(-12); /* last 12 turns for context */
   var messages = [];
-  for (var i = 0; i < hist.length; i++) {
+  for (var i = 0; i < hist.length - 1; i++) { /* exclude the just-pushed user message */
     messages.push({
       role: hist[i].role === 'user' ? 'user' : 'model',
       parts: [{text: hist[i].text}]
     });
   }
 
-  var systemPrompt = 'You are Nova, an expert English speaking coach for Indian learners. ' +
-    'Your job: correct grammar gently, suggest vocabulary upgrades, explain idioms, ' +
-    'and encourage confident speaking. Be warm, specific, and concise. ' +
-    'When you spot grammar errors, quote the wrong phrase then give the correct one. ' +
-    'Always respond in 2-4 sentences maximum unless asked for more. ' +
-    'Never say you are an AI. You are Nova, a human coach.';
+  var systemPrompt = _novaBuildSystemPrompt(self);
 
   var body = {
     system_instruction: {parts: [{text: systemPrompt}]},
@@ -4319,9 +4597,14 @@ function _novaGemini(userText, self, el, key) {
 
   var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key;
 
+  /* Show typing indicator */
+  var h = self._getHistory();
+  h.push({role: 'nova', text: '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span>'});
+  self.render(el);
+  /* Remove the typing indicator entry (it will be replaced by real reply) */
+  h.pop();
+
   if (typeof fetch === 'function') {
-    self._history.push({role: 'nova', text: '...'});
-    self.render(el);
     fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -4331,19 +4614,18 @@ function _novaGemini(userText, self, el, key) {
       return res.json();
     }).then(function (resp) {
       var reply = '';
-      try {
-        reply = resp.candidates[0].content.parts[0].text;
-      } catch (e) {
-        reply = 'Nova had trouble connecting. ' + _novaRules(userText);
-      }
-      self._history.push({role: 'nova', text: _esc(reply)});
+      try { reply = resp.candidates[0].content.parts[0].text; }
+      catch (e) { reply = 'Nova had trouble reading the response. ' + _novaRules(userText); }
+      h.push({role: 'nova', text: _esc(reply)});
+      self._saveHistory();
       TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
       STORE.save();
       SPEECH.speak(reply);
       self.render(el);
     }).catch(function () {
-      var reply = _novaRules(userText) + ' (offline fallback)';
-      self._history.push({role: 'nova', text: _esc(reply)});
+      var reply = _novaRules(userText) + ' (offline — no connection)';
+      h.push({role: 'nova', text: _esc(reply)});
+      self._saveHistory();
       self.render(el);
     });
     return;
@@ -4360,7 +4642,8 @@ function _novaGemini(userText, self, el, key) {
     } catch (e) {
       reply = 'Nova had trouble connecting. ' + _novaRules(userText);
     }
-    self._history.push({role: 'nova', text: _esc(reply)});
+    h.push({role: 'nova', text: _esc(reply)});
+    self._saveHistory();
     TRAINER.log({skill: 'fluency', delta: 1, source: 'coach/gemini'});
     STORE.save();
     SPEECH.speak(reply);
@@ -4368,11 +4651,10 @@ function _novaGemini(userText, self, el, key) {
   };
   xhr.onerror = function () {
     var reply = _novaRules(userText) + ' (offline fallback)';
-    self._history.push({role: 'nova', text: _esc(reply)});
+    h.push({role: 'nova', text: _esc(reply)});
+    self._saveHistory();
     self.render(el);
   };
-  self._history.push({role: 'nova', text: '...'});
-  self.render(el);
   xhr.send(JSON.stringify(body));
 }
 
@@ -6287,6 +6569,641 @@ VIEWS.read = {
 };
 
 VIEWS.read.lookupIPA = VIEWS.read.lookupWord;
+/* =====================================================================
+   views-f.js -- ES6 allowed (same rule as views-d/e)
+   VIEWS.docstudio -- Document Studio: upload, read, study
+   VIEWS.resume    -- Resume / Writing Analyzer
+   ===================================================================== */
+
+/* DOCSTUDIO */
+VIEWS.docstudio = {
+  _activeIdx: -1,
+
+  render: function(el) {
+    var self = this;
+    var docs = STORE.get("docs") || [];
+    var activeDoc = self._activeIdx >= 0 ? docs[self._activeIdx] : null;
+
+    var docListHtml = "";
+    if (docs.length === 0) {
+      docListHtml = "<p class=\"ds-empty\">No documents yet.<br>Upload a file or paste text below.</p>";
+    } else {
+      for (var i = 0; i < docs.length; i++) {
+        var d = docs[i];
+        var iact = self._activeIdx === i ? " active" : "";
+        docListHtml += "<div class=\"ds-doc-item" + iact + "\" data-idx=\"" + i + "\">" +
+          "<span class=\"ds-doc-icon\">📄</span>" +
+          "<span class=\"ds-doc-name\">" + _escF(d.title) + "</span>" +
+          "<button class=\"ds-doc-delete\" data-del=\"" + i + "\" title=\"Remove\">&#215;</button>" +
+          "</div>";
+      }
+    }
+
+    var readerHtml = activeDoc ? _renderDocReader(activeDoc) :
+      "<div class=\"ds-no-doc\"><div class=\"ds-no-doc-icon\">📖</div>" +
+      "<h2>Select or upload a document</h2>" +
+      "<p>Choose from the list on the left, or upload a new file.</p></div>";
+
+    el.innerHTML =
+      "<div class=\"view-docstudio\">" +
+        "<div class=\"ds-header\">" +
+          "<div><h1>📄 Document Studio</h1>" +
+          "<p class=\"sub\">Upload any text file or paste content &mdash; then read, study, and ask Nova about it.</p></div>" +
+          "<label class=\"btn-primary ds-upload-btn\" for=\"ds-file-input\">" +
+            "&#8679; Upload File" +
+            "<input type=\"file\" id=\"ds-file-input\" accept=\".txt,.md,.csv,.js,.html,.py,.json,.pdf\" style=\"display:none\">" +
+          "</label>" +
+        "</div>" +
+        "<div class=\"ds-layout\">" +
+          "<div class=\"ds-sidebar\">" +
+            "<div class=\"ds-sidebar-title\">Your Documents</div>" +
+            docListHtml +
+            "<div class=\"ds-paste-section\">" +
+              "<textarea id=\"ds-paste\" placeholder=\"Or paste text here…\" rows=\"4\"></textarea>" +
+              "<div class=\"ds-paste-row\">" +
+                "<input type=\"text\" id=\"ds-paste-title\" placeholder=\"Document title\" />" +
+                "<button class=\"btn-primary\" id=\"ds-paste-save\">Save</button>" +
+              "</div>" +
+            "</div>" +
+          "</div>" +
+          "<div class=\"ds-reader\" id=\"ds-reader\">" + readerHtml + "</div>" +
+        "</div>" +
+      "</div>";
+
+    self._bindEvents(el, docs);
+  },
+
+  _bindEvents: function(el, docs) {
+    var self = this;
+
+    var fileInput = el.querySelector("#ds-file-input");
+    if (fileInput) {
+      fileInput.addEventListener("change", function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var title = file.name.replace(/\.[^/.]+$/, "");
+        var isPdf = file.name.toLowerCase().endsWith(".pdf");
+        fileInput.value = "";
+
+        if (isPdf) {
+          /* FIX-4: Lazy-load local vendored pdf.js, then extract text */
+          UI.toast("📄 Loading PDF…", "info");
+          _loadPdfJs(function(err) {
+            if (err) { UI.toast("❌ PDF engine failed to load: " + err, "error"); return; }
+            _extractPdfText(file, function(text, extractErr) {
+              if (extractErr) { UI.toast("❌ Could not read PDF: " + extractErr, "error"); return; }
+              self._saveDoc(title, text, el);
+            });
+          });
+        } else {
+          var reader = new FileReader();
+          reader.onload = function(ev) {
+            self._saveDoc(title, ev.target.result, el);
+          };
+          reader.readAsText(file, "UTF-8");
+        }
+      });
+    }
+
+    var pasteSaveBtn = el.querySelector("#ds-paste-save");
+    if (pasteSaveBtn) {
+      pasteSaveBtn.addEventListener("click", function() {
+        var text = (el.querySelector("#ds-paste").value || "").trim();
+        var title = (el.querySelector("#ds-paste-title").value || "").trim() || "Pasted Document";
+        if (!text) { UI.toast("Nothing to save", "error"); return; }
+        self._saveDoc(title, text, el);
+      });
+    }
+
+    el.querySelectorAll(".ds-doc-item").forEach(function(item) {
+      item.addEventListener("click", function(e) {
+        if (e.target.classList.contains("ds-doc-delete")) return;
+        var idx = parseInt(item.dataset.idx, 10);
+        self._activeIdx = idx;
+        var d2 = STORE.get("docs") || [];
+        d2.forEach(function(doc, i) { doc.active = (i === idx); });
+        STORE.set("docs", d2);
+        self.render(el);
+      });
+    });
+
+    el.querySelectorAll(".ds-doc-delete").forEach(function(btn) {
+      btn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        var idx = parseInt(btn.dataset.del, 10);
+        var d3 = STORE.get("docs") || [];
+        d3.splice(idx, 1);
+        STORE.set("docs", d3);
+        if (self._activeIdx >= d3.length) self._activeIdx = d3.length - 1;
+        self.render(el);
+      });
+    });
+
+    var readerEl = el.querySelector("#ds-reader");
+    if (readerEl) {
+      /* dblclick — desktop word lookup */
+      readerEl.addEventListener("dblclick", function() {
+        var sel = window.getSelection ? window.getSelection().toString().trim() : "";
+        if (!sel || sel.indexOf(" ") !== -1) return;
+        var word = sel.toLowerCase().replace(/[^a-z]/g, "");
+        if (!word) return;
+        _showWordPopup(sel, word);
+      });
+      /* FIX-5: single-tap word lookup for touch devices — pointerup within 300ms */
+      var _tapStart = 0;
+      var _tapX0 = 0;
+      var _tapY0 = 0;
+      readerEl.addEventListener("pointerdown", function(e) {
+        _tapStart = Date.now();
+        _tapX0 = e.clientX;
+        _tapY0 = e.clientY;
+      });
+      readerEl.addEventListener("pointerup", function(e) {
+        var dt = Date.now() - _tapStart;
+        var dx = Math.abs(e.clientX - _tapX0);
+        var dy = Math.abs(e.clientY - _tapY0);
+        if (dt > 300 || dx > 10 || dy > 10) return; /* not a quick tap */
+        var sel = window.getSelection ? window.getSelection().toString().trim() : "";
+        if (!sel || sel.indexOf(" ") !== -1) return;
+        var word = sel.toLowerCase().replace(/[^a-z]/g, "");
+        if (!word) return;
+        _showWordPopup(sel, word);
+      });
+    }
+
+    el.querySelectorAll(".ds-send-nova").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var d4 = STORE.get("docs") || [];
+        var idx = self._activeIdx;
+        if (idx < 0 || !d4[idx]) return;
+        d4.forEach(function(doc, i) { doc.active = (i === idx); });
+        STORE.set("docs", d4);
+        if (typeof VIEWS.coach !== "undefined") {
+          VIEWS.coach._activeDoc = d4[idx];
+          VIEWS.coach._mode = "document";
+        }
+        UI.toast("📄 Document sent to Nova — opening Nova!", "info");
+        setTimeout(function() { window.navigate("coach"); }, 900);
+      });
+    });
+
+    el.querySelectorAll(".ds-train-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        TRAINER.log({skill: "reading", delta: 2, source: "docstudio/train"});
+        STORE.addXP(10);
+        UI.toast("🎓 +10 XP — trained from document!", "success");
+      });
+    });
+  },
+
+  _saveDoc: function(title, text, el) {
+    var CHAR_LIMIT = 400000;
+    var SIZE_LIMIT = 3 * 1024 * 1024; /* 3 MB in bytes */
+    var truncated = false;
+
+    /* FIX-2: hard cap per document */
+    if (text.length > CHAR_LIMIT) {
+      text = text.slice(0, CHAR_LIMIT);
+      truncated = true;
+    }
+
+    /* FIX-2: check total stored size before saving */
+    var docs = STORE.get("docs") || [];
+    var existingSize = 0;
+    for (var di = 0; di < docs.length; di++) {
+      existingSize += (docs[di].text || "").length;
+    }
+    if (existingSize + text.length > SIZE_LIMIT) {
+      UI.toast("❌ Storage full (3 MB limit). Delete some documents first, then retry.", "error");
+      return;
+    }
+
+    var sections = _splitSections(text);
+    var wc = text.split(/\s+/).length;
+    var doc = { title: title, text: text, sections: sections, added: Date.now(), active: true, wordCount: wc };
+    docs.forEach(function(d) { d.active = false; });
+    docs.push(doc);
+    STORE.set("docs", docs);
+    this._activeIdx = docs.length - 1;
+    TRAINER.log({skill: "reading", delta: 1, source: "docstudio/upload"});
+    if (truncated) {
+      UI.toast("⚠️ \"" + _truncate(title, 22) + "\" truncated to 400k chars — first portion saved.", "info");
+    } else {
+      UI.toast("✅ \"" + _truncate(title, 28) + "\" saved — " + wc.toLocaleString() + " words", "success");
+    }
+    this.render(el);
+  }
+
+};
+
+/* FIX-4: PDF.js lazy-loader — injects local vendored scripts only when first PDF is picked.
+   Paths are relative; works via file:// and any static server.
+   INV-2 / INV-8: no CDN, no remote URL — src/vendor/ files are committed. */
+var _pdfJsLoaded = false;
+
+function _loadPdfJs(cb) {
+  if (_pdfJsLoaded && typeof pdfjsLib !== "undefined") { cb(null); return; }
+  if (typeof document === "undefined") { cb("no DOM"); return; }
+
+  /* Inject pdf.min.js (the API wrapper) */
+  var script = document.createElement("script");
+  /* Path is relative to index.html which is at root */
+  script.src = "src/vendor/pdf.min.js";
+  script.onload = function() {
+    /* Point worker to the local vendored copy — no CDN */
+    if (typeof pdfjsLib !== "undefined") {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "src/vendor/pdf.worker.min.js";
+      _pdfJsLoaded = true;
+      cb(null);
+    } else {
+      cb("pdfjsLib not defined after load");
+    }
+  };
+  script.onerror = function() { cb("failed to load src/vendor/pdf.min.js"); };
+  document.head.appendChild(script);
+}
+
+function _extractPdfText(file, cb) {
+  /* Read file as ArrayBuffer, then parse page-by-page via pdf.js */
+  var fr = new FileReader();
+  fr.onload = function(ev) {
+    var typedArr = new Uint8Array(ev.target.result);
+    pdfjsLib.getDocument({data: typedArr}).promise.then(function(pdfDoc) {
+      var totalPages = pdfDoc.numPages;
+      var pageTexts = [];
+      var pagesRead = 0;
+
+      function readPage(n) {
+        pdfDoc.getPage(n).then(function(page) {
+          page.getTextContent().then(function(tc) {
+            var pageText = tc.items.map(function(item) {
+              return item.str;
+            }).join(" ");
+            pageTexts[n - 1] = pageText;
+            pagesRead++;
+            if (pagesRead < totalPages) {
+              readPage(n + 1);
+            } else {
+              cb(pageTexts.join("\n\n"), null);
+            }
+          }).catch(function(e) { cb(null, String(e)); });
+        }).catch(function(e) { cb(null, String(e)); });
+      }
+
+      if (totalPages === 0) { cb("", null); } else { readPage(1); }
+    }).catch(function(e) { cb(null, String(e)); });
+  };
+  fr.onerror = function() { cb(null, "FileReader error"); };
+  fr.readAsArrayBuffer(file);
+}
+
+function _renderDocReader(doc) {
+
+  var sections = (doc.sections && doc.sections.length) ? doc.sections : [{heading: "", body: doc.text}];
+  var readTime = Math.max(1, Math.round(doc.wordCount / 200));
+  var html =
+    "<div class=\"ds-reader-header\">" +
+      "<div>" +
+        "<h2 class=\"ds-reader-title\">" + _escF(doc.title) + "</h2>" +
+        "<span class=\"ds-reader-meta\">" + (doc.wordCount || 0).toLocaleString() + " words &middot; ~" + readTime + " min read &middot; " + sections.length + " section" + (sections.length !== 1 ? "s" : "") + "</span>" +
+      "</div>" +
+      "<div class=\"ds-reader-actions\">" +
+        "<button class=\"btn-ghost btn-sm ds-send-nova\">🤖 Ask Nova</button>" +
+        "<button class=\"btn-ghost btn-sm ds-train-btn\">🎓 +XP</button>" +
+      "</div>" +
+    "</div>" +
+    "<div class=\"ds-doc-tip\">💡 <strong>Double-click any word</strong> to look it up. Click &ldquo;Ask Nova&rdquo; to open a doc-aware AI session.</div>" +
+    "<div class=\"ds-sections\">";
+
+  for (var si = 0; si < sections.length; si++) {
+    var s = sections[si];
+    html += "<div class=\"ds-section\">";
+    if (s.heading) { html += "<h3 class=\"ds-section-heading\">" + _escF(s.heading) + "</h3>"; }
+    var paras = s.body.split(/\n{2,}/).filter(function(p) { return p.trim(); });
+    for (var pi = 0; pi < paras.length; pi++) {
+      html += "<p class=\"ds-para\">" + _escF(paras[pi].trim()) + "</p>";
+    }
+    html += "</div>";
+  }
+  html += "</div>";
+  return html;
+}
+
+function _splitSections(text) {
+  var lines = text.split("\n");
+  var sections = [];
+  var current = {heading: "", body: ""};
+  for (var li = 0; li < lines.length; li++) {
+    var line = lines[li];
+    var isHeading = /^#{1,3}\s+/.test(line) ||
+      (line.trim().length > 0 && line.trim().length < 80 && /^[A-Z0-9]/.test(line.trim()) && !line.trim().endsWith(".") && !line.trim().endsWith(","));
+    if (isHeading && current.body.trim()) {
+      sections.push(current);
+      current = {heading: line.replace(/^#+\s*/, "").trim(), body: ""};
+    } else if (isHeading && !current.body.trim()) {
+      current.heading = line.replace(/^#+\s*/, "").trim();
+    } else {
+      current.body += line + "\n";
+    }
+  }
+  if (current.body.trim() || current.heading) { sections.push(current); }
+  return sections.length ? sections : [{heading: "", body: text}];
+}
+
+function _showWordPopup(sel, word) {
+  document.querySelectorAll(".word-popup").forEach(function(p) { if (p.parentNode) p.parentNode.removeChild(p); });
+  var found = null;
+  if (typeof WORDS !== "undefined") {
+    for (var wi = 0; wi < WORDS.length; wi++) {
+      if (WORDS[wi].w && WORDS[wi].w.toLowerCase() === word) { found = WORDS[wi]; break; }
+    }
+  }
+  var popup = document.createElement("div");
+  popup.className = "word-popup";
+  /* FIX-5: WORDS schema only has {w, ipa, lvl} — render only those fields */
+  if (found) {
+    popup.innerHTML =
+      "<strong>" + _escF(found.w) + "</strong>" +
+      (found.ipa ? " <span class=\"ipa\">" + _escF(found.ipa) + "</span>" : "") +
+      (found.lvl ? " <span class=\"word-lvl\">[" + _escF(found.lvl) + "]</span>" : "") +
+      "<div class=\"word-popup-actions\">" +
+        "<button class=\"word-popup-say\">🔊 Hear it</button>" +
+        "<button class=\"word-popup-close\">&#215; Close</button>" +
+      "</div>";
+  } else {
+    popup.innerHTML =
+      "<strong>" + _escF(sel) + "</strong><br>" +
+      "<span class=\"word-def muted\">Not in word bank &mdash; ask Nova!</span>" +
+      "<div class=\"word-popup-actions\">" +
+        "<button class=\"word-popup-say\">🔊 Hear it</button>" +
+        "<button class=\"word-popup-close\">&#215; Close</button>" +
+      "</div>";
+  }
+  popup.style.cssText = "position:fixed;bottom:140px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid rgba(124,58,237,0.5);border-radius:14px;padding:16px 20px;z-index:600;font-size:0.9rem;min-width:240px;box-shadow:0 8px 40px rgba(0,0,0,0.5);";
+  document.body.appendChild(popup);
+  /* FIX-5: addEventListener instead of inline onclick */
+  var sayBtn = popup.querySelector(".word-popup-say");
+  if (sayBtn) {
+    var wordToSay = found ? found.w : sel;
+    sayBtn.addEventListener("click", function() { if (typeof SPEECH !== "undefined") { SPEECH.speak(wordToSay); } });
+  }
+  var closeBtn = popup.querySelector(".word-popup-close");
+  if (closeBtn) closeBtn.addEventListener("click", function() { if (popup.parentNode) popup.parentNode.removeChild(popup); });
+  setTimeout(function() { if (popup.parentNode) popup.parentNode.removeChild(popup); }, 6000);
+}
+
+function _escF(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function _truncate(s, n) {
+  return s.length > n ? s.slice(0, n) + "..." : s;
+}
+
+/* RESUME ANALYZER */
+VIEWS.resume = {
+  _report: null,
+
+  render: function(el) {
+    var self = this;
+    var reports = STORE.get("resumeReports") || [];
+
+    var histHtml = "";
+    if (reports.length > 0) {
+      histHtml = "<div class=\"resume-history\"><div class=\"section-title\">Past Reports (" + reports.length + ")</div>";
+      var recent = reports.slice(-5).reverse();
+      for (var ri = 0; ri < recent.length; ri++) {
+        var r = recent[ri];
+        histHtml += "<div class=\"resume-history-item\">" +
+          "<span>" + (r.type || "Text") + "</span>" +
+          "<span class=\"muted\">" + new Date(r.ts).toLocaleDateString() + "</span>" +
+          "<span class=\"resume-score-pill\">" + r.overall + "/100</span>" +
+          "</div>";
+      }
+      histHtml += "</div>";
+    }
+
+    el.innerHTML =
+      "<div class=\"view-resume\">" +
+        "<h1>📝 Resume &amp; Writing Analyzer</h1>" +
+        "<p class=\"sub\">Paste your resume, cover letter, email, or essay &mdash; get grammar fixes, vocabulary upgrades, and a full score.</p>" +
+        "<div class=\"resume-layout\">" +
+          "<div class=\"resume-input-panel\">" +
+            "<div class=\"resume-input-header\">" +
+              "<label class=\"section-title\">Your Text</label>" +
+              "<label class=\"btn-ghost btn-sm\" for=\"resume-file-input\">📎 Upload .txt</label>" +
+              "<input type=\"file\" id=\"resume-file-input\" accept=\".txt,.md\" style=\"display:none\">" +
+            "</div>" +
+            "<textarea id=\"resume-text\" placeholder=\"Paste your resume, cover letter, email, or essay here…\" rows=\"18\"></textarea>" +
+            "<div class=\"resume-actions\">" +
+              "<select id=\"resume-type\" class=\"resume-select\">" +
+                "<option value=\"resume\">Resume / CV</option>" +
+                "<option value=\"cover\">Cover Letter</option>" +
+                "<option value=\"email\">Professional Email</option>" +
+                "<option value=\"essay\">Essay / Report</option>" +
+              "</select>" +
+              "<button class=\"btn-primary\" id=\"resume-analyze\">🔍 Analyze</button>" +
+            "</div>" +
+          "</div>" +
+          "<div class=\"resume-report-panel\" id=\"resume-report\">" +
+            (self._report ? _renderResumeReport(self._report) : _renderResumeEmpty()) +
+          "</div>" +
+        "</div>" +
+        histHtml +
+      "</div>";
+
+    self._bindEvents(el);
+  },
+
+  _bindEvents: function(el) {
+    var self = this;
+    var fileInput = el.querySelector("#resume-file-input");
+    if (fileInput) {
+      fileInput.addEventListener("change", function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) { el.querySelector("#resume-text").value = ev.target.result; fileInput.value = ""; };
+        reader.readAsText(file, "UTF-8");
+      });
+    }
+    var analyzeBtn = el.querySelector("#resume-analyze");
+    if (analyzeBtn) {
+      analyzeBtn.addEventListener("click", function() {
+        var text = (el.querySelector("#resume-text").value || "").trim();
+        var type = el.querySelector("#resume-type").value;
+        if (!text || text.length < 50) { UI.toast("Paste at least a few sentences to analyze", "error"); return; }
+        analyzeBtn.textContent = "⏳ Analyzing…";
+        analyzeBtn.disabled = true;
+        var report = _runAnalysis(text, type);
+        self._report = report;
+        var reps = STORE.get("resumeReports") || [];
+        reps.push(report);
+        STORE.set("resumeReports", reps);
+        TRAINER.log({skill: "writing", delta: 2, source: "resume/analyze"});
+        STORE.addXP(15);
+        analyzeBtn.textContent = "🔍 Analyze";
+        analyzeBtn.disabled = false;
+        var reportEl = el.querySelector("#resume-report");
+        if (reportEl) reportEl.innerHTML = _renderResumeReport(report);
+        var settings = STORE.get("settings") || {};
+        var key = settings.geminiKey || "";
+        if (key && key.trim().length > 10) {
+          _resumeGeminiCritique(text, type, report, reportEl, key.trim());
+        }
+      });
+    }
+  }
+};
+
+function _runAnalysis(text, type) {
+  var issues = [];
+  var grammarScore = 100;
+  var vocabScore = 100;
+  var structureScore = 100;
+
+  if (typeof COACH_RULES !== "undefined") {
+    for (var ri = 0; ri < COACH_RULES.length; ri++) {
+      if (COACH_RULES[ri].pat.test(text)) {
+        issues.push({cat: "grammar", msg: COACH_RULES[ri].fix, severity: "high"});
+        grammarScore = Math.max(0, grammarScore - 12);
+      }
+    }
+  }
+  if (typeof COACH_UPGRADES !== "undefined") {
+    for (var ui = 0; ui < COACH_UPGRADES.length; ui++) {
+      var up = COACH_UPGRADES[ui];
+      var pat = new RegExp("\\b" + up.basic.toLowerCase() + "\\b", "i");
+      if (pat.test(text)) {
+        issues.push({cat: "vocab", msg: "\"" + up.basic + "\" \u2192 try \"" + up.better + "\" (B1) or \"" + up.adv + "\" (C1)", severity: "medium"});
+        vocabScore = Math.max(0, vocabScore - 8);
+      }
+    }
+  }
+  if (type === "resume") {
+    var lower = text.toLowerCase();
+    var expected = ["experience", "education", "skills", "summary", "projects", "contact"];
+    var missing = [];
+    for (var si = 0; si < expected.length; si++) { if (lower.indexOf(expected[si]) === -1) missing.push(expected[si]); }
+    if (missing.length > 3) {
+      issues.push({cat: "structure", msg: "Missing common resume sections: " + missing.slice(0, 3).join(", "), severity: "medium"});
+      structureScore = Math.max(0, structureScore - 20);
+    }
+    var wc2 = text.split(/\s+/).length;
+    if (wc2 < 100) {
+      issues.push({cat: "structure", msg: "Resume seems short — aim for 300-600 words", severity: "medium"});
+      structureScore = Math.max(0, structureScore - 15);
+    }
+  }
+  var sentences = text.split(/[.!?]+/).filter(function(s) { return s.trim().split(/\s+/).length > 5; });
+  var longSents = sentences.filter(function(s) { return s.trim().split(/\s+/).length > 35; });
+  if (longSents.length > 0) {
+    issues.push({cat: "clarity", msg: longSents.length + " sentence(s) over 35 words — break them up", severity: "low"});
+  }
+  var passivePat = /\b(is|are|was|were|be|been|being)\s+\w+ed\b/gi;
+  var passiveCount = (text.match(passivePat) || []).length;
+  if (passiveCount > 4) {
+    issues.push({cat: "clarity", msg: passiveCount + " passive voice uses — prefer active voice for impact", severity: "low"});
+  }
+  var overall = Math.round(grammarScore * 0.35 + vocabScore * 0.30 + structureScore * 0.25 + Math.min(100, 100 - longSents.length * 5) * 0.10);
+  return { ts: Date.now(), type: type, grammar: grammarScore, vocab: vocabScore, structure: structureScore, overall: overall, issues: issues, wordCount: text.split(/\s+/).length, geminiCritique: null };
+}
+
+function _renderResumeEmpty() {
+  return "<div class=\"resume-empty\"><div class=\"resume-empty-icon\">📊</div>" +
+    "<h2>Your report will appear here</h2>" +
+    "<p>Paste your text on the left and click Analyze to get instant scores and specific improvement tips.</p></div>";
+}
+
+function _scoreColor(s) { return s >= 80 ? "var(--green)" : s >= 55 ? "var(--gold)" : "var(--red)"; }
+function _scoreLabel(s) { return s >= 80 ? "Good" : s >= 55 ? "Fair" : "Needs work"; }
+
+function _renderResumeReport(r) {
+  var catIcons = {grammar: "⚠️", vocab: "💡", structure: "🗂️", clarity: "🔍"};
+  var issueHtml = "";
+  if (r.issues.length === 0) {
+    issueHtml = "<div class=\"resume-no-issues\">✅ No major issues found — excellent work!</div>";
+  } else {
+    var grouped = {};
+    for (var ii = 0; ii < r.issues.length; ii++) {
+      var iss = r.issues[ii];
+      if (!grouped[iss.cat]) grouped[iss.cat] = [];
+      grouped[iss.cat].push(iss);
+    }
+    var cats = Object.keys(grouped);
+    for (var ci = 0; ci < cats.length; ci++) {
+      var cat = cats[ci];
+      var catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
+      issueHtml += "<div class=\"resume-issue-group\"><div class=\"resume-issue-cat\">" + (catIcons[cat] || "•") + " " + catLabel + "</div>";
+      for (var gi = 0; gi < grouped[cat].length; gi++) {
+        var giss = grouped[cat][gi];
+        issueHtml += "<div class=\"resume-issue-item sev-" + giss.severity + "\">" + _escF(giss.msg) + "</div>";
+      }
+      issueHtml += "</div>";
+    }
+  }
+  var bars = [{label: "Grammar", val: r.grammar}, {label: "Vocabulary", val: r.vocab}, {label: "Structure", val: r.structure}];
+  var barHtml = "";
+  for (var bi = 0; bi < bars.length; bi++) {
+    var b = bars[bi];
+    barHtml += "<div class=\"resume-bar-row\">" +
+      "<span class=\"resume-bar-label\">" + b.label + "</span>" +
+      "<div class=\"resume-bar-track\"><div class=\"resume-bar-fill\" style=\"width:" + b.val + "%;background:" + _scoreColor(b.val) + "\"></div></div>" +
+      "<span class=\"resume-bar-val\" style=\"color:" + _scoreColor(b.val) + "\">" + b.val + " <small>" + _scoreLabel(b.val) + "</small></span>" +
+      "</div>";
+  }
+  var geminiHtml;
+  if (r.geminiCritique) {
+    geminiHtml = "<div class=\"resume-gemini-block\"><div class=\"section-title\">🤖 Nova's Expert Critique</div>" +
+      "<div class=\"resume-gemini-text\">" + _escF(r.geminiCritique) + "</div></div>";
+  } else {
+    geminiHtml = "<div class=\"resume-gemini-pending\" id=\"resume-gemini-section\"><div class=\"section-title\">🤖 Nova's Expert Critique</div>" +
+      "<p class=\"muted\">Add your free Gemini key in <a href=\"#/settings\">Settings</a> to unlock a holistic 200-word critique from Nova.</p></div>";
+  }
+  return "<div class=\"resume-report\">" +
+    "<div class=\"resume-score-header\">" +
+      "<div class=\"resume-overall-score\" style=\"color:" + _scoreColor(r.overall) + "\">" + r.overall + "<span class=\"resume-score-max\">/100</span></div>" +
+      "<div class=\"resume-score-label\">" + (r.overall >= 80 ? "🌟 Excellent" : r.overall >= 60 ? "👍 Good" : "💪 Needs improvement") + "</div>" +
+      "<div class=\"resume-word-count\">" + r.wordCount.toLocaleString() + " words analyzed</div>" +
+    "</div>" +
+    "<div class=\"resume-score-bars\">" + barHtml + "</div>" +
+    "<div class=\"resume-issues-section\"><div class=\"section-title\">Issues Found (" + r.issues.length + ")</div>" + issueHtml + "</div>" +
+    geminiHtml +
+    "</div>";
+}
+
+function _resumeGeminiCritique(text, type, report, reportEl, key) {
+  var typeLabel = {resume: "resume", cover: "cover letter", email: "professional email", essay: "essay"}[type] || "document";
+  var excerpt = text.slice(0, 2000);
+  var prompt = "You are Nova, an expert English writing coach. The student has shared a " + typeLabel + " for analysis.\n" +
+    "Scores: Grammar " + report.grammar + "/100, Vocabulary " + report.vocab + "/100, Structure " + report.structure + "/100, Overall " + report.overall + "/100.\n" +
+    "Text:\n---\n" + excerpt + "\n---\n" +
+    "Write a warm but honest 3-paragraph critique (~200 words):\n" +
+    "1. What they did WELL (quote specific phrases)\n" +
+    "2. The 2-3 most important improvements (be actionable)\n" +
+    "3. A motivating closing sentence.\n" +
+    "Do NOT repeat the scores. Be a real coach.";
+  var body = {contents: [{role: "user", parts: [{text: prompt}]}]};
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + key;
+  var geminiSection = reportEl ? reportEl.querySelector("#resume-gemini-section") : null;
+  if (geminiSection) { geminiSection.innerHTML = "<div class=\"section-title\">🤖 Nova's Expert Critique</div><p class=\"muted\">Nova is reading your text…</p>"; }
+  if (typeof fetch === "function") {
+    fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)})
+      .then(function(res) { return res.json(); })
+      .then(function(resp) {
+        var critique = resp.candidates[0].content.parts[0].text;
+        report.geminiCritique = critique;
+        var reps = STORE.get("resumeReports") || [];
+        if (reps.length > 0) { reps[reps.length - 1].geminiCritique = critique; }
+        STORE.set("resumeReports", reps);
+        if (geminiSection) {
+          geminiSection.innerHTML = "<div class=\"section-title\">🤖 Nova's Expert Critique</div><div class=\"resume-gemini-text\">" + _escF(critique) + "</div>";
+        }
+      }).catch(function() {
+        if (geminiSection) { geminiSection.innerHTML = "<div class=\"section-title\">🤖 Nova's Expert Critique</div><p class=\"muted\">Could not connect right now. Try again when online.</p>"; }
+      });
+  }
+}
 </script>
 </body>
 </html>
