@@ -135,6 +135,24 @@ VIEWS.home = {
       '</div>' +
     '</div>';
 
+    var weeklyStripHtml = '';
+    if (typeof WEEKLY !== 'undefined' && WEEKLY.getRollup) {
+      var rollup = WEEKLY.getRollup();
+      if (rollup.locked) {
+        weeklyStripHtml = '<div class="home-weekly-strip" id="home-weekly-strip" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;color:var(--mut);">' +
+          '<span>📈 <strong>Weekly Trend:</strong> ' + _escA(rollup.message) + ' (' + rollup.totalSessions + '/3 done)</span>' +
+          '<a href="#/path" style="color:var(--acc2);text-decoration:none;font-weight:600;">View progress →</a>' +
+        '</div>';
+      } else {
+        var wCur = rollup.thisWeek || {};
+        var wD = rollup.deltas || {};
+        weeklyStripHtml = '<div class="home-weekly-strip" id="home-weekly-strip" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;color:var(--txt);flex-wrap:wrap;gap:8px;">' +
+          '<span>📈 <strong>This Week:</strong> ' + _escA(rollup.story) + ' · ' + (wCur.wpm || 0) + ' WPM (' + (wD.wpm ? wD.wpm.text : '') + ') · ' + (wCur.honestScore || 0) + '/10 honest</span>' +
+          '<a href="#/path" style="color:var(--acc2);text-decoration:none;font-weight:600;">View progress →</a>' +
+        '</div>';
+      }
+    }
+
     var html = '<div class="view-home">' +
       '<div class="card home-greeting-band">' +
         '<div class="greeting-content">' +
@@ -150,6 +168,7 @@ VIEWS.home = {
       '</div>' +
       _renderFlowCard() +
       heroesHtml +
+      weeklyStripHtml +
       '<div class="section-title">🚀 Start Here</div>' +
       '<div class="start-here-grid">' +
         '<div class="card start-card" onclick="navigate(\'daily\')">' +

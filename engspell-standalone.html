@@ -7095,7 +7095,7 @@ var STORE = (function () {
 
   var KEY = 'engspell_v1';
   var LEGACY_KEY = 'fluentup_v1';
-  var VERSION = 6;
+  var VERSION = 7;
 
   var def = {
     version: VERSION,
@@ -7121,7 +7121,8 @@ var STORE = (function () {
       streakRewarded: false,
       novaTurns: 0,
       srsReviews: 0
-    }
+    },
+    weeklyHistory: []   /* INV-5: v7 — Weekly progress session history (M17) */
   };
 
   function _raw() {
@@ -7176,6 +7177,12 @@ var STORE = (function () {
       if (data.settings.remindOn === undefined) { data.settings.remindOn = false; }
       data.version = 6;
     }
+    // v6 → v7: add weeklyHistory (M17)
+    if (v < 7) {
+      if (!data.weeklyHistory) { data.weeklyHistory = []; }
+      data.version = 7;
+    }
+    if (!data.weeklyHistory) { data.weeklyHistory = []; }
     if (!data.settings) { data.settings = {}; }
     if (data.settings.honestMode === undefined) { data.settings.honestMode = false; }
     if (data.settings.liveCorrect === undefined) { data.settings.liveCorrect = false; }
@@ -7310,6 +7317,9 @@ var STORE = (function () {
     save();
     if (typeof FLOW !== 'undefined' && FLOW.mark) {
       FLOW.mark(5);
+    }
+    if (typeof WEEKLY !== 'undefined' && WEEKLY.recordFromAssessment) {
+      WEEKLY.recordFromAssessment(report);
     }
   }
 
@@ -8397,6 +8407,342 @@ var REMINDERS = (function () {
 })();
 
 /* ══════════════════════════════════════════════════════════════════════
+   WEEKLY — "So What" Progress Rollups & Weekly History (M17: WEEKLY-01)
+   ISO-week bucketing, deltas, CEFR story, cap at 500 oldest-pruned
+   ════════════════════════════════════════════════════════════════════*/
+var WEEKLY = (function () {
+  'use strict';
+
+  function getIsoWeekYearAndWeek(d) {
+    var date;
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) {
+      var y = parseInt(d.slice(0, 4), 10);
+      var m = parseInt(d.slice(5, 7), 10) - 1;
+      var day = parseInt(d.slice(8, 10), 10);
+      date = new Date(Date.UTC(y, m, day));
+    } else {
+      var dt = (typeof d === 'number' || typeof d === 'string') ? new Date(d) : d;
+      if (!dt || isNaN(dt.getTime())) { dt = new Date(); }
+      date = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()));
+    }
+    var dayNr = date.getUTCDay();
+    if (dayNr === 0) { dayNr = 7; }
+    date.setUTCDate(date.getUTCDate() + 4 - dayNr);
+    var isoYear = date.getUTCFullYear();
+    var yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    var weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return { year: isoYear, week: weekNo };
+  }
+
+  function isoWeekOf(tsOrDate) {
+    if (!tsOrDate) { tsOrDate = new Date(); }
+    var res = getIsoWeekYearAndWeek(tsOrDate);
+    var wStr = res.week < 10 ? '0' + res.week : '' + res.week;
+    return res.year + '-W' + wStr;
+  }
+
+  function getPrevIsoWeek(isoWeekStr) {
+    var parts = (isoWeekStr || '').split('-W');
+    if (parts.length === 2) {
+      var y = parseInt(parts[0], 10);
+      var w = parseInt(parts[1], 10);
+      var d = new Date(Date.UTC(y, 0, 4 + (w - 1) * 7));
+      var prev = new Date(d.getTime() - 7 * 86400000);
+      return isoWeekOf(prev);
+    }
+    return isoWeekOf(Date.now() - 7 * 86400000);
+  }
+
+  function record(entry) {
+    if (!entry) { entry = {}; }
+    var ts = entry.ts || Date.now();
+    var wpm = typeof entry.wpm === 'number' ? Math.round(entry.wpm) : 110;
+    var fillersPerMin = typeof entry.fillersPerMin === 'number' ? Math.round(entry.fillersPerMin * 10) / 10 : 0;
+    var honestScore = typeof entry.honestScore === 'number' ? Math.round(entry.honestScore * 10) / 10 : 7;
+    var lessonsDone = typeof entry.lessonsDone === 'number' ? entry.lessonsDone : ((STORE.get('completed') || []).length);
+    var xp = typeof entry.xp === 'number' ? entry.xp : (STORE.get('xp') || 0);
+
+    var clean = {
+      ts: ts,
+      wpm: wpm,
+      fillersPerMin: fillersPerMin,
+      honestScore: honestScore,
+      lessonsDone: lessonsDone,
+      xp: xp
+    };
+
+    var hist = STORE.get('weeklyHistory') || [];
+    hist.push(clean);
+    if (hist.length > 500) {
+      hist = hist.slice(hist.length - 500);
+    }
+    STORE.set('weeklyHistory', hist);
+    return clean;
+  }
+
+  function recordFromAssessment(report) {
+    if (!report) { return null; }
+    var ts = report.date ? new Date(report.date).getTime() : Date.now();
+    var wpm = report.avgWpm || report.wpm || 110;
+    var fillersPerMin = 0;
+    if (typeof report.fillersPerMin === 'number') {
+      fillersPerMin = report.fillersPerMin;
+    } else if (typeof report.fillerRate === 'number') {
+      fillersPerMin = Math.round(report.fillerRate * wpm * 10) / 10;
+    } else if (Array.isArray(report.results) && report.results.length) {
+      var totalFillers = 0;
+      for (var i = 0; i < report.results.length; i++) {
+        totalFillers += (report.results[i].fillers || 0);
+      }
+      fillersPerMin = Math.round((totalFillers / (report.results.length * 0.5)) * 10) / 10;
+    }
+    var honestScore = 7;
+    if (typeof report.honestScore === 'number') {
+      honestScore = report.honestScore;
+    } else if (report.band) {
+      var bMap = { 'C2': 10, 'C1': 9, 'B2': 8, 'B1': 7, 'A2': 5, 'A1': 3 };
+      honestScore = bMap[report.band] || 7;
+    }
+    var lessonsDone = (STORE.get('completed') || []).length;
+    var xp = STORE.get('xp') || 0;
+    return record({
+      ts: ts,
+      wpm: wpm,
+      fillersPerMin: fillersPerMin,
+      honestScore: honestScore,
+      lessonsDone: lessonsDone,
+      xp: xp
+    });
+  }
+
+  function recordFixerSession(opts) {
+    if (!opts) { opts = {}; }
+    var ts = opts.ts || Date.now();
+    var wpm = typeof opts.wpm === 'number' ? opts.wpm : 120;
+    var fillersPerMin = typeof opts.fillersPerMin === 'number' ? opts.fillersPerMin : 0;
+    var honestScore = 7;
+    if (typeof opts.honestScore === 'number') {
+      honestScore = opts.honestScore;
+    } else if (typeof opts.issuesCount === 'number') {
+      var wc = typeof opts.wordCount === 'number' ? opts.wordCount : 12;
+      honestScore = STORE.computeHonestScore(opts.issuesCount, wc);
+    }
+    var lessonsDone = typeof opts.lessonsDone === 'number' ? opts.lessonsDone : ((STORE.get('completed') || []).length);
+    var xp = typeof opts.xp === 'number' ? opts.xp : (STORE.get('xp') || 0);
+    return record({
+      ts: ts,
+      wpm: wpm,
+      fillersPerMin: fillersPerMin,
+      honestScore: honestScore,
+      lessonsDone: lessonsDone,
+      xp: xp
+    });
+  }
+
+  function getBuckets(hist) {
+    if (!hist) { hist = STORE.get('weeklyHistory') || []; }
+    var buckets = {};
+    for (var i = 0; i < hist.length; i++) {
+      var it = hist[i];
+      var wk = isoWeekOf(it.ts);
+      if (!buckets[wk]) { buckets[wk] = []; }
+      buckets[wk].push(it);
+    }
+    return buckets;
+  }
+
+  function summarizeBucket(items) {
+    if (!items || !items.length) { return null; }
+    var sumWpm = 0, sumFillers = 0, sumHonest = 0;
+    var maxLessons = 0, minLessons = Infinity;
+    var maxXP = 0, minXP = Infinity;
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      sumWpm += (it.wpm || 0);
+      sumFillers += (it.fillersPerMin || 0);
+      sumHonest += (it.honestScore || 0);
+      var ld = (it.lessonsDone || 0);
+      if (ld > maxLessons) { maxLessons = ld; }
+      if (ld < minLessons) { minLessons = ld; }
+      var x = (it.xp || 0);
+      if (x > maxXP) { maxXP = x; }
+      if (x < minXP) { minXP = x; }
+    }
+    var cnt = items.length;
+    var avgWpm = Math.round(sumWpm / cnt);
+    var avgFillers = Math.round((sumFillers / cnt) * 10) / 10;
+    var avgHonest = Math.round((sumHonest / cnt) * 10) / 10;
+    var latestItem = items[items.length - 1];
+    return {
+      sessionCount: cnt,
+      wpm: avgWpm,
+      fillersPerMin: avgFillers,
+      fillers: avgFillers,
+      honestScore: avgHonest,
+      lessonsDone: latestItem.lessonsDone || 0,
+      lessons: latestItem.lessonsDone || 0,
+      lessonsGained: (minLessons !== Infinity && maxLessons >= minLessons) ? (maxLessons - minLessons) : 0,
+      xp: latestItem.xp || 0,
+      xpGained: (minXP !== Infinity && maxXP >= minXP) ? (maxXP - minXP) : 0
+    };
+  }
+
+  function getDelta(curVal, prevVal, isHigherBetter) {
+    if (prevVal === undefined || prevVal === null) {
+      return {
+        delta: 0,
+        direction: 'no-prior-week',
+        text: '—',
+        improved: false,
+        isGood: false
+      };
+    }
+    var d = Math.round((curVal - prevVal) * 10) / 10;
+    var dir = 'flat';
+    if (d > 0) {
+      dir = 'up';
+    } else if (d < 0) {
+      dir = 'down';
+    }
+    var isGood = isHigherBetter === false ? (d < 0) : (d > 0);
+    var sign = d > 0 ? '+' : '';
+    return {
+      delta: d,
+      direction: dir,
+      text: sign + d,
+      improved: isGood,
+      isGood: isGood
+    };
+  }
+
+  function getCefrStory(curWpm, curFillerRate, prevWpm, prevFillerRate) {
+    var curBand = (typeof bandOf === 'function') ? bandOf(curWpm, curFillerRate) : 'B1';
+    var bands = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    var curIdx = bands.indexOf(curBand);
+    var nextBand = curIdx < bands.length - 1 ? bands[curIdx + 1] : null;
+
+    var prevBand = null;
+    if (prevWpm !== undefined && prevWpm !== null) {
+      prevBand = (typeof bandOf === 'function') ? bandOf(prevWpm, prevFillerRate) : null;
+    }
+
+    var wpmDelta = (prevWpm !== undefined && prevWpm !== null) ? (curWpm - prevWpm) : 0;
+    var sign = wpmDelta > 0 ? '+' : '';
+
+    var statusPart = '';
+    if (!prevBand) {
+      statusPart = 'reached ' + curBand;
+    } else if (curBand === prevBand) {
+      statusPart = 'held ' + curBand;
+    } else {
+      var prevIdx = bands.indexOf(prevBand);
+      if (curIdx > prevIdx) {
+        statusPart = 'promoted to ' + curBand;
+      } else {
+        statusPart = 'slipped to ' + curBand;
+      }
+    }
+
+    var progressPart = '';
+    if (nextBand) {
+      if (prevWpm !== undefined && prevWpm !== null && wpmDelta !== 0) {
+        progressPart = ', ' + sign + wpmDelta + ' WPM toward ' + nextBand;
+      } else if (wpmDelta === 0 && prevWpm !== undefined && prevWpm !== null) {
+        progressPart = ', steady pace toward ' + nextBand;
+      } else {
+        progressPart = ', pacing toward ' + nextBand;
+      }
+    } else {
+      progressPart = ', top tier';
+    }
+
+    return statusPart + progressPart;
+  }
+
+  function getRollup(customDate) {
+    var hist = STORE.get('weeklyHistory') || [];
+    var totalSessions = hist.length;
+    if (totalSessions < 3) {
+      return {
+        locked: true,
+        totalSessions: totalSessions,
+        needed: 3 - totalSessions,
+        message: 'finish 3 sessions to unlock your weekly trend'
+      };
+    }
+
+    var refDate = customDate ? new Date(customDate) : new Date();
+    var curWeekKey = isoWeekOf(refDate);
+    var prevWeekKey = getPrevIsoWeek(curWeekKey);
+
+    var buckets = getBuckets(hist);
+    var thisItems = buckets[curWeekKey] || [];
+    if (!thisItems.length) {
+      var allWeeks = Object.keys(buckets).sort();
+      if (allWeeks.length) {
+        curWeekKey = allWeeks[allWeeks.length - 1];
+        thisItems = buckets[curWeekKey] || [];
+        prevWeekKey = getPrevIsoWeek(curWeekKey);
+      }
+    }
+    var prevItems = buckets[prevWeekKey] || [];
+
+    var thisSum = summarizeBucket(thisItems);
+    var prevSum = summarizeBucket(prevItems);
+
+    var deltas = {
+      wpm: getDelta(thisSum ? thisSum.wpm : 0, prevSum ? prevSum.wpm : null, true),
+      fillersPerMin: getDelta(thisSum ? thisSum.fillersPerMin : 0, prevSum ? prevSum.fillersPerMin : null, false),
+      fillers: getDelta(thisSum ? thisSum.fillersPerMin : 0, prevSum ? prevSum.fillersPerMin : null, false),
+      honestScore: getDelta(thisSum ? thisSum.honestScore : 0, prevSum ? prevSum.honestScore : null, true),
+      lessons: getDelta(thisSum ? thisSum.lessons : 0, prevSum ? prevSum.lessons : null, true),
+      lessonsDone: getDelta(thisSum ? thisSum.lessonsDone : 0, prevSum ? prevSum.lessonsDone : null, true),
+      xp: getDelta(thisSum ? thisSum.xp : 0, prevSum ? prevSum.xp : null, true),
+      XP: getDelta(thisSum ? thisSum.xp : 0, prevSum ? prevSum.xp : null, true)
+    };
+
+    var curFillerFraction = thisSum ? (thisSum.fillersPerMin / (thisSum.wpm || 100)) : 0.03;
+    var prevFillerFraction = prevSum ? (prevSum.fillersPerMin / (prevSum.wpm || 100)) : null;
+    var cefrStory = getCefrStory(
+      thisSum ? thisSum.wpm : 100,
+      curFillerFraction,
+      prevSum ? prevSum.wpm : null,
+      prevFillerFraction
+    );
+
+    var curBand = (typeof bandOf === 'function') ? bandOf(thisSum ? thisSum.wpm : 100, curFillerFraction) : 'B1';
+
+    return {
+      locked: false,
+      totalSessions: totalSessions,
+      curWeek: curWeekKey,
+      prevWeek: prevWeekKey,
+      thisWeek: thisSum,
+      lastWeek: prevSum,
+      deltas: deltas,
+      band: curBand,
+      story: cefrStory
+    };
+  }
+
+  if (typeof window !== 'undefined') { window.WEEKLY = { isoWeekOf: isoWeekOf, getPrevIsoWeek: getPrevIsoWeek, record: record, recordFromAssessment: recordFromAssessment, recordFixerSession: recordFixerSession, getBuckets: getBuckets, summarizeBucket: summarizeBucket, getDelta: getDelta, getCefrStory: getCefrStory, getRollup: getRollup }; }
+  if (typeof global !== 'undefined') { global.WEEKLY = { isoWeekOf: isoWeekOf, getPrevIsoWeek: getPrevIsoWeek, record: record, recordFromAssessment: recordFromAssessment, recordFixerSession: recordFixerSession, getBuckets: getBuckets, summarizeBucket: summarizeBucket, getDelta: getDelta, getCefrStory: getCefrStory, getRollup: getRollup }; }
+
+  return {
+    isoWeekOf: isoWeekOf,
+    getPrevIsoWeek: getPrevIsoWeek,
+    record: record,
+    recordFromAssessment: recordFromAssessment,
+    recordFixerSession: recordFixerSession,
+    getBuckets: getBuckets,
+    summarizeBucket: summarizeBucket,
+    getDelta: getDelta,
+    getCefrStory: getCefrStory,
+    getRollup: getRollup
+  };
+})();
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -8824,6 +9170,7 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.LLM_PROVIDERS = LLM_PROVIDERS;
   window.llmAsk = llmAsk;
   window.REMINDERS = REMINDERS;
+  window.WEEKLY = WEEKLY;
   window.isHonest = STORE.isHonest;
   window.computeHonestScore = STORE.computeHonestScore;
 
@@ -8835,6 +9182,7 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     global.LLM_PROVIDERS = LLM_PROVIDERS;
     global.llmAsk = llmAsk;
     global.REMINDERS = REMINDERS;
+    global.WEEKLY = WEEKLY;
     global.isHonest = STORE.isHonest;
     global.computeHonestScore = STORE.computeHonestScore;
   }
@@ -8976,6 +9324,24 @@ VIEWS.home = {
       '</div>' +
     '</div>';
 
+    var weeklyStripHtml = '';
+    if (typeof WEEKLY !== 'undefined' && WEEKLY.getRollup) {
+      var rollup = WEEKLY.getRollup();
+      if (rollup.locked) {
+        weeklyStripHtml = '<div class="home-weekly-strip" id="home-weekly-strip" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;color:var(--mut);">' +
+          '<span>📈 <strong>Weekly Trend:</strong> ' + _escA(rollup.message) + ' (' + rollup.totalSessions + '/3 done)</span>' +
+          '<a href="#/path" style="color:var(--acc2);text-decoration:none;font-weight:600;">View progress →</a>' +
+        '</div>';
+      } else {
+        var wCur = rollup.thisWeek || {};
+        var wD = rollup.deltas || {};
+        weeklyStripHtml = '<div class="home-weekly-strip" id="home-weekly-strip" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;color:var(--txt);flex-wrap:wrap;gap:8px;">' +
+          '<span>📈 <strong>This Week:</strong> ' + _escA(rollup.story) + ' · ' + (wCur.wpm || 0) + ' WPM (' + (wD.wpm ? wD.wpm.text : '') + ') · ' + (wCur.honestScore || 0) + '/10 honest</span>' +
+          '<a href="#/path" style="color:var(--acc2);text-decoration:none;font-weight:600;">View progress →</a>' +
+        '</div>';
+      }
+    }
+
     var html = '<div class="view-home">' +
       '<div class="card home-greeting-band">' +
         '<div class="greeting-content">' +
@@ -8991,6 +9357,7 @@ VIEWS.home = {
       '</div>' +
       _renderFlowCard() +
       heroesHtml +
+      weeklyStripHtml +
       '<div class="section-title">🚀 Start Here</div>' +
       '<div class="start-here-grid">' +
         '<div class="card start-card" onclick="navigate(\'daily\')">' +
@@ -9704,6 +10071,13 @@ VIEWS.coach = {
 
       if (typeof FLOW !== 'undefined' && FLOW.mark) {
         FLOW.mark(3);
+      }
+      if (typeof WEEKLY !== 'undefined' && WEEKLY.recordFixerSession) {
+        WEEKLY.recordFixerSession({
+          wpm: paceWpm || 115,
+          fillersPerMin: interruptCount,
+          honestScore: verdict === 'pass' ? 9 : (verdict === 'almost' ? 6 : 4)
+        });
       }
 
       var endCard = document.getElementById('live-end-card');
@@ -11412,7 +11786,69 @@ VIEWS.path = {
     const stages = ['Survivor', 'Builder', 'Speaker', 'Master'];
     const completed = STORE.get('completed') || [];
 
-    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${COURSE.length} lessons · 4 stages · grammar through speaking</p>`;
+    let rollupHtml = '';
+    if (typeof WEEKLY !== 'undefined' && WEEKLY.getRollup) {
+      const rollup = WEEKLY.getRollup();
+      if (rollup.locked) {
+        rollupHtml = `
+        <div class="card weekly-card" id="path-weekly-card" style="margin-bottom:24px;padding:20px 22px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-md);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+            <div style="font-size:1.1rem;font-weight:700;color:var(--txt);">📈 This Week's Progress</div>
+            <span style="font-size:0.75rem;padding:3px 9px;border-radius:12px;background:rgba(245,158,11,0.15);color:var(--warn);border:1px solid rgba(245,158,11,0.3);">${rollup.totalSessions}/3 Sessions</span>
+          </div>
+          <p style="color:var(--mut);font-size:0.9rem;margin:0 0 14px 0;">Finish 3 sessions to unlock your weekly trend.</p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <a href="#/assessment" class="btn-sm btn-primary" style="text-decoration:none;">Take Assessment 🎤</a>
+            <a href="#/coach" class="btn-sm btn-ghost" style="text-decoration:none;">Live Drill 🎙️</a>
+            <a href="#/doctor" class="btn-sm btn-ghost" style="text-decoration:none;">Sentence Doctor 🩺</a>
+          </div>
+        </div>`;
+      } else {
+        const cur = rollup.thisWeek || {};
+        const d = rollup.deltas || {};
+        const story = rollup.story || '';
+        const band = rollup.band || 'B1';
+        rollupHtml = `
+        <div class="card weekly-card" id="path-weekly-card" style="margin-bottom:24px;padding:20px 22px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-md);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:1.15rem;font-weight:800;color:var(--txt);">📈 This Week · <span style="color:var(--acc2);">${story}</span></div>
+              <div style="font-size:0.8rem;color:var(--mut);margin-top:3px;">Week ${rollup.curWeek} · ${rollup.totalSessions} sessions recorded</div>
+            </div>
+            <span class="cefr-badge" style="font-size:0.9rem;padding:5px 12px;border-radius:12px;background:var(--acc);color:#fff;font-weight:800;">${band}</span>
+          </div>
+          <div class="weekly-stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;">
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Pace</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.wpm || 0} <span style="font-size:0.72rem;font-weight:400;color:var(--mut);">WPM</span></div>
+              <div style="font-size:0.75rem;color:${d.wpm.direction==='up'?'var(--ok)':(d.wpm.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.wpm.direction==='up'?'▲':(d.wpm.direction==='down'?'▼':'•')} ${d.wpm.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Fillers</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.fillersPerMin || 0} <span style="font-size:0.72rem;font-weight:400;color:var(--mut);">/min</span></div>
+              <div style="font-size:0.75rem;color:${d.fillersPerMin.direction==='down'?'var(--ok)':(d.fillersPerMin.direction==='up'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.fillersPerMin.direction==='down'?'▼':(d.fillersPerMin.direction==='up'?'▲':'•')} ${d.fillersPerMin.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Honest Score</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.honestScore || 0} <span style="font-size:0.72rem;font-weight:400;color:var(--mut);">/10</span></div>
+              <div style="font-size:0.75rem;color:${d.honestScore.direction==='up'?'var(--ok)':(d.honestScore.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.honestScore.direction==='up'?'▲':(d.honestScore.direction==='down'?'▼':'•')} ${d.honestScore.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Lessons Done</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.lessons || 0}</div>
+              <div style="font-size:0.75rem;color:${d.lessons.direction==='up'?'var(--ok)':(d.lessons.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.lessons.direction==='up'?'▲':(d.lessons.direction==='down'?'▼':'•')} ${d.lessons.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">XP</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${U.fmtXP(cur.xp || 0)}</div>
+              <div style="font-size:0.75rem;color:${d.xp.direction==='up'?'var(--ok)':(d.xp.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.xp.direction==='up'?'▲':(d.xp.direction==='down'?'▼':'•')} ${d.xp.text}</div>
+            </div>
+          </div>
+        </div>`;
+      }
+    }
+
+    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${COURSE.length} lessons · 4 stages · grammar through speaking</p>${rollupHtml}`;
 
     for (let stage = 1; stage <= 4; stage++) {
       const lessons = COURSE.filter(l => l.stage === stage);
@@ -11731,6 +12167,15 @@ VIEWS.doctor = {
         TRAINER.log({skill: 'grammar', delta: -1, source: 'doctor/issues'});
       }
       STORE.addXP(2);
+      if (typeof WEEKLY !== 'undefined' && WEEKLY.recordFixerSession) {
+        const words = (typeof U !== 'undefined' && U.tokenise) ? U.tokenise(text).length : text.split(/\s+/).filter(Boolean).length;
+        WEEKLY.recordFixerSession({
+          issuesCount: results.length,
+          wordCount: words,
+          wpm: 120,
+          fillersPerMin: 0
+        });
+      }
     });
   }
 };
@@ -13225,6 +13670,14 @@ VIEWS.resume = {
         STORE.set("resumeReports", reps);
         TRAINER.log({skill: "writing", delta: 2, source: "resume/analyze"});
         STORE.addXP(15);
+        if (typeof WEEKLY !== "undefined" && WEEKLY.recordFixerSession) {
+          WEEKLY.recordFixerSession({
+            issuesCount: (report.issues || []).length,
+            wordCount: text.split(/\s+/).filter(Boolean).length,
+            wpm: 125,
+            fillersPerMin: 0
+          });
+        }
         analyzeBtn.textContent = "🔍 Analyze";
         analyzeBtn.disabled = false;
         var reportEl = el.querySelector("#resume-report");

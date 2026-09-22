@@ -212,7 +212,69 @@ VIEWS.path = {
     const stages = ['Survivor', 'Builder', 'Speaker', 'Master'];
     const completed = STORE.get('completed') || [];
 
-    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${COURSE.length} lessons · 4 stages · grammar through speaking</p>`;
+    let rollupHtml = '';
+    if (typeof WEEKLY !== 'undefined' && WEEKLY.getRollup) {
+      const rollup = WEEKLY.getRollup();
+      if (rollup.locked) {
+        rollupHtml = `
+        <div class="card weekly-card" id="path-weekly-card" style="margin-bottom:24px;padding:20px 22px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-md);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+            <div style="font-size:1.1rem;font-weight:700;color:var(--txt);">📈 This Week's Progress</div>
+            <span style="font-size:0.75rem;padding:3px 9px;border-radius:12px;background:rgba(245,158,11,0.15);color:var(--warn);border:1px solid rgba(245,158,11,0.3);">${rollup.totalSessions}/3 Sessions</span>
+          </div>
+          <p style="color:var(--mut);font-size:0.9rem;margin:0 0 14px 0;">Finish 3 sessions to unlock your weekly trend.</p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <a href="#/assessment" class="btn-sm btn-primary" style="text-decoration:none;">Take Assessment 🎤</a>
+            <a href="#/coach" class="btn-sm btn-ghost" style="text-decoration:none;">Live Drill 🎙️</a>
+            <a href="#/doctor" class="btn-sm btn-ghost" style="text-decoration:none;">Sentence Doctor 🩺</a>
+          </div>
+        </div>`;
+      } else {
+        const cur = rollup.thisWeek || {};
+        const d = rollup.deltas || {};
+        const story = rollup.story || '';
+        const band = rollup.band || 'B1';
+        rollupHtml = `
+        <div class="card weekly-card" id="path-weekly-card" style="margin-bottom:24px;padding:20px 22px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-md);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:1.15rem;font-weight:800;color:var(--txt);">📈 This Week · <span style="color:var(--acc2);">${story}</span></div>
+              <div style="font-size:0.8rem;color:var(--mut);margin-top:3px;">Week ${rollup.curWeek} · ${rollup.totalSessions} sessions recorded</div>
+            </div>
+            <span class="cefr-badge" style="font-size:0.9rem;padding:5px 12px;border-radius:12px;background:var(--acc);color:#fff;font-weight:800;">${band}</span>
+          </div>
+          <div class="weekly-stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;">
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Pace</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.wpm || 0} <span style="font-size:0.72rem;font-weight:400;color:var(--mut);">WPM</span></div>
+              <div style="font-size:0.75rem;color:${d.wpm.direction==='up'?'var(--ok)':(d.wpm.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.wpm.direction==='up'?'▲':(d.wpm.direction==='down'?'▼':'•')} ${d.wpm.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Fillers</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.fillersPerMin || 0} <span style="font-size:0.72rem;font-weight:400;color:var(--mut);">/min</span></div>
+              <div style="font-size:0.75rem;color:${d.fillersPerMin.direction==='down'?'var(--ok)':(d.fillersPerMin.direction==='up'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.fillersPerMin.direction==='down'?'▼':(d.fillersPerMin.direction==='up'?'▲':'•')} ${d.fillersPerMin.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Honest Score</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.honestScore || 0} <span style="font-size:0.72rem;font-weight:400;color:var(--mut);">/10</span></div>
+              <div style="font-size:0.75rem;color:${d.honestScore.direction==='up'?'var(--ok)':(d.honestScore.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.honestScore.direction==='up'?'▲':(d.honestScore.direction==='down'?'▼':'•')} ${d.honestScore.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">Lessons Done</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${cur.lessons || 0}</div>
+              <div style="font-size:0.75rem;color:${d.lessons.direction==='up'?'var(--ok)':(d.lessons.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.lessons.direction==='up'?'▲':(d.lessons.direction==='down'?'▼':'•')} ${d.lessons.text}</div>
+            </div>
+            <div class="weekly-stat-box" style="background:var(--bg2);padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--line);">
+              <div style="font-size:0.75rem;color:var(--mut);margin-bottom:4px;">XP</div>
+              <div style="font-size:1.2rem;font-weight:700;color:var(--txt);">${U.fmtXP(cur.xp || 0)}</div>
+              <div style="font-size:0.75rem;color:${d.xp.direction==='up'?'var(--ok)':(d.xp.direction==='down'?'var(--bad)':'var(--mut)')};font-weight:600;margin-top:2px;">${d.xp.direction==='up'?'▲':(d.xp.direction==='down'?'▼':'•')} ${d.xp.text}</div>
+            </div>
+          </div>
+        </div>`;
+      }
+    }
+
+    let html = `<div class="view-path"><h1>📖 Learn Path</h1><p class="sub">${COURSE.length} lessons · 4 stages · grammar through speaking</p>${rollupHtml}`;
 
     for (let stage = 1; stage <= 4; stage++) {
       const lessons = COURSE.filter(l => l.stage === stage);
@@ -531,6 +593,15 @@ VIEWS.doctor = {
         TRAINER.log({skill: 'grammar', delta: -1, source: 'doctor/issues'});
       }
       STORE.addXP(2);
+      if (typeof WEEKLY !== 'undefined' && WEEKLY.recordFixerSession) {
+        const words = (typeof U !== 'undefined' && U.tokenise) ? U.tokenise(text).length : text.split(/\s+/).filter(Boolean).length;
+        WEEKLY.recordFixerSession({
+          issuesCount: results.length,
+          wordCount: words,
+          wpm: 120,
+          fillersPerMin: 0
+        });
+      }
     });
   }
 };

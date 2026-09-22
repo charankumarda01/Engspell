@@ -471,6 +471,14 @@ VIEWS.resume = {
         STORE.set("resumeReports", reps);
         TRAINER.log({skill: "writing", delta: 2, source: "resume/analyze"});
         STORE.addXP(15);
+        if (typeof WEEKLY !== "undefined" && WEEKLY.recordFixerSession) {
+          WEEKLY.recordFixerSession({
+            issuesCount: (report.issues || []).length,
+            wordCount: text.split(/\s+/).filter(Boolean).length,
+            wpm: 125,
+            fillersPerMin: 0
+          });
+        }
         analyzeBtn.textContent = "🔍 Analyze";
         analyzeBtn.disabled = false;
         var reportEl = el.querySelector("#resume-report");

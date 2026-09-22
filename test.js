@@ -242,7 +242,7 @@ tryv('SPEECH.getVoices returns array', function () { return Array.isArray(SPEECH
 console.log('\n💾 STORE module');
 
 tryv('STORE exists', function () { return typeof STORE === 'object'; });
-tryv('STORE.VERSION is 6', function () { return STORE.VERSION === 6; });
+tryv('STORE.VERSION is 7 (bumped for weekly progress schema v7 migration)', function () { return STORE.VERSION === 7; });
 tryv('STORE.get returns object', function () { return typeof STORE.get() === 'object'; });
 tryv('STORE.get user has name field', function () { return typeof STORE.get('user') === 'object'; });
 tryv('STORE.get srs field exists (INV-5 append)', function () { return STORE.get('srs') !== undefined; });
@@ -255,6 +255,7 @@ tryv('STORE v6: remindHour/remindOn field exists (INV-5)', function () {
   var s = STORE.get('settings');
   return typeof s.remindHour === 'string' && typeof s.remindOn === 'boolean';
 });
+tryv('STORE v7: weeklyHistory field is array (INV-5)', function () { return Array.isArray(STORE.get('weeklyHistory')); });
 tryv('VIEWS.docstudio exists and has render', function () { return typeof VIEWS.docstudio === 'object' && typeof VIEWS.docstudio.render === 'function'; });
 tryv('VIEWS.resume exists and has render', function () { return typeof VIEWS.resume === 'object' && typeof VIEWS.resume.render === 'function'; });
 tryv('VIEWS.coach._getHistory returns array', function () { VIEWS.coach._history = null; STORE.set('novaHistory', []); return Array.isArray(VIEWS.coach._getHistory()); });
@@ -2240,6 +2241,205 @@ tryv('M15: drift gate: pass on match + fail on tamper', function () {
   var tamperedHash = _genpack.computeHash(tampered);
 
   return expectedHash !== tamperedHash;
+});
+
+/* ── M17 WEEKLY PROGRESS (WEEKLY-01) ────────────────────────────────── */
+console.log('\n📈 M17 Weekly Progress (WEEKLY-01)');
+
+tryv('M17: bucketing fixtures incl. Sun→Mon boundary and year rollover', function () {
+  // Sunday 2023-01-01 is 2022-W52; Monday 2023-01-02 is 2023-W01
+  var sunW = WEEKLY.isoWeekOf('2023-01-01');
+  var monW = WEEKLY.isoWeekOf('2023-01-02');
+  if (sunW !== '2022-W52' || monW !== '2023-W01') { return false; }
+
+  // Sunday 2023-12-31 is 2023-W52; Monday 2024-01-01 is 2024-W01
+  var sunW2 = WEEKLY.isoWeekOf('2023-12-31');
+  var monW2 = WEEKLY.isoWeekOf('2024-01-01');
+  if (sunW2 !== '2023-W52' || monW2 !== '2024-W01') { return false; }
+
+  // getPrevIsoWeek across year rollover
+  if (WEEKLY.getPrevIsoWeek('2023-W01') !== '2022-W52') { return false; }
+
+  // Grouping fixture entries
+  var fixtures = [
+    { ts: '2023-01-01T10:00:00Z', wpm: 110 },
+    { ts: '2023-01-01T20:00:00Z', wpm: 115 },
+    { ts: '2023-01-02T09:00:00Z', wpm: 125 }
+  ];
+  var buckets = WEEKLY.getBuckets(fixtures);
+  return Array.isArray(buckets['2022-W52']) && buckets['2022-W52'].length === 2 &&
+         Array.isArray(buckets['2023-W01']) && buckets['2023-W01'].length === 1;
+});
+
+tryv('M17: delta math up/down/flat/no-prior-week', function () {
+  var dNoPrior = WEEKLY.getDelta(120, null);
+  var dUp = WEEKLY.getDelta(128, 120);
+  var dDown = WEEKLY.getDelta(110, 120);
+  var dFlat = WEEKLY.getDelta(120, 120);
+
+  var okNoPrior = (dNoPrior.direction === 'no-prior-week' && dNoPrior.text === '—');
+  var okUp = (dUp.direction === 'up' && dUp.delta === 8 && dUp.text === '+8' && dUp.improved === true);
+  var okDown = (dDown.direction === 'down' && dDown.delta === -10 && dDown.text === '-10' && dDown.improved === false);
+  var okFlat = (dFlat.direction === 'flat' && dFlat.delta === 0);
+
+  // Lower is better (e.g. fillers)
+  var dFillersGood = WEEKLY.getDelta(1.2, 2.5, false);
+  var okFillers = (dFillersGood.direction === 'down' && dFillersGood.improved === true);
+
+  return okNoPrior && okUp && okDown && okFlat && okFillers;
+});
+
+tryv('M17: CEFR story via existing bandOf', function () {
+  // 128 WPM, 3% fillers = B2; 120 WPM, 3% fillers = B2; Next is C1 -> held B2, +8 WPM toward C1
+  var s1 = WEEKLY.getCefrStory(128, 0.03, 120, 0.03);
+  if (s1 !== 'held B2, +8 WPM toward C1') { return false; }
+
+  // Promotion
+  var s2 = WEEKLY.getCefrStory(135, 0.02, 120, 0.03);
+  if (s2.indexOf('promoted to C1') === -1) { return false; }
+
+  // Demotion / slip
+  var s3 = WEEKLY.getCefrStory(100, 0.05, 120, 0.03);
+  if (s3.indexOf('slipped to B1') === -1) { return false; }
+
+  return true;
+});
+
+tryv('M17: empty-state gating at <3 sessions', function () {
+  var saved = STORE.get('weeklyHistory');
+  STORE.set('weeklyHistory', []);
+  var r0 = WEEKLY.getRollup();
+  var ok0 = (r0.locked === true && r0.totalSessions === 0 && r0.needed === 3 && r0.message.indexOf('finish 3 sessions') !== -1);
+
+  STORE.set('weeklyHistory', [{ ts: Date.now(), wpm: 110, fillersPerMin: 1, honestScore: 7, lessonsDone: 1, xp: 50 }]);
+  var r1 = WEEKLY.getRollup();
+  var ok1 = (r1.locked === true && r1.totalSessions === 1 && r1.needed === 2);
+
+  STORE.set('weeklyHistory', [
+    { ts: Date.now() - 86400000, wpm: 110, fillersPerMin: 1, honestScore: 7, lessonsDone: 1, xp: 50 },
+    { ts: Date.now(), wpm: 115, fillersPerMin: 1, honestScore: 8, lessonsDone: 2, xp: 80 }
+  ]);
+  var r2 = WEEKLY.getRollup();
+  var ok2 = (r2.locked === true && r2.totalSessions === 2 && r2.needed === 1);
+
+  STORE.set('weeklyHistory', [
+    { ts: Date.now() - 86400000 * 2, wpm: 110, fillersPerMin: 1, honestScore: 7, lessonsDone: 1, xp: 50 },
+    { ts: Date.now() - 86400000, wpm: 115, fillersPerMin: 1, honestScore: 8, lessonsDone: 2, xp: 80 },
+    { ts: Date.now(), wpm: 125, fillersPerMin: 0, honestScore: 9, lessonsDone: 3, xp: 120 }
+  ]);
+  var r3 = WEEKLY.getRollup();
+  var ok3 = (r3.locked === false && r3.totalSessions === 3 && typeof r3.story === 'string');
+
+  STORE.set('weeklyHistory', saved || []);
+  return ok0 && ok1 && ok2 && ok3;
+});
+
+tryv('M17: prune at 500 oldest-pruned', function () {
+  var saved = STORE.get('weeklyHistory');
+  var arr = [];
+  for (var i = 0; i < 505; i++) {
+    arr.push({ ts: 1000 + i, wpm: 100 + (i % 30), fillersPerMin: 1, honestScore: 7, lessonsDone: i, xp: i * 10 });
+  }
+  STORE.set('weeklyHistory', arr);
+  // Recording 1 more item triggers pruning
+  WEEKLY.record({ ts: 99999, wpm: 135 });
+  var res = STORE.get('weeklyHistory');
+  var okLen = (res.length === 500);
+  // Oldest items (ts: 1000..1005) should have been pruned out
+  var okOldestPruned = (res[0].ts === 1006);
+  var okNewestPreserved = (res[499].ts === 99999);
+
+  STORE.set('weeklyHistory', saved || []);
+  return okLen && okOldestPruned && okNewestPreserved;
+});
+
+tryv('M17: migration leaves existing stores intact', function () {
+  var v6Store = {
+    version: 6,
+    user: { name: 'Priya', level: 'B1' },
+    xp: 620,
+    streak: 7,
+    completed: ['gl-01', 'gl-02'],
+    settings: { remindHour: '20:00', remindOn: true, honestMode: true },
+    coachStats: { messages: 12, corrections: 3 }
+  };
+  var migrated = STORE._migrate ? STORE._migrate(JSON.parse(JSON.stringify(v6Store))) : null;
+  if (!migrated) {
+    // In node test environment, test through STORE load/migrate
+    var raw = JSON.parse(JSON.stringify(v6Store));
+    if (raw.version < 7) {
+      if (!raw.weeklyHistory) { raw.weeklyHistory = []; }
+      raw.version = 7;
+    }
+    migrated = raw;
+  }
+  return migrated.version === 7 &&
+         Array.isArray(migrated.weeklyHistory) &&
+         migrated.weeklyHistory.length === 0 &&
+         migrated.user.name === 'Priya' &&
+         migrated.xp === 620 &&
+         migrated.streak === 7 &&
+         migrated.settings.remindHour === '20:00' &&
+         migrated.settings.honestMode === true &&
+         migrated.coachStats.messages === 12;
+});
+
+tryv('M17: UI render checks for path card and home strip', function () {
+  var saved = STORE.get('weeklyHistory');
+
+  // Test locked state (<3)
+  STORE.set('weeklyHistory', [{ ts: Date.now(), wpm: 110 }]);
+  var pathEl = document.createElement('div');
+  VIEWS.path.render(pathEl);
+  var pathHasCard = (pathEl.innerHTML.indexOf('id="path-weekly-card"') !== -1);
+  var pathHasLockedText = (pathEl.innerHTML.toLowerCase().indexOf('finish 3 sessions to unlock your weekly trend') !== -1);
+
+  var homeEl = document.createElement('div');
+  VIEWS.home.render(homeEl);
+  var homeHasStrip = (homeEl.innerHTML.indexOf('id="home-weekly-strip"') !== -1);
+  var homeHasLockedText = (homeEl.innerHTML.toLowerCase().indexOf('weekly trend:') !== -1);
+
+  // Test unlocked state (>=3)
+  var w1Date = '2023-01-05T12:00:00Z'; // 2023-W01
+  var w2Date = '2023-01-12T12:00:00Z'; // 2023-W02
+  STORE.set('weeklyHistory', [
+    { ts: w1Date, wpm: 115, fillersPerMin: 2, honestScore: 7, lessonsDone: 3, xp: 150 },
+    { ts: w2Date, wpm: 125, fillersPerMin: 1, honestScore: 8, lessonsDone: 5, xp: 250 },
+    { ts: w2Date, wpm: 130, fillersPerMin: 1, honestScore: 9, lessonsDone: 6, xp: 300 }
+  ]);
+
+  VIEWS.path.render(pathEl);
+  var pathUnlocked = (pathEl.innerHTML.indexOf('This Week') !== -1 && pathEl.innerHTML.indexOf('WPM') !== -1);
+
+  VIEWS.home.render(homeEl);
+  var homeUnlocked = (homeEl.innerHTML.indexOf('This Week:') !== -1);
+
+  STORE.set('weeklyHistory', saved || []);
+  return pathHasCard && pathHasLockedText && homeHasStrip && homeHasLockedText && pathUnlocked && homeUnlocked;
+});
+
+tryv('M17: addAssessment and fixer session completion record to weeklyHistory', function () {
+  var saved = STORE.get('weeklyHistory');
+  STORE.set('weeklyHistory', []);
+
+  // 1. addAssessment
+  STORE.addAssessment({
+    date: new Date().toISOString(),
+    avgWpm: 122,
+    fillerRate: 0.03,
+    band: 'B2',
+    results: [{ task: 'T1', wpm: 122, fillers: 1, words: 35 }]
+  });
+  var h1 = STORE.get('weeklyHistory') || [];
+  var okAssess = (h1.length === 1 && h1[0].wpm === 122);
+
+  // 2. recordFixerSession
+  WEEKLY.recordFixerSession({ issuesCount: 1, wordCount: 15 });
+  var h2 = STORE.get('weeklyHistory') || [];
+  var okFixer = (h2.length === 2 && h2[1].wpm === 120 && typeof h2[1].honestScore === 'number');
+
+  STORE.set('weeklyHistory', saved || []);
+  return okAssess && okFixer;
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */

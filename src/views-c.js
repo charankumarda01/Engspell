@@ -139,6 +139,13 @@ VIEWS.coach = {
       if (typeof FLOW !== 'undefined' && FLOW.mark) {
         FLOW.mark(3);
       }
+      if (typeof WEEKLY !== 'undefined' && WEEKLY.recordFixerSession) {
+        WEEKLY.recordFixerSession({
+          wpm: paceWpm || 115,
+          fillersPerMin: interruptCount,
+          honestScore: verdict === 'pass' ? 9 : (verdict === 'almost' ? 6 : 4)
+        });
+      }
 
       var endCard = document.getElementById('live-end-card');
       if (endCard) {
