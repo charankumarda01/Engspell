@@ -32,7 +32,7 @@ Experience the ₹0 forever English coach that stops you mid-sentence:
 
 EngSpell is a single-page "English gym" that runs entirely in the browser:
 
-- **Real course** — 32 lessons (Survivor → Master) teaching grammar through spoken patterns,
+- **Real course** — 68 lessons (44 core + 24 generated, Survivor → Master) teaching grammar through spoken patterns,
   with 2 voice missions each that must be completed aloud.
 - **Nova, the AI coach** — free conversation with live grammar correction + native upgrades,
   powered by Gemini 2.0 Flash (free tier, your API key). Falls back to rule engine offline.
@@ -51,17 +51,17 @@ EngSpell is a single-page "English gym" that runs entirely in the browser:
 | Home + Onboarding | `#/home` | Daily goal ring, streak, week chart, next-best-action |
 | Today's Dose | `#/daily` | Daily twister / power word / idiom quiz / quote shadow |
 | My Trainer | `#/trainer` | SVG Weakness Radar (6 skills), auto-plan |
-| Learn Path | `#/path`, `#/lesson/:id` | 32 lessons · 4 stages, pattern tables, 2 missions each |
+| Learn Path | `#/path`, `#/lesson/:id` | 68 lessons · 4 stages, pattern tables, 2 missions each |
 | Grammar Atlas | `#/atlas` | 12 tenses (machine, when, signal words) + tense quiz |
 | Foundations | `#/foundations` | Alphabet, 20 vowels, 24 consonants, spell-anything tool |
 | Idioms & Phrasal Verbs | `#/idioms` | 48 + 48 with audio, decks, quiz mode |
 | Pronunciation Lab | `#/pronunciation` | 130+ words (A1→C1+), 18 minimal pairs, twisters |
 | Clarity Studio | `#/clarity` | Word stress, rhythm, intonation, connected speech |
-| Listening Lab | `#/listening` | 12 graded passages (A1–C1) + comprehension + dictation |
+| Listening Lab | `#/listening` | 34 graded passages (A1–C1) + comprehension + dictation |
 | Spelling Trainer | `#/spelling` | 60 words · 3 levels · audio dictation rounds |
 | Phrase Builder | `#/phrases` | 24 sentence builds, 18 grammar blanks, phrasebook |
 | Sentence Doctor | `#/doctor` | Paste any sentence → 35+ diagnoses incl. desi-English |
-| Conversations | `#/scenarios` | 8 scenarios, key phrases, full voice role-play + scoring |
+| Conversations | `#/scenarios` | 26 scenarios, key phrases, full voice role-play + scoring |
 | Nova — AI Coach | `#/coach` | Gemini-powered free conversation + grammar surgery |
 | Review Queue | `#/review` | SM-2 spaced repetition review deck (1/3/7/16/35 days) |
 | Reading Corner | `#/read` | Graded passages A1–C1, word tap IPA chips, vocabulary saves |
@@ -138,8 +138,9 @@ sw.js               Service worker (offline PWA)
 
 src/
   data.js           Letters, 44 sounds, 130 words, pairs, twisters, spelling, coach rules
-  data2.js          COURSE (32 lessons), clarity data, idioms/PVs, quotes, daily seeds
-  data3.js          Grammar Atlas (12 tenses), 12 listening passages, assessment pools
+  data2.js          COURSE (44 core lessons), clarity data, idioms/PVs, quotes, daily seeds
+  data3.js          Grammar Atlas (12 tenses), 12 core listening passages, assessment pools
+  data4.js          DATA4 generator (+24 lessons, +12 scenarios, +12 passages = 68/26/34 total)
   speech.js         TTS (voice pick, rate, slow) + SpeechRecognition wrapper
   core.js           STORE, TRAINER, U (align/norm), UI primitives, router, nav
   views-a.js        Home, Foundations, Pronunciation Lab

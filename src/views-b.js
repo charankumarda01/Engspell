@@ -263,7 +263,7 @@ VIEWS.scenarios = {
     var cards = '';
     for (var si = 0; si < allScenarios.length; si++) {
       var s = allScenarios[si];
-      cards += '<div class="scenario-card" onclick="navigate(\'scenarios\',\'' + s.id + '\')">' +
+      cards += '<div class="scenario-card" data-scenario-id="' + s.id + '" onclick="navigate(\'scenarios\',\'' + s.id + '\')">' +
         '<div class="sc-level">' + s.level + '</div>' +
         '<h3>' + s.title + '</h3>' +
         '<p>' + s.context + '</p>' +
@@ -271,7 +271,7 @@ VIEWS.scenarios = {
         '<button class="btn-primary">Start Role-Play →</button>' +
         '</div>';
     }
-    el.innerHTML = '<div class="view-scenarios"><h1>🎭 Conversations</h1><p class="sub">Practice real-life English conversations.</p><div class="scenario-grid">' + cards + '</div></div>';
+    el.innerHTML = '<div class="view-scenarios"><h1>🎭 Conversations</h1><p class="sub">' + allScenarios.length + ' real-life English conversations & role-plays.</p><div class="scenario-grid">' + cards + '</div></div>';
   }
 };
 
@@ -281,7 +281,7 @@ function _renderScenario(el, sc) {
 
   function renderTurn() {
     var turn = sc.turns[turnIdx];
-    var html = '<div class="scenario-play">' +
+    var html = '<div class="scenario-play" data-scenario-id="' + sc.id + '">' +
       '<div class="sc-header"><button onclick="navigate(\'scenarios\')" class="btn-back">← Back</button><h2>' + sc.title + '</h2></div>' +
       '<div class="sc-turn">' + (turnIdx + 1) + ' / ' + sc.turns.length + '</div>';
 

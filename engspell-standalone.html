@@ -9454,6 +9454,13 @@ VIEWS.home = {
     var allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined' && COURSE.length) ? COURSE : []);
     var totalLessons = allLessons.length || 68;
     var remaining = Math.max(0, totalLessons - completed.length);
+    var nextUncompleted = null;
+    for (var uli = 0; uli < allLessons.length; uli++) {
+      if (completed.indexOf(allLessons[uli].id) === -1) {
+        nextUncompleted = allLessons[uli];
+        break;
+      }
+    }
 
 
     var docs = STORE.get('docs') || [];
@@ -9529,11 +9536,11 @@ VIEWS.home = {
           '<span class="start-card-action">Daily Ritual →</span>' +
         '</div>' +
 
-        '<div class="card start-card" onclick="navigate(\'' + nextRoute + '\')">' +
+        '<div class="card start-card" id="home-next-lesson-card"' + (nextUncompleted ? ' data-lesson-id="' + nextUncompleted.id + '"' : '') + ' onclick="navigate(\'' + (nextRoute === 'path' && nextUncompleted ? 'lesson' : nextRoute) + '\'' + (nextRoute === 'path' && nextUncompleted ? ',\'' + nextUncompleted.id + '\'' : '') + ')">' +
           '<div class="start-card-icon">' + ((typeof SKILL_META !== 'undefined' && SKILL_META[nextSkill]) ? SKILL_META[nextSkill].icon : '📖') + '</div>' +
           '<div class="start-card-body">' +
             '<h3>Next Lesson</h3>' +
-            '<p>Level up <strong>' + nextSkill + '</strong> (weakest skill)</p>' +
+            '<p>' + (nextUncompleted ? '<strong>' + nextUncompleted.id + '</strong>: ' + _escA(nextUncompleted.title) : 'Level up <strong>' + nextSkill + '</strong> (weakest skill)') + '</p>' +
           '</div>' +
           '<span class="start-card-action">Continue →</span>' +
         '</div>' +
@@ -9982,7 +9989,7 @@ VIEWS.scenarios = {
     var cards = '';
     for (var si = 0; si < allScenarios.length; si++) {
       var s = allScenarios[si];
-      cards += '<div class="scenario-card" onclick="navigate(\'scenarios\',\'' + s.id + '\')">' +
+      cards += '<div class="scenario-card" data-scenario-id="' + s.id + '" onclick="navigate(\'scenarios\',\'' + s.id + '\')">' +
         '<div class="sc-level">' + s.level + '</div>' +
         '<h3>' + s.title + '</h3>' +
         '<p>' + s.context + '</p>' +
@@ -9990,7 +9997,7 @@ VIEWS.scenarios = {
         '<button class="btn-primary">Start Role-Play →</button>' +
         '</div>';
     }
-    el.innerHTML = '<div class="view-scenarios"><h1>🎭 Conversations</h1><p class="sub">Practice real-life English conversations.</p><div class="scenario-grid">' + cards + '</div></div>';
+    el.innerHTML = '<div class="view-scenarios"><h1>🎭 Conversations</h1><p class="sub">' + allScenarios.length + ' real-life English conversations & role-plays.</p><div class="scenario-grid">' + cards + '</div></div>';
   }
 };
 
@@ -10000,7 +10007,7 @@ function _renderScenario(el, sc) {
 
   function renderTurn() {
     var turn = sc.turns[turnIdx];
-    var html = '<div class="scenario-play">' +
+    var html = '<div class="scenario-play" data-scenario-id="' + sc.id + '">' +
       '<div class="sc-header"><button onclick="navigate(\'scenarios\')" class="btn-back">← Back</button><h2>' + sc.title + '</h2></div>' +
       '<div class="sc-turn">' + (turnIdx + 1) + ' / ' + sc.turns.length + '</div>';
 
@@ -10471,8 +10478,23 @@ VIEWS.coach = {
       '<button class="tab-btn' + (self._mode === 'interview' ? ' active' : '') + '" id="mode-interview">🎤 Mock Interview</button>' +
       '<button class="tab-btn' + (self._mode === 'drill' ? ' active' : '') + '" id="mode-drill">🎙️ Live Drill</button>' +
       modeDocBtn +
-      '</div>' +
-      '<div class="chat-window" id="chat-window">';
+      '</div>';
+
+    if (self._mode === 'chat') {
+      var allScenarios = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allScenarios() : (typeof SCENARIOS !== 'undefined' ? SCENARIOS : []);
+      var scOpts = '<option value="">🎭 Free-Talk Scenario Topic (' + allScenarios.length + ' available)...</option>';
+      for (var sci = 0; sci < allScenarios.length; sci++) {
+        var scItem = allScenarios[sci];
+        scOpts += '<option value="' + scItem.id + '" data-scenario-id="' + scItem.id + '">[' + scItem.level + '] ' + _esc(scItem.title) + '</option>';
+      }
+      html += '<div class="coach-scenario-picker-row" style="margin:10px 0;display:flex;align-items:center;gap:8px;">' +
+        '<select id="coach-scenario-select" class="coach-scenario-picker" style="width:100%;padding:8px 12px;font-size:0.85rem;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);">' +
+        scOpts +
+        '</select>' +
+        '</div>';
+    }
+
+    html += '<div class="chat-window" id="chat-window">';
 
     if (history.length === 0) {
       html += '<div class="bubble nova"><div class="bubble-label">Nova</div>'
@@ -10533,6 +10555,16 @@ VIEWS.coach = {
     if (docModeBtn) {
       docModeBtn.addEventListener('click', function () {
         self._mode = 'document'; self.render(el);
+      });
+    }
+
+    /* Scenario picker */
+    var scSelect = document.getElementById('coach-scenario-select');
+    if (scSelect) {
+      scSelect.addEventListener('change', function () {
+        if (this.value) {
+          navigate('scenarios', this.value);
+        }
       });
     }
 
@@ -11394,6 +11426,9 @@ VIEWS.onboarding = {
     'use strict';
     var self = this;
     var screen = self._screen || 0;
+    var allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined' && COURSE.length) ? COURSE : []);
+    var allScenarios = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allScenarios() : ((typeof SCENARIOS !== 'undefined' && SCENARIOS.length) ? SCENARIOS : []);
+    var allPassages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && PASSAGES.length) ? PASSAGES : []);
 
     var placementPool = [
       (typeof QUIZ_BANK !== 'undefined' && QUIZ_BANK[0]) || { q: 'Which sentence is correct?', opts: ["She don't like tea.", "She doesn't like tea.", "She not like tea."], ans: 1, skill: 'grammar' },
@@ -11421,7 +11456,7 @@ VIEWS.onboarding = {
     /* SCREEN 1: Welcome */
     if (screen === 0) {
       html += '<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;line-height:1.3;">Welcome to EngSpell</h1>'
-        + '<p style="color:var(--mut);margin-bottom:24px;font-size:0.95rem;line-height:1.5;">Master clear English pronunciation, speaking fluency, and confidence — 100% free, offline-first, and private.</p>'
+        + '<p style="color:var(--mut);margin-bottom:24px;font-size:0.95rem;line-height:1.5;">Master clear English pronunciation, speaking fluency, and confidence across ' + (allLessons.length || 68) + ' interactive lessons and ' + (allScenarios.length || 26) + ' role-play scenarios — 100% free, offline-first, and private.</p>'
         + '<div style="margin-bottom:20px;">'
         + '<label style="display:block;font-size:0.85rem;font-weight:600;color:var(--txt);margin-bottom:6px;">What should we call you?</label>'
         + '<input type="text" id="ob-name-input" placeholder="Enter your first name" value="' + _esc(self._answers.name || '') + '" style="width:100%;padding:12px 14px;font-size:1rem;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);" />'
@@ -11488,7 +11523,7 @@ VIEWS.onboarding = {
         + '</div>'
         + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;font-size:0.8rem;">'
         + '<div style="font-weight:700;color:var(--ok);margin-bottom:4px;">🛡️ Offline Rules</div>'
-        + '<div style="color:var(--mut);line-height:1.4;">Grammar rules, pronunciation lab, word bank, and SRS review always free forever.</div>'
+        + '<div style="color:var(--mut);line-height:1.4;">' + (allLessons.length || 68) + ' lessons, ' + (allPassages.length || 34) + ' graded texts, pronunciation lab, and SRS review always free forever.</div>'
         + '</div>'
         + '</div>'
         + '<div style="margin-bottom:16px;">'
@@ -12023,7 +12058,7 @@ VIEWS.path = {
         <div class="lesson-grid">`;
       for (const lesson of lessons) {
         const done = completed.indexOf(lesson.id) !== -1;
-        html += `<div class="lesson-card${done ? ' done' : ''}" onclick="navigate('lesson','${lesson.id}')">
+        html += `<div class="lesson-card${done ? ' done' : ''}" data-lesson-id="${lesson.id}" onclick="navigate('lesson','${lesson.id}')">
           <div class="lesson-num">${lesson.id}</div>
           <div class="lesson-title">${lesson.title}</div>
           ${done ? '<div class="lesson-done">✅</div>' : '<div class="lesson-arrow">→</div>'}
@@ -12055,7 +12090,7 @@ VIEWS.lesson = {
     ).join('');
 
     el.innerHTML = `
-    <div class="view-lesson">
+    <div class="view-lesson" data-lesson-id="${lesson.id}">
       <div class="lesson-header">
         <button onclick="navigate('path')" class="btn-back">← Learn Path</button>
         <span class="stage-badge">Stage ${lesson.stage}</span>
@@ -12585,6 +12620,12 @@ VIEWS.trainer = {
       </div>`;
     }).join('');
 
+    const allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined') ? COURSE : []);
+    const completed = (typeof STORE !== 'undefined' && STORE.get) ? (STORE.get('completed') || []) : [];
+    const uncompletedLessons = allLessons.filter(l => completed.indexOf(l.id) === -1);
+    const nextLesson = uncompletedLessons.length ? uncompletedLessons[0] : (allLessons.length ? allLessons[0] : null);
+    const upcomingLessons = uncompletedLessons.slice(0, 4);
+
     el.innerHTML = `
     <div class="view-trainer">
       <h1>📊 My Trainer</h1>
@@ -12595,6 +12636,28 @@ VIEWS.trainer = {
         <div class="trainer-right">
           <h3>🎯 Your Plan (weakest first)</h3>
           <div class="plan-list">${planItems || '<p class="muted">Keep practising to build your radar.</p>'}</div>
+        </div>
+      </div>
+
+      <div class="trainer-course-bar" style="margin:20px 0;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-md);padding:18px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <h3 style="font-size:1.05rem;margin:0 0 4px 0;font-weight:700;">📖 Course Progress</h3>
+            <span style="font-size:0.85rem;color:var(--mut);" id="trainer-lesson-stats">${completed.length} of ${allLessons.length} lessons completed</span>
+          </div>
+          <a href="#/path" class="btn-sm">View Full Path (${allLessons.length}) →</a>
+        </div>
+        ${nextLesson ? `
+        <div class="trainer-next-card" id="trainer-next-lesson" data-lesson-id="${nextLesson.id}" onclick="navigate('lesson','${nextLesson.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer;">
+          <div>
+            <span class="badge" style="font-size:0.75rem;margin-right:8px;background:rgba(124,58,237,0.2);color:var(--acc2);">${nextLesson.id}</span>
+            <strong style="font-size:0.92rem;">${nextLesson.title}</strong>
+            <span style="font-size:0.8rem;color:var(--mut);margin-left:8px;">Stage ${nextLesson.stage}</span>
+          </div>
+          <span style="color:var(--acc2);font-weight:600;font-size:0.85rem;">Start →</span>
+        </div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;" id="trainer-all-lessons">
+          ${allLessons.map(l => `<span class="chip trainer-lesson-chip" data-lesson-id="${l.id}" onclick="navigate('lesson','${l.id}')" style="font-size:0.78rem;cursor:pointer;${completed.indexOf(l.id)!==-1?'opacity:0.6;':''}">${l.id}: ${l.title}</span>`).join('')}
         </div>
       </div>
 
@@ -12619,8 +12682,9 @@ VIEWS.assessment = {
       return;
     }
 
+    const allPassages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
     const tasks = [
-      { type: 'read', label: 'Read Aloud', prompt: 'Read this passage aloud:', text: PASSAGES[0].text.slice(0, 200) + '...' },
+      { type: 'read', label: 'Read Aloud', prompt: 'Read this passage aloud:', text: (allPassages.length ? allPassages[0].text.slice(0, 200) : '') + '...' },
       { type: 'topic', label: 'Free Topic', prompt: ASSESSMENT_POOLS.topics[0], text: null },
       { type: 'scene', label: 'Role Scene', prompt: ASSESSMENT_POOLS.scenes[0].role, text: null },
       { type: 'topic', label: 'Random Topic', prompt: ASSESSMENT_POOLS.topics[2], text: null },
@@ -12781,15 +12845,16 @@ VIEWS.listening = {
   _tab: 'comprehension',
   render(el) {
     const self = this;
-    const passage = PASSAGES[self._idx];
+    const allPassages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
+    const passage = allPassages[self._idx] || allPassages[0];
 
     const tabBar = `<div class="tab-bar">
       <button class="tab-btn${self._tab==='comprehension'?' active':''}" id="tab-comp">Comprehension</button>
       <button class="tab-btn${self._tab==='dictation'?' active':''}" id="tab-dict">Dictation</button>
     </div>`;
 
-    const passBtns = PASSAGES.map((p, i) =>
-      `<button class="tab-btn${i===self._idx?' active':''}" id="pass-${i}">${p.level}: ${p.title}</button>`
+    const passBtns = allPassages.map((p, i) =>
+      `<button class="tab-btn${i===self._idx?' active':''}" id="pass-${i}" data-passage-id="${p.id}">${p.level}: ${p.title}</button>`
     ).join('');
 
     let content = '';
@@ -12829,13 +12894,14 @@ VIEWS.listening = {
     el.innerHTML = `
     <div class="view-listening">
       <h1>👂 Listening Lab</h1>
+      <p class="sub">${allPassages.length} graded passages · Comprehension quizzes & dictation</p>
       <div class="passage-select">${passBtns}</div>
       ${tabBar}
       <div class="tab-content">${content}</div>
     </div>`;
 
     // Passage selection
-    PASSAGES.forEach((p, i) => {
+    allPassages.forEach((p, i) => {
       const btn = document.getElementById(`pass-${i}`);
       if (btn) btn.addEventListener('click', () => { self._idx = i; self.render(el); });
     });
@@ -13117,7 +13183,7 @@ VIEWS.read = {
 
     // Handle Open Passage state
     if (arg) {
-      const passages = (typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : [];
+      const passages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
       const passage = passages.find(p => p.id === arg);
 
       if (!passage) {
@@ -13280,7 +13346,7 @@ VIEWS.read = {
     }
 
     // Passage List state (Reading Corner Home)
-    const passages = (typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : [];
+    const passages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
     const levels = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
     let groupsHtml = '';
@@ -13294,7 +13360,7 @@ VIEWS.read = {
         const excerpt = p.text.slice(0, 110) + (p.text.length > 110 ? '...' : '');
 
         return `
-        <div class="read-passage-card" onclick="navigate('read','${p.id}')">
+        <div class="read-passage-card" data-passage-id="${p.id}" onclick="navigate('read','${p.id}')">
           <div class="rpc-top">
             <span class="rpc-level">${p.level}</span>
             <span class="rpc-saved">💾 saved (${savedCount})</span>
@@ -13322,7 +13388,7 @@ VIEWS.read = {
     <div class="view-read">
       <div class="read-home-header">
         <h1>📚 Reading Corner</h1>
-        <p class="sub">Read graded texts from A1 to C1. Tap any word to see its phonetic IPA, hear correct pronunciation, and save it to your Spaced Repetition review deck.</p>
+        <p class="sub">Read ${passages.length} graded texts from A1 to C1. Tap any word to see its phonetic IPA, hear correct pronunciation, and save it to your Spaced Repetition review deck.</p>
       </div>
 
       <div id="read-saved-container">

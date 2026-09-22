@@ -107,6 +107,13 @@ VIEWS.home = {
     var allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined' && COURSE.length) ? COURSE : []);
     var totalLessons = allLessons.length || 68;
     var remaining = Math.max(0, totalLessons - completed.length);
+    var nextUncompleted = null;
+    for (var uli = 0; uli < allLessons.length; uli++) {
+      if (completed.indexOf(allLessons[uli].id) === -1) {
+        nextUncompleted = allLessons[uli];
+        break;
+      }
+    }
 
 
     var docs = STORE.get('docs') || [];
@@ -182,11 +189,11 @@ VIEWS.home = {
           '<span class="start-card-action">Daily Ritual →</span>' +
         '</div>' +
 
-        '<div class="card start-card" onclick="navigate(\'' + nextRoute + '\')">' +
+        '<div class="card start-card" id="home-next-lesson-card"' + (nextUncompleted ? ' data-lesson-id="' + nextUncompleted.id + '"' : '') + ' onclick="navigate(\'' + (nextRoute === 'path' && nextUncompleted ? 'lesson' : nextRoute) + '\'' + (nextRoute === 'path' && nextUncompleted ? ',\'' + nextUncompleted.id + '\'' : '') + ')">' +
           '<div class="start-card-icon">' + ((typeof SKILL_META !== 'undefined' && SKILL_META[nextSkill]) ? SKILL_META[nextSkill].icon : '📖') + '</div>' +
           '<div class="start-card-body">' +
             '<h3>Next Lesson</h3>' +
-            '<p>Level up <strong>' + nextSkill + '</strong> (weakest skill)</p>' +
+            '<p>' + (nextUncompleted ? '<strong>' + nextUncompleted.id + '</strong>: ' + _escA(nextUncompleted.title) : 'Level up <strong>' + nextSkill + '</strong> (weakest skill)') + '</p>' +
           '</div>' +
           '<span class="start-card-action">Continue →</span>' +
         '</div>' +

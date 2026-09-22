@@ -240,6 +240,12 @@ VIEWS.trainer = {
       </div>`;
     }).join('');
 
+    const allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined') ? COURSE : []);
+    const completed = (typeof STORE !== 'undefined' && STORE.get) ? (STORE.get('completed') || []) : [];
+    const uncompletedLessons = allLessons.filter(l => completed.indexOf(l.id) === -1);
+    const nextLesson = uncompletedLessons.length ? uncompletedLessons[0] : (allLessons.length ? allLessons[0] : null);
+    const upcomingLessons = uncompletedLessons.slice(0, 4);
+
     el.innerHTML = `
     <div class="view-trainer">
       <h1>📊 My Trainer</h1>
@@ -250,6 +256,28 @@ VIEWS.trainer = {
         <div class="trainer-right">
           <h3>🎯 Your Plan (weakest first)</h3>
           <div class="plan-list">${planItems || '<p class="muted">Keep practising to build your radar.</p>'}</div>
+        </div>
+      </div>
+
+      <div class="trainer-course-bar" style="margin:20px 0;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-md);padding:18px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <h3 style="font-size:1.05rem;margin:0 0 4px 0;font-weight:700;">📖 Course Progress</h3>
+            <span style="font-size:0.85rem;color:var(--mut);" id="trainer-lesson-stats">${completed.length} of ${allLessons.length} lessons completed</span>
+          </div>
+          <a href="#/path" class="btn-sm">View Full Path (${allLessons.length}) →</a>
+        </div>
+        ${nextLesson ? `
+        <div class="trainer-next-card" id="trainer-next-lesson" data-lesson-id="${nextLesson.id}" onclick="navigate('lesson','${nextLesson.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer;">
+          <div>
+            <span class="badge" style="font-size:0.75rem;margin-right:8px;background:rgba(124,58,237,0.2);color:var(--acc2);">${nextLesson.id}</span>
+            <strong style="font-size:0.92rem;">${nextLesson.title}</strong>
+            <span style="font-size:0.8rem;color:var(--mut);margin-left:8px;">Stage ${nextLesson.stage}</span>
+          </div>
+          <span style="color:var(--acc2);font-weight:600;font-size:0.85rem;">Start →</span>
+        </div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;" id="trainer-all-lessons">
+          ${allLessons.map(l => `<span class="chip trainer-lesson-chip" data-lesson-id="${l.id}" onclick="navigate('lesson','${l.id}')" style="font-size:0.78rem;cursor:pointer;${completed.indexOf(l.id)!==-1?'opacity:0.6;':''}">${l.id}: ${l.title}</span>`).join('')}
         </div>
       </div>
 
@@ -274,8 +302,9 @@ VIEWS.assessment = {
       return;
     }
 
+    const allPassages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
     const tasks = [
-      { type: 'read', label: 'Read Aloud', prompt: 'Read this passage aloud:', text: PASSAGES[0].text.slice(0, 200) + '...' },
+      { type: 'read', label: 'Read Aloud', prompt: 'Read this passage aloud:', text: (allPassages.length ? allPassages[0].text.slice(0, 200) : '') + '...' },
       { type: 'topic', label: 'Free Topic', prompt: ASSESSMENT_POOLS.topics[0], text: null },
       { type: 'scene', label: 'Role Scene', prompt: ASSESSMENT_POOLS.scenes[0].role, text: null },
       { type: 'topic', label: 'Random Topic', prompt: ASSESSMENT_POOLS.topics[2], text: null },
@@ -436,15 +465,16 @@ VIEWS.listening = {
   _tab: 'comprehension',
   render(el) {
     const self = this;
-    const passage = PASSAGES[self._idx];
+    const allPassages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
+    const passage = allPassages[self._idx] || allPassages[0];
 
     const tabBar = `<div class="tab-bar">
       <button class="tab-btn${self._tab==='comprehension'?' active':''}" id="tab-comp">Comprehension</button>
       <button class="tab-btn${self._tab==='dictation'?' active':''}" id="tab-dict">Dictation</button>
     </div>`;
 
-    const passBtns = PASSAGES.map((p, i) =>
-      `<button class="tab-btn${i===self._idx?' active':''}" id="pass-${i}">${p.level}: ${p.title}</button>`
+    const passBtns = allPassages.map((p, i) =>
+      `<button class="tab-btn${i===self._idx?' active':''}" id="pass-${i}" data-passage-id="${p.id}">${p.level}: ${p.title}</button>`
     ).join('');
 
     let content = '';
@@ -484,13 +514,14 @@ VIEWS.listening = {
     el.innerHTML = `
     <div class="view-listening">
       <h1>👂 Listening Lab</h1>
+      <p class="sub">${allPassages.length} graded passages · Comprehension quizzes & dictation</p>
       <div class="passage-select">${passBtns}</div>
       ${tabBar}
       <div class="tab-content">${content}</div>
     </div>`;
 
     // Passage selection
-    PASSAGES.forEach((p, i) => {
+    allPassages.forEach((p, i) => {
       const btn = document.getElementById(`pass-${i}`);
       if (btn) btn.addEventListener('click', () => { self._idx = i; self.render(el); });
     });
@@ -772,7 +803,7 @@ VIEWS.read = {
 
     // Handle Open Passage state
     if (arg) {
-      const passages = (typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : [];
+      const passages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
       const passage = passages.find(p => p.id === arg);
 
       if (!passage) {
@@ -935,7 +966,7 @@ VIEWS.read = {
     }
 
     // Passage List state (Reading Corner Home)
-    const passages = (typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : [];
+    const passages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && Array.isArray(PASSAGES)) ? PASSAGES : []);
     const levels = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
     let groupsHtml = '';
@@ -949,7 +980,7 @@ VIEWS.read = {
         const excerpt = p.text.slice(0, 110) + (p.text.length > 110 ? '...' : '');
 
         return `
-        <div class="read-passage-card" onclick="navigate('read','${p.id}')">
+        <div class="read-passage-card" data-passage-id="${p.id}" onclick="navigate('read','${p.id}')">
           <div class="rpc-top">
             <span class="rpc-level">${p.level}</span>
             <span class="rpc-saved">💾 saved (${savedCount})</span>
@@ -977,7 +1008,7 @@ VIEWS.read = {
     <div class="view-read">
       <div class="read-home-header">
         <h1>📚 Reading Corner</h1>
-        <p class="sub">Read graded texts from A1 to C1. Tap any word to see its phonetic IPA, hear correct pronunciation, and save it to your Spaced Repetition review deck.</p>
+        <p class="sub">Read ${passages.length} graded texts from A1 to C1. Tap any word to see its phonetic IPA, hear correct pronunciation, and save it to your Spaced Repetition review deck.</p>
       </div>
 
       <div id="read-saved-container">

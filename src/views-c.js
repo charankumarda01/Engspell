@@ -377,8 +377,23 @@ VIEWS.coach = {
       '<button class="tab-btn' + (self._mode === 'interview' ? ' active' : '') + '" id="mode-interview">🎤 Mock Interview</button>' +
       '<button class="tab-btn' + (self._mode === 'drill' ? ' active' : '') + '" id="mode-drill">🎙️ Live Drill</button>' +
       modeDocBtn +
-      '</div>' +
-      '<div class="chat-window" id="chat-window">';
+      '</div>';
+
+    if (self._mode === 'chat') {
+      var allScenarios = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allScenarios() : (typeof SCENARIOS !== 'undefined' ? SCENARIOS : []);
+      var scOpts = '<option value="">🎭 Free-Talk Scenario Topic (' + allScenarios.length + ' available)...</option>';
+      for (var sci = 0; sci < allScenarios.length; sci++) {
+        var scItem = allScenarios[sci];
+        scOpts += '<option value="' + scItem.id + '" data-scenario-id="' + scItem.id + '">[' + scItem.level + '] ' + _esc(scItem.title) + '</option>';
+      }
+      html += '<div class="coach-scenario-picker-row" style="margin:10px 0;display:flex;align-items:center;gap:8px;">' +
+        '<select id="coach-scenario-select" class="coach-scenario-picker" style="width:100%;padding:8px 12px;font-size:0.85rem;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);">' +
+        scOpts +
+        '</select>' +
+        '</div>';
+    }
+
+    html += '<div class="chat-window" id="chat-window">';
 
     if (history.length === 0) {
       html += '<div class="bubble nova"><div class="bubble-label">Nova</div>'
@@ -439,6 +454,16 @@ VIEWS.coach = {
     if (docModeBtn) {
       docModeBtn.addEventListener('click', function () {
         self._mode = 'document'; self.render(el);
+      });
+    }
+
+    /* Scenario picker */
+    var scSelect = document.getElementById('coach-scenario-select');
+    if (scSelect) {
+      scSelect.addEventListener('change', function () {
+        if (this.value) {
+          navigate('scenarios', this.value);
+        }
       });
     }
 
@@ -1300,6 +1325,9 @@ VIEWS.onboarding = {
     'use strict';
     var self = this;
     var screen = self._screen || 0;
+    var allLessons = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allLessons() : ((typeof COURSE !== 'undefined' && COURSE.length) ? COURSE : []);
+    var allScenarios = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allScenarios() : ((typeof SCENARIOS !== 'undefined' && SCENARIOS.length) ? SCENARIOS : []);
+    var allPassages = (typeof DATA_MERGE !== 'undefined') ? DATA_MERGE.allPassages() : ((typeof PASSAGES !== 'undefined' && PASSAGES.length) ? PASSAGES : []);
 
     var placementPool = [
       (typeof QUIZ_BANK !== 'undefined' && QUIZ_BANK[0]) || { q: 'Which sentence is correct?', opts: ["She don't like tea.", "She doesn't like tea.", "She not like tea."], ans: 1, skill: 'grammar' },
@@ -1327,7 +1355,7 @@ VIEWS.onboarding = {
     /* SCREEN 1: Welcome */
     if (screen === 0) {
       html += '<h1 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;line-height:1.3;">Welcome to EngSpell</h1>'
-        + '<p style="color:var(--mut);margin-bottom:24px;font-size:0.95rem;line-height:1.5;">Master clear English pronunciation, speaking fluency, and confidence — 100% free, offline-first, and private.</p>'
+        + '<p style="color:var(--mut);margin-bottom:24px;font-size:0.95rem;line-height:1.5;">Master clear English pronunciation, speaking fluency, and confidence across ' + (allLessons.length || 68) + ' interactive lessons and ' + (allScenarios.length || 26) + ' role-play scenarios — 100% free, offline-first, and private.</p>'
         + '<div style="margin-bottom:20px;">'
         + '<label style="display:block;font-size:0.85rem;font-weight:600;color:var(--txt);margin-bottom:6px;">What should we call you?</label>'
         + '<input type="text" id="ob-name-input" placeholder="Enter your first name" value="' + _esc(self._answers.name || '') + '" style="width:100%;padding:12px 14px;font-size:1rem;background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);color:var(--txt);" />'
@@ -1394,7 +1422,7 @@ VIEWS.onboarding = {
         + '</div>'
         + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;font-size:0.8rem;">'
         + '<div style="font-weight:700;color:var(--ok);margin-bottom:4px;">🛡️ Offline Rules</div>'
-        + '<div style="color:var(--mut);line-height:1.4;">Grammar rules, pronunciation lab, word bank, and SRS review always free forever.</div>'
+        + '<div style="color:var(--mut);line-height:1.4;">' + (allLessons.length || 68) + ' lessons, ' + (allPassages.length || 34) + ' graded texts, pronunciation lab, and SRS review always free forever.</div>'
         + '</div>'
         + '</div>'
         + '<div style="margin-bottom:16px;">'

@@ -2528,6 +2528,112 @@ tryv('M18: README has badge and demo anchors', function () {
   return hasBadge && hasDemoSection && hasDemoScriptLink && demoDocExists && hasWinG && hasStoryboard;
 });
 
+/* ── M15a: MERGED CONTENT IN VIEWS (CNT-WIRE) ──────────────────────── */
+console.log('\n🧩 M15a Merged Content in Views');
+
+tryv('M15a: VIEWS.path renders generated lesson gl-01 and 68 lessons subtext', function () {
+  var el = document.createElement('div');
+  VIEWS.path.render(el);
+  var html = el.innerHTML;
+  return html.indexOf('data-lesson-id="gl-01"') !== -1 && html.indexOf('68 lessons') !== -1;
+});
+
+tryv('M15a: VIEWS.lesson renders generated lesson gl-01 content and data-lesson-id', function () {
+  var el = document.createElement('div');
+  VIEWS.lesson.render(el, 'gl-01');
+  var html = el.innerHTML;
+  var gl = DATA4.lessons[0];
+  return html.indexOf('data-lesson-id="gl-01"') !== -1 && html.indexOf(gl.title) !== -1;
+});
+
+tryv('M15a: VIEWS.trainer renders generated lesson gl-01 and 68 lessons stats', function () {
+  var el = document.createElement('div');
+  VIEWS.trainer.render(el);
+  var html = el.innerHTML;
+  return html.indexOf('data-lesson-id="gl-01"') !== -1 && html.indexOf('of 68 lessons completed') !== -1;
+});
+
+tryv('M15a: VIEWS.scenarios renders generated scenario sc-01 in list and player', function () {
+  var el = document.createElement('div');
+  VIEWS.scenarios.render(el);
+  var listHtml = el.innerHTML;
+  var hasScInList = listHtml.indexOf('data-scenario-id="sc-01"') !== -1 && listHtml.indexOf('26 real-life English conversations') !== -1;
+
+  VIEWS.scenarios.render(el, 'sc-01');
+  var playHtml = el.innerHTML;
+  var sc = DATA4.scenarios[0];
+  var hasScPlay = playHtml.indexOf('data-scenario-id="sc-01"') !== -1 && playHtml.indexOf(sc.title) !== -1;
+
+  return hasScInList && hasScPlay;
+});
+
+tryv('M15a: VIEWS.coach Free-Talk scenario picker renders generated scenario sc-01', function () {
+  var el = document.createElement('div');
+  VIEWS.coach._mode = 'chat';
+  VIEWS.coach.render(el);
+  var html = el.innerHTML;
+  return html.indexOf('id="coach-scenario-select"') !== -1 &&
+         html.indexOf('data-scenario-id="sc-01"') !== -1 &&
+         html.indexOf('value="sc-01"') !== -1;
+});
+
+tryv('M15a: VIEWS.read renders generated passage ps-01 in list and open-passage state', function () {
+  var el = document.createElement('div');
+  VIEWS.read.render(el, '');
+  var listHtml = el.innerHTML;
+  var hasPsInList = listHtml.indexOf('data-passage-id="ps-01"') !== -1 && listHtml.indexOf('34 graded texts') !== -1;
+
+  VIEWS.read.render(el, 'ps-01');
+  var openHtml = el.innerHTML;
+  var ps = DATA4.passages[0];
+  var hasOpenPs = openHtml.indexOf('open-passage-ps-01') !== -1 && openHtml.indexOf(ps.title) !== -1;
+
+  return hasPsInList && hasOpenPs;
+});
+
+tryv('M15a: VIEWS.listening renders generated passage ps-01 and 34 passages count', function () {
+  var el = document.createElement('div');
+  VIEWS.listening.render(el);
+  var html = el.innerHTML;
+  return html.indexOf('data-passage-id="ps-01"') !== -1 && html.indexOf('34 graded passages') !== -1;
+});
+
+tryv('M15a: VIEWS.home renders 68 total lessons and gl-01 when core completed', function () {
+  var el = document.createElement('div');
+  STORE.set('completed', []);
+  VIEWS.home.render(el);
+  var html1 = el.innerHTML;
+  var hasRemaining68 = html1.indexOf('<span class="prog-num">68</span><span class="prog-label">Remaining</span>') !== -1;
+
+  var coreIds = [];
+  for (var i = 1; i <= 44; i++) {
+    coreIds.push(i < 10 ? 'L0' + i : 'L' + i);
+  }
+  STORE.set('completed', coreIds);
+  VIEWS.home.render(el);
+  var html2 = el.innerHTML;
+  var hasGl01Next = html2.indexOf('data-lesson-id="gl-01"') !== -1 && html2.indexOf('gl-01') !== -1;
+
+  STORE.set('completed', []);
+  return hasRemaining68 && hasGl01Next;
+});
+
+tryv('M15a: VIEWS.onboarding renders dynamic merged lesson and scenario counts', function () {
+  var el = document.createElement('div');
+  VIEWS.onboarding._screen = 0;
+  VIEWS.onboarding.render(el);
+  var s1Html = el.innerHTML;
+  var hasS1Counts = s1Html.indexOf('68 interactive lessons') !== -1 && s1Html.indexOf('26 role-play scenarios') !== -1;
+
+  VIEWS.onboarding._screen = 3;
+  VIEWS.onboarding.render(el);
+  var s4Html = el.innerHTML;
+  var hasS4Counts = s4Html.indexOf('68 lessons') !== -1 && s4Html.indexOf('34 graded texts') !== -1;
+
+  VIEWS.onboarding._screen = 0;
+  return hasS1Counts && hasS4Counts;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

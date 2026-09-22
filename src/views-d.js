@@ -288,7 +288,7 @@ VIEWS.path = {
         <div class="lesson-grid">`;
       for (const lesson of lessons) {
         const done = completed.indexOf(lesson.id) !== -1;
-        html += `<div class="lesson-card${done ? ' done' : ''}" onclick="navigate('lesson','${lesson.id}')">
+        html += `<div class="lesson-card${done ? ' done' : ''}" data-lesson-id="${lesson.id}" onclick="navigate('lesson','${lesson.id}')">
           <div class="lesson-num">${lesson.id}</div>
           <div class="lesson-title">${lesson.title}</div>
           ${done ? '<div class="lesson-done">✅</div>' : '<div class="lesson-arrow">→</div>'}
@@ -320,7 +320,7 @@ VIEWS.lesson = {
     ).join('');
 
     el.innerHTML = `
-    <div class="view-lesson">
+    <div class="view-lesson" data-lesson-id="${lesson.id}">
       <div class="lesson-header">
         <button onclick="navigate('path')" class="btn-back">← Learn Path</button>
         <span class="stage-badge">Stage ${lesson.stage}</span>
