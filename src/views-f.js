@@ -604,14 +604,23 @@ function _renderResumeReport(r) {
 function _resumeGeminiCritique(text, type, report, reportEl, key) {
   var typeLabel = {resume: "resume", cover: "cover letter", email: "professional email", essay: "essay"}[type] || "document";
   var excerpt = text.slice(0, 2000);
-  var prompt = "You are Nova, an expert English writing coach. The student has shared a " + typeLabel + " for analysis.\n" +
-    "Scores: Grammar " + report.grammar + "/100, Vocabulary " + report.vocab + "/100, Structure " + report.structure + "/100, Overall " + report.overall + "/100.\n" +
-    "Text:\n---\n" + excerpt + "\n---\n" +
-    "Write a warm but honest 3-paragraph critique (~200 words):\n" +
-    "1. What they did WELL (quote specific phrases)\n" +
-    "2. The 2-3 most important improvements (be actionable)\n" +
-    "3. A motivating closing sentence.\n" +
-    "Do NOT repeat the scores. Be a real coach.";
+  var honest = (typeof isHonest === "function") ? isHonest() : false;
+  var prompt = "";
+  if (honest) {
+    prompt = "You are Nova in BRUTAL HONESTY mode. The student has shared a " + typeLabel + " for harsh review.\n" +
+      "Scores: Grammar " + report.grammar + "/100, Vocabulary " + report.vocab + "/100, Structure " + report.structure + "/100, Overall " + report.overall + "/100.\n" +
+      "Text:\n---\n" + excerpt + "\n---\n" +
+      "Start with a strict overall score 'N/10'. List EVERY weakness and error one per line with ▸. Zero fluff, direct, uncompromising critique. End with the single most critical rewrite.";
+  } else {
+    prompt = "You are Nova, an expert English writing coach. The student has shared a " + typeLabel + " for analysis.\n" +
+      "Scores: Grammar " + report.grammar + "/100, Vocabulary " + report.vocab + "/100, Structure " + report.structure + "/100, Overall " + report.overall + "/100.\n" +
+      "Text:\n---\n" + excerpt + "\n---\n" +
+      "Write a warm but honest 3-paragraph critique (~200 words):\n" +
+      "1. What they did WELL (quote specific phrases)\n" +
+      "2. The 2-3 most important improvements (be actionable)\n" +
+      "3. A motivating closing sentence.\n" +
+      "Do NOT repeat the scores. Be a real coach.";
+  }
   var body = {contents: [{role: "user", parts: [{text: prompt}]}]};
   var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + key;
   var geminiSection = reportEl ? reportEl.querySelector("#resume-gemini-section") : null;

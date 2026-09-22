@@ -29,7 +29,7 @@ var STORE = (function () {
     daily: {date: '', twisterIdx: 0, wordIdx: 0, idiomIdx: 0, quoteIdx: 0, done: []},
     assessments: [],
     coachStats: {messages: 0, corrections: 0, sessions: 0},
-    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: ''},
+    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false},
     srs: {},  /* INV-5: MISSION 2 SRS */
     docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
     novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
@@ -82,6 +82,8 @@ var STORE = (function () {
       }
       data.version = 4;
     }
+    if (!data.settings) { data.settings = {}; }
+    if (data.settings.honestMode === undefined) { data.settings.honestMode = false; }
     return data;
   }
 
@@ -220,6 +222,19 @@ var STORE = (function () {
     return JSON.stringify(_data, null, 2);
   }
 
+  function isHonest() {
+    if (!_data) { load(); }
+    var s = _data.settings;
+    return !!(s && s.honestMode);
+  }
+
+  function computeHonestScore(fixes, words) {
+    var f = typeof fixes === 'number' ? fixes : 0;
+    var w = typeof words === 'number' ? words : 10;
+    var s = 10 - (f * 2) - (w < 4 ? 2 : 0);
+    return Math.max(1, Math.min(10, s));
+  }
+
   /* Init */
   load();
 
@@ -240,7 +255,9 @@ var STORE = (function () {
     isCompleted: isCompleted,
     addAssessment: addAssessment,
     resetAll: resetAll,
-    exportJSON: exportJSON
+    exportJSON: exportJSON,
+    isHonest: isHonest,
+    computeHonestScore: computeHonestScore
   };
 }());
 
@@ -1195,10 +1212,14 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.updateReviewBadge = updateReviewBadge;
   window.updateFlowChip = updateFlowChip;
   window.FLOW = FLOW;
+  window.isHonest = STORE.isHonest;
+  window.computeHonestScore = STORE.computeHonestScore;
 
   if (typeof global !== 'undefined') {
     global.updateFlowChip = updateFlowChip;
     global.updateReviewBadge = updateReviewBadge;
     global.FLOW = FLOW;
+    global.isHonest = STORE.isHonest;
+    global.computeHonestScore = STORE.computeHonestScore;
   }
 }());

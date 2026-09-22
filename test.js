@@ -1227,6 +1227,77 @@ tryv('M6: Home view + chip render in all three states (fresh / mid / complete)',
   }
 });
 
+/* ── M7: HONEST MODE ──────────────────────────────────────────────── */
+console.log('\n🗡️ M7 Honest Mode — Zero-Filter Feedback');
+
+tryv('M7: Prompt has "N/10" when on and NOT when off', function () {
+  var s = STORE.get('settings') || {};
+
+  // Test OFF
+  s.honestMode = false;
+  STORE.set('settings', s);
+  var promptOff = _novaBuildSystemPrompt(VIEWS.coach);
+  if (promptOff.indexOf('N/10') !== -1 || promptOff.indexOf('BRUTAL HONESTY') !== -1) {
+    return false;
+  }
+
+  // Test ON
+  s.honestMode = true;
+  STORE.set('settings', s);
+  var promptOn = _novaBuildSystemPrompt(VIEWS.coach);
+  if (promptOn.indexOf('N/10') === -1 || promptOn.indexOf('BRUTAL HONESTY') === -1) {
+    return false;
+  }
+
+  // Reset to false
+  s.honestMode = false;
+  STORE.set('settings', s);
+  return true;
+});
+
+tryv('M7: Chip math fixtures (0 fixes+long → ≥8; 3 fixes → ≤4)', function () {
+  // 0 fixes + long sentence (e.g. 8 words) -> 10 (>= 8)
+  var score0Long = STORE.computeHonestScore(0, 8);
+  if (score0Long < 8) { return false; }
+
+  // 3 fixes -> 10 - 3*2 = 4 (<= 4)
+  var score3 = STORE.computeHonestScore(3, 8);
+  if (score3 > 4) { return false; }
+
+  // 0 fixes + short sentence (<4 words) -> 10 - 0 - 2 = 8 (>= 8)
+  var score0Short = STORE.computeHonestScore(0, 2);
+  if (score0Short !== 8) { return false; }
+
+  // Clamping test: 6 fixes -> 10 - 12 = -2 clamped to 1
+  var scoreClamped = STORE.computeHonestScore(6, 10);
+  if (scoreClamped !== 1) { return false; }
+
+  return true;
+});
+
+tryv('M7: Toggle persists after reload', function () {
+  var s = STORE.get('settings') || {};
+  s.honestMode = true;
+  STORE.set('settings', s);
+  STORE.save();
+
+  // Reload from storage
+  STORE.reload();
+  var reloaded = STORE.get('settings');
+  if (!reloaded || reloaded.honestMode !== true) { return false; }
+  if (isHonest() !== true) { return false; }
+
+  // Toggle off and reload
+  reloaded.honestMode = false;
+  STORE.set('settings', reloaded);
+  STORE.save();
+  STORE.reload();
+  if (STORE.get('settings').honestMode !== false) { return false; }
+  if (isHonest() !== false) { return false; }
+
+  return true;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

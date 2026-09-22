@@ -239,6 +239,47 @@ function _novaRespond(userText, self, el) {
 
 function _novaRules(text) {
   var t = text.toLowerCase();
+  var honest = (typeof isHonest === 'function') ? isHonest() : false;
+
+  if (honest) {
+    var fixes = [];
+    var words = (typeof U !== 'undefined' && U.tokenise) ? U.tokenise(text).length : text.split(/\s+/).filter(Boolean).length;
+
+    /* Collect ALL grammar rule checks */
+    for (var ri = 0; ri < COACH_RULES.length; ri++) {
+      if (COACH_RULES[ri].pat.test(text)) {
+        fixes.push('Grammar: ' + COACH_RULES[ri].fix);
+      }
+    }
+
+    /* Collect ALL vocabulary upgrades */
+    for (var ui = 0; ui < COACH_UPGRADES.length; ui++) {
+      var up = COACH_UPGRADES[ui];
+      if (t.indexOf(up.basic.toLowerCase()) !== -1) {
+        fixes.push('Upgrade "' + up.basic + '" → "' + up.better + '" (or "' + up.adv + '")');
+      }
+    }
+
+    var score = Math.max(1, Math.min(10, 10 - (fixes.length * 2) - (words < 4 ? 2 : 0)));
+    var color = score < 6 ? '#ef4444' : (score <= 8 ? '#f59e0b' : '#10b981');
+    var chipHtml = '<span class="honest-score-chip" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + ';border-radius:12px;padding:2px 8px;font-weight:700;font-size:0.82rem;">' + score + '/10</span>';
+
+    var out = chipHtml + ' <strong>Score: ' + score + '/10</strong>\n';
+    if (fixes.length > 0) {
+      out += 'Mistakes to fix:\n';
+      for (var fi = 0; fi < fixes.length; fi++) {
+        out += '▸ ' + fixes[fi] + '\n';
+      }
+      out += 'Exact corrected sentence required. Under 90 words.';
+    } else {
+      if (words < 4) {
+        out += '▸ Too brief. Express a complete sentence (at least 4 words) to score higher.';
+      } else {
+        out += 'Zero glaring errors detected. Well structured.';
+      }
+    }
+    return out;
+  }
 
   /* Grammar rule checks */
   for (var ri = 0; ri < COACH_RULES.length; ri++) {
@@ -284,7 +325,7 @@ function _novaBuildSystemPrompt(self) {
 
   var name = user.name ? user.name : 'the learner';
   var level = user.level || 'A2';
-  var mode = self._mode || 'chat';
+  var mode = self ? self._mode || 'chat' : 'chat';
 
   var base = 'You are Nova, an expert English speaking coach specialising in helping Indian learners.' +
     ' The student\'s name is ' + name + ' and their current CEFR level is ' + level + '.' +
@@ -295,12 +336,17 @@ function _novaBuildSystemPrompt(self) {
     ' Never say you are an AI. You are Nova.';
 
   /* Document context */
-  if (mode === 'document' && self._activeDoc) {
+  if (mode === 'document' && self && self._activeDoc) {
     var excerpt = self._activeDoc.text ? self._activeDoc.text.slice(0, 1200) : '';
     base += ' The student is currently reading a document titled "' + self._activeDoc.title + '".' +
       ' Here is an excerpt for context:\n---\n' + excerpt + '\n---' +
       ' When the student asks about a word or phrase, quote the surrounding sentence from the excerpt before explaining.' +
       ' When asked to summarise, produce a 3-bullet summary of the excerpt.';
+  }
+
+  /* M7 Brutal Honesty Mode */
+  if (typeof isHonest === 'function' ? isHonest() : (settings.honestMode)) {
+    base += ' BRUTAL HONESTY mode: start each reply with strict score \'N/10\'; list EVERY mistake one per line with ▸; never praise below 8/10; give the exact corrected sentence; under 90 words.';
   }
 
   return base;
@@ -594,6 +640,14 @@ VIEWS.settings = {
       '<p class="setting-hint">Your key never leaves your device. It\'s only used for Nova\'s AI chat (INV-8).</p>' +
       '</div>' +
 
+      '<div class="setting-group">' +
+      '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+      '<input type="checkbox" id="s-honest"' + (settings.honestMode ? ' checked' : '') + ' style="width:18px;height:18px;" />' +
+      '<span>🗡️ Brutal honesty mode — Nova scores you hard</span>' +
+      '</label>' +
+      '<p class="setting-hint">When enabled, Nova scores every message out of 10, lists every mistake with ▸, and gives zero sugarcoated praise.</p>' +
+      '</div>' +
+
       '<button class="btn-primary" id="s-save">💾 Save Settings</button>' +
 
       '<div class="setting-group danger-zone">' +
@@ -606,12 +660,29 @@ VIEWS.settings = {
       document.getElementById('rate-val').textContent = this.value + 'x';
     });
 
+    var honestEl = document.getElementById('s-honest');
+    if (honestEl) {
+      honestEl.addEventListener('change', function () {
+        var s = STORE.get('settings') || {};
+        s.honestMode = this.checked;
+        STORE.set('settings', s);
+        UI.toast(this.checked ? '🗡️ Brutal honesty mode ON' : 'Brutal honesty mode OFF', 'info');
+      });
+    }
+
     document.getElementById('s-save').addEventListener('click', function () {
       var voice = document.getElementById('s-voice').value;
       var rate = parseFloat(document.getElementById('s-rate').value);
       var goal = parseInt(document.getElementById('s-goal').value, 10);
       var geminiKey = document.getElementById('s-gemini').value.trim();
-      STORE.set('settings', {voice: voice, rate: rate, dailyGoal: goal, geminiKey: geminiKey});
+      var honestMode = document.getElementById('s-honest') ? document.getElementById('s-honest').checked : false;
+      var curSettings = STORE.get('settings') || {};
+      curSettings.voice = voice;
+      curSettings.rate = rate;
+      curSettings.dailyGoal = goal;
+      curSettings.geminiKey = geminiKey;
+      curSettings.honestMode = honestMode;
+      STORE.set('settings', curSettings);
       SPEECH.setRate(rate);
       if (voice) { SPEECH.setVoiceByName(voice); }
       UI.toast('Settings saved!', 'success');

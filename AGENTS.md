@@ -91,6 +91,7 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **READ-01**: Reading Corner, interactive IPA word chips, audio, vocab saves — **SHIPPED** (2026-09-21 · `d916c81`)
 - **M8**: UI Polish & Design Tokens, structured nav groupings, mobile bar — **SHIPPED** (2026-09-22 · `927d86d`)
 - **M6**: Today's Flow, 5-step sequence lock, streak retrofix, global chip — **SHIPPED** (2026-09-22)
+- **M7**: Honest Mode, brutal honesty toggle, /10 scoring, offline uncapped fixes, resume review persona — **SHIPPED** (2026-09-22)
 
 ---
 
