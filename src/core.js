@@ -28,8 +28,8 @@ var STORE = (function () {
     path: {current: 0, stage: 1},
     daily: {date: '', twisterIdx: 0, wordIdx: 0, idiomIdx: 0, quoteIdx: 0, done: []},
     assessments: [],
-    coachStats: {messages: 0, corrections: 0, sessions: 0},
-    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false},
+    coachStats: {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0},
+    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false},
     srs: {},  /* INV-5: MISSION 2 SRS */
     docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
     novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
@@ -84,6 +84,11 @@ var STORE = (function () {
     }
     if (!data.settings) { data.settings = {}; }
     if (data.settings.honestMode === undefined) { data.settings.honestMode = false; }
+    if (data.settings.liveCorrect === undefined) { data.settings.liveCorrect = false; }
+    if (data.settings.bargeIn === undefined) { data.settings.bargeIn = false; }
+    if (!data.coachStats) {
+      data.coachStats = {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0};
+    }
     return data;
   }
 
@@ -792,6 +797,237 @@ var FLOW = (function () {
 })();
 
 /* ══════════════════════════════════════════════════════════════════════
+   LIVE_COACH — Word-level speech matching, prefix alignment,
+   interrupt decision engine, throttle & Android restart state machine (M9)
+   Honest copy: "word-level live matching via browser speech recognition"
+   ════════════════════════════════════════════════════════════════════*/
+var LIVE_COACH = (function () {
+  'use strict';
+
+  var HIGH_SEVERITY_RULES = [
+    { pat: /\b(i|he|she|they|we|you)\s+(going|doing|coming|working|waiting|trying)\b/i, fix: "say 'am/is/are' before verb", speak: "Add 'is' or 'are'." },
+    { pat: /\ba\s+(apple|orange|egg|elephant|hour|umbrella|idea|interview|honest|urgent)\b/i, fix: "use 'an' before vowel sounds", speak: "Use 'an' before vowels." },
+    { pat: /\ban\s+(car|dog|cat|house|university|european|union|job|person)\b/i, fix: "use 'a' before consonant sounds", speak: "Use 'a' here." },
+    { pat: /\bdid\s+(went|came|saw|ate|had|spoke|wrote)\b/i, fix: "use base verb after 'did'", speak: "Use base verb with did." },
+    { pat: /\b(he|she|it)\s+(don't|dont)\b/i, fix: "use 'does not' with he/she/it", speak: "Say 'does not' for he." }
+  ];
+
+  function matchPrefix(target, partial) {
+    var targetTokens = (typeof U !== 'undefined' && U.tokenise) ? U.tokenise(target || '') : [];
+    var partialTokens = (typeof U !== 'undefined' && U.tokenise) ? U.tokenise(partial || '') : [];
+    var aligned = (typeof U !== 'undefined' && U.align) ? U.align(target || '', partial || '') : [];
+
+    var matchedCount = 0;
+    for (var i = 0; i < aligned.length; i++) {
+      if (aligned[i].ok) {
+        matchedCount++;
+      } else {
+        break;
+      }
+    }
+
+    var isComplete = (targetTokens.length > 0 && matchedCount === targetTokens.length);
+    var nextExpected = matchedCount < targetTokens.length ? targetTokens[matchedCount] : null;
+
+    var candidate = null;
+    var mismatch = false;
+    var unexpectedCount = 0;
+
+    if (partialTokens.length > matchedCount) {
+      unexpectedCount = partialTokens.length - matchedCount;
+      candidate = partialTokens[matchedCount];
+      if (nextExpected && candidate !== nextExpected) {
+        mismatch = true;
+      }
+    }
+
+    return {
+      target: target,
+      partial: partial,
+      targetTokens: targetTokens,
+      partialTokens: partialTokens,
+      matchedCount: matchedCount,
+      matchedWords: targetTokens.slice(0, matchedCount),
+      nextExpected: nextExpected,
+      candidate: candidate,
+      mismatch: mismatch,
+      unexpectedCount: unexpectedCount,
+      isComplete: isComplete
+    };
+  }
+
+  function shouldInterrupt(state) {
+    if (!state) { return false; }
+    var max = (state.maxInterrupts !== undefined) ? state.maxInterrupts : 3;
+    var count = state.interruptCount || 0;
+    if (count >= max) {
+      return false;
+    }
+    var match = state.match;
+    if (!match || match.isComplete) {
+      return false;
+    }
+    var silenceMs = (state.silenceMs !== undefined) ? state.silenceMs : 0;
+    if (silenceMs < 500) {
+      return false;
+    }
+    var leaked = (match.unexpectedCount >= 2);
+    var mismatched = (match.mismatch === true && match.candidate !== null);
+    return leaked || mismatched;
+  }
+
+  function getChipStates(target, partial) {
+    var match = (partial && typeof partial === 'object' && partial.targetTokens)
+      ? partial
+      : matchPrefix(target, partial || '');
+    var tokens = match.targetTokens;
+    var matchedCount = match.matchedCount;
+    var chips = [];
+
+    for (var i = 0; i < tokens.length; i++) {
+      var state = 'upcoming';
+      if (i < matchedCount) {
+        state = 'matched';
+      } else if (i === matchedCount) {
+        state = 'current';
+      }
+      chips.push({
+        word: tokens[i],
+        state: state,
+        index: i
+      });
+    }
+    return chips;
+  }
+
+  function renderChipHTML(target, partial) {
+    var chips = getChipStates(target, partial);
+    var html = '<div class="live-drill-chips" id="live-drill-chips">';
+    for (var i = 0; i < chips.length; i++) {
+      var c = chips[i];
+      html += '<span class="live-chip chip-' + c.state + '" data-word="' + c.word + '" data-state="' + c.state + '">' + c.word + '</span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function createThrottle(windowMs) {
+    var win = (windowMs !== undefined) ? windowMs : 20000;
+    var lastTs = -Infinity;
+
+    return {
+      canExecute: function (nowTs, isInFlight) {
+        if (isInFlight) { return false; }
+        var now = (nowTs !== undefined) ? nowTs : Date.now();
+        return (now - lastTs) >= win;
+      },
+      record: function (nowTs) {
+        lastTs = (nowTs !== undefined) ? nowTs : Date.now();
+      },
+      reset: function () {
+        lastTs = -Infinity;
+      },
+      getLastTs: function () { return lastTs; },
+      getWindow: function () { return win; }
+    };
+  }
+
+  function createRestartTracker(opts) {
+    opts = opts || {};
+    var maxFails = (opts.maxFails !== undefined) ? opts.maxFails : 3;
+    var baseDelay = (opts.baseDelay !== undefined) ? opts.baseDelay : 250;
+    var fails = 0;
+    var paused = false;
+
+    return {
+      onSuccess: function () {
+        fails = 0;
+        paused = false;
+        return { fails: 0, paused: false };
+      },
+      onEnd: function (isExpected) {
+        if (isExpected) {
+          fails = 0;
+          return { shouldRestart: false, delay: 0, paused: false, failCount: 0 };
+        }
+        fails++;
+        if (fails > maxFails) {
+          paused = true;
+          return { shouldRestart: false, delay: 0, paused: true, failCount: fails, message: 'paused — tap to resume' };
+        }
+        var delay = baseDelay * Math.pow(2, fails - 1);
+        return { shouldRestart: true, delay: delay, paused: false, failCount: fails };
+      },
+      resume: function () {
+        fails = 0;
+        paused = false;
+        return { fails: 0, paused: false };
+      },
+      isPaused: function () { return paused; },
+      getFails: function () { return fails; },
+      getMaxFails: function () { return maxFails; }
+    };
+  }
+
+  function detectHighSeverityFix(text) {
+    if (!text) { return null; }
+    for (var i = 0; i < HIGH_SEVERITY_RULES.length; i++) {
+      var r = HIGH_SEVERITY_RULES[i];
+      if (r.pat.test(text)) {
+        return {
+          fix: r.fix,
+          spoken: r.speak
+        };
+      }
+    }
+    return null;
+  }
+
+  function lookupWordIpa(word) {
+    if (!word || typeof WORDS === 'undefined') { return ''; }
+    var w = word.toLowerCase().trim();
+    for (var i = 0; i < WORDS.length; i++) {
+      if (WORDS[i].w && WORDS[i].w.toLowerCase() === w) {
+        return WORDS[i].ipa ? '/' + WORDS[i].ipa + '/' : '';
+      }
+    }
+    return '';
+  }
+
+  function buildInterruptMessage(target, match) {
+    var nextWord = match ? match.nextExpected : '';
+    var ipa = lookupWordIpa(nextWord);
+    var spoken = "Stop! The word is '" + nextWord + "'" + (ipa ? " " + ipa : "") + ". Listen slowly.";
+    var lastWords = (match && match.matchedWords && match.matchedWords.length > 0)
+      ? match.matchedWords.slice(-3).join(' ')
+      : '';
+    var prompt = lastWords ? "Again from: '…" + lastWords + "…'" : "Again from: '" + ((match && match.targetTokens && match.targetTokens[0]) || '') + "…'";
+    return {
+      word: nextWord,
+      ipa: ipa,
+      spoken: spoken,
+      prompt: prompt
+    };
+  }
+
+  var bargeInThrottle = createThrottle(20000);
+
+  return {
+    HIGH_SEVERITY_RULES: HIGH_SEVERITY_RULES,
+    matchPrefix: matchPrefix,
+    shouldInterrupt: shouldInterrupt,
+    getChipStates: getChipStates,
+    renderChipHTML: renderChipHTML,
+    createThrottle: createThrottle,
+    createRestartTracker: createRestartTracker,
+    detectHighSeverityFix: detectHighSeverityFix,
+    lookupWordIpa: lookupWordIpa,
+    buildInterruptMessage: buildInterruptMessage,
+    bargeInThrottle: bargeInThrottle
+  };
+})();
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -1212,6 +1448,7 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
   window.updateReviewBadge = updateReviewBadge;
   window.updateFlowChip = updateFlowChip;
   window.FLOW = FLOW;
+  window.LIVE_COACH = LIVE_COACH;
   window.isHonest = STORE.isHonest;
   window.computeHonestScore = STORE.computeHonestScore;
 
@@ -1219,6 +1456,7 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     global.updateFlowChip = updateFlowChip;
     global.updateReviewBadge = updateReviewBadge;
     global.FLOW = FLOW;
+    global.LIVE_COACH = LIVE_COACH;
     global.isHonest = STORE.isHonest;
     global.computeHonestScore = STORE.computeHonestScore;
   }

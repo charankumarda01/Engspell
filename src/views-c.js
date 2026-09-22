@@ -6,9 +6,12 @@
 /* ── NOVA COACH ─────────────────────────────────────────────────────────────── */
 VIEWS.coach = {
   _history: null, /* loaded lazily from STORE */
-  _mode: 'chat',  /* chat | interview | document */
+  _mode: 'chat',  /* chat | interview | document | drill */
   _interviewQ: 0,
   _activeDoc: null, /* {title, text} when in document mode */
+  _drillIdx: 0,
+  _drillRaf: null,
+  _inFlightReply: false,
 
   _getHistory: function () {
     if (!this._history) {
@@ -30,9 +33,300 @@ VIEWS.coach = {
     STORE.set('novaHistory', []);
   },
 
+  _renderDrill: function (el) {
+    var self = this;
+    var targets = (typeof TWISTERS !== 'undefined' && TWISTERS.length > 0)
+      ? TWISTERS
+      : ["She sells seashells on the seashore.", "Peter Piper picked a peck of pickled peppers.", "How much wood would a woodchuck chuck?"];
+    self._drillIdx = self._drillIdx || 0;
+    var target = targets[self._drillIdx % targets.length];
+
+    var html = '<div class="view-coach">'
+      + '<div class="nova-header">'
+      + '<h1>🎙️ Live Coach — Live Drill</h1>'
+      + '<button class="btn-ghost btn-sm" id="drill-back-chat">💬 Back to Chat</button>'
+      + '</div>'
+      + '<div class="coach-modes">'
+      + '<button class="tab-btn" id="mode-chat">💬 Chat</button>'
+      + '<button class="tab-btn" id="mode-interview">🎤 Mock Interview</button>'
+      + '<button class="tab-btn active" id="mode-drill">🎙️ Live Drill</button>'
+      + '</div>'
+      + '<div class="live-drill-container" style="padding:16px 0;">'
+      + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">'
+      + '<span style="font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--acc2);font-weight:700;">Target Sentence</span>'
+      + '<span class="live-drill-caption" style="font-size:0.75rem;color:var(--mut);">word-level live matching via browser speech recognition</span>'
+      + '</div>'
+      + '<div id="live-target-sentence" style="font-size:1.25rem;font-weight:600;margin-bottom:14px;color:var(--txt);line-height:1.4;">' + _esc(target) + '</div>'
+      + '<div id="live-chips-area" style="margin-bottom:8px;">' + LIVE_COACH.renderChipHTML(target, '') + '</div>'
+      + '</div>'
+      + '<div id="live-prompt-banner" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:var(--r-md);padding:14px;margin-bottom:16px;"></div>'
+      + '<div id="live-paused-banner" style="display:none;margin-bottom:16px;"><button class="btn-warn" id="live-resume-btn" style="width:100%;padding:10px;">⚠️ Paused — tap to resume</button></div>'
+      + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">'
+      + '<button class="btn-primary" id="live-mic-btn" style="font-size:1rem;padding:10px 18px;">🎙️ Start Speaking</button>'
+      + '<button class="btn-ghost btn-sm" id="live-listen-slow">🐢 Listen Slowly</button>'
+      + '<button class="btn-ghost btn-sm" id="live-target-next">🎲 Next Drill</button>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;margin-bottom:16px;">'
+      + '<input type="text" id="live-typed-input" placeholder="Speech not working? Type here to drill..." style="flex:1;" />'
+      + '<button class="btn-secondary" id="live-typed-submit">Check Typed</button>'
+      + '</div>'
+      + '<div id="live-end-card" style="display:none;margin-top:16px;"></div>'
+      + '</div>'
+      + '</div>';
+
+    el.innerHTML = html;
+
+    var isListening = false;
+    var completed = false;
+    var interruptCount = 0;
+    var startTime = Date.now();
+    var lastPartialTs = Date.now();
+    var restartTracker = LIVE_COACH.createRestartTracker({ maxFails: 3, baseDelay: 250 });
+    var micBtn = document.getElementById('live-mic-btn');
+
+    document.getElementById('drill-back-chat').addEventListener('click', function () {
+      if (isListening) { SPEECH.stopListening(); }
+      self._mode = 'chat';
+      self.render(el);
+    });
+    document.getElementById('mode-chat').addEventListener('click', function () {
+      if (isListening) { SPEECH.stopListening(); }
+      self._mode = 'chat';
+      self.render(el);
+    });
+    document.getElementById('mode-interview').addEventListener('click', function () {
+      if (isListening) { SPEECH.stopListening(); }
+      self._mode = 'interview';
+      self._interviewQ = 0;
+      self.render(el);
+    });
+    document.getElementById('live-target-next').addEventListener('click', function () {
+      if (isListening) { SPEECH.stopListening(); }
+      self._drillIdx = (self._drillIdx || 0) + 1;
+      self._renderDrill(el);
+    });
+    document.getElementById('live-listen-slow').addEventListener('click', function () {
+      SPEECH.speakSlow(target);
+    });
+
+    function _finishDrill(success) {
+      completed = true;
+      isListening = false;
+      SPEECH.stopListening();
+      if (micBtn) { micBtn.textContent = '🎙️ Start Speaking'; }
+      var durationSec = Math.max(1, (Date.now() - startTime) / 1000);
+      var tokens = (typeof U !== 'undefined' && U.tokenise) ? U.tokenise(target) : [];
+      var wordCount = tokens.length;
+      var paceWpm = Math.round((wordCount / durationSec) * 60);
+      var firstTryPct = Math.max(0, Math.round(100 - (interruptCount * 33.3)));
+      var verdict = (interruptCount === 0) ? 'pass' : (interruptCount === 1 ? 'almost' : 'fail');
+
+      var cStats = STORE.get('coachStats') || {};
+      cStats.drills = (cStats.drills || 0) + 1;
+      cStats.interrupts = (cStats.interrupts || 0) + interruptCount;
+      STORE.set('coachStats', cStats);
+      STORE.save();
+
+      TRAINER.log({
+        skill: 'pronunciation',
+        delta: (verdict === 'pass' ? 5 : (verdict === 'almost' ? 3 : 1)),
+        source: 'live-drill',
+        ts: Date.now()
+      });
+      STORE.addXP(verdict === 'pass' ? 20 : 10, 'live-drill');
+
+      if (typeof FLOW !== 'undefined' && FLOW.mark) {
+        FLOW.mark(3);
+      }
+
+      var endCard = document.getElementById('live-end-card');
+      if (endCard) {
+        endCard.style.display = 'block';
+        var vColor = verdict === 'pass' ? 'var(--ok)' : (verdict === 'almost' ? 'var(--warn)' : 'var(--bad)');
+        var vLabel = verdict === 'pass' ? 'Excellent! 🎯' : (verdict === 'almost' ? 'Good Effort! 👍' : 'Needs Practice 🔁');
+        endCard.innerHTML = '<div style="border:1px solid ' + vColor + ';border-radius:14px;padding:16px;background:rgba(16,24,48,0.9);">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+          + '<span style="font-size:1.15rem;font-weight:700;color:' + vColor + ';">' + vLabel + '</span>'
+          + '<span class="badge" style="background:' + vColor + '22;color:' + vColor + ';">Verdict: ' + verdict.toUpperCase() + '</span>'
+          + '</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;text-align:center;">'
+          + '<div style="background:var(--bg1);padding:8px;border-radius:8px;"><div style="font-size:1.2rem;font-weight:700;">' + firstTryPct + '%</div><div style="font-size:0.75rem;color:var(--mut);">First-Try Accuracy</div></div>'
+          + '<div style="background:var(--bg1);padding:8px;border-radius:8px;"><div style="font-size:1.2rem;font-weight:700;">' + interruptCount + '</div><div style="font-size:0.75rem;color:var(--mut);">Interrupts (max 3)</div></div>'
+          + '<div style="background:var(--bg1);padding:8px;border-radius:8px;"><div style="font-size:1.2rem;font-weight:700;">' + paceWpm + '</div><div style="font-size:0.75rem;color:var(--mut);">Pace (WPM)</div></div>'
+          + '</div>'
+          + '<div style="display:flex;gap:10px;flex-wrap:wrap;">'
+          + '<button class="btn-primary btn-sm" id="live-replay-btn">🔊 Corrected Replay</button>'
+          + '<button class="btn-ghost btn-sm" id="live-end-next-btn">Next Drill ▸</button>'
+          + '</div>'
+          + '</div>';
+
+        var rBtn = document.getElementById('live-replay-btn');
+        if (rBtn) {
+          rBtn.addEventListener('click', function () {
+            SPEECH.speak(target);
+          });
+        }
+        var nBtn = document.getElementById('live-end-next-btn');
+        if (nBtn) {
+          nBtn.addEventListener('click', function () {
+            self._drillIdx = (self._drillIdx || 0) + 1;
+            self._renderDrill(el);
+          });
+        }
+      }
+    }
+
+    function _handleInterrupt(match) {
+      interruptCount++;
+      isListening = false;
+      SPEECH.stopListening();
+      if (micBtn) { micBtn.textContent = '🎙️ Resume Speaking'; }
+
+      var info = LIVE_COACH.buildInterruptMessage(target, match);
+      var banner = document.getElementById('live-prompt-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">'
+          + '<div>🛑 <strong style="color:var(--bad);">Stop!</strong> The word is <em>"' + _esc(info.word) + '"</em> ' + _esc(info.ipa) + '</div>'
+          + '<button class="btn-sm btn-ghost" id="live-hear-word">🔊 Hear Word</button>'
+          + '</div>'
+          + '<div style="margin-top:6px;font-size:0.9rem;color:var(--txt);">' + _esc(info.prompt) + '</div>';
+        var hwBtn = document.getElementById('live-hear-word');
+        if (hwBtn) {
+          hwBtn.addEventListener('click', function () {
+            SPEECH.speakSlow(info.word);
+          });
+        }
+      }
+
+      SPEECH.speak("Stop! The word is '" + info.word + "'" + (info.ipa ? " " + info.ipa : "") + ". Listen slowly.");
+      setTimeout(function () {
+        SPEECH.speakSlow(info.word);
+      }, 1600);
+    }
+
+    function _startListen() {
+      if (!SPEECH.canListen()) {
+        UI.toast('Speech recognition not available. Please use the typed fallback.', 'warning');
+        return;
+      }
+      var pausedBanner = document.getElementById('live-paused-banner');
+      if (pausedBanner) { pausedBanner.style.display = 'none'; }
+      isListening = true;
+      if (micBtn) { micBtn.textContent = '⏹️ Stop'; }
+
+      SPEECH.listen({
+        interim: true,
+        continuous: true,
+        onresult: function (transcript, isFinal, alts) {
+          if (completed) { return; }
+          restartTracker.onSuccess();
+          lastPartialTs = Date.now();
+
+          var match = LIVE_COACH.matchPrefix(target, transcript);
+
+          if (self._drillRaf) { cancelAnimationFrame(self._drillRaf); }
+          self._drillRaf = requestAnimationFrame(function () {
+            var chipsEl = document.getElementById('live-chips-area');
+            if (chipsEl) {
+              chipsEl.innerHTML = LIVE_COACH.renderChipHTML(target, match);
+            }
+          });
+
+          if (match.isComplete) {
+            _finishDrill(true);
+            return;
+          }
+
+          var silence = Date.now() - lastPartialTs;
+          if (LIVE_COACH.shouldInterrupt({
+            interruptCount: interruptCount,
+            silenceMs: Math.max(silence, 500),
+            match: match
+          })) {
+            _handleInterrupt(match);
+          }
+        },
+        onend: function () {
+          if (completed) { return; }
+          var res = restartTracker.onEnd(false);
+          if (res.shouldRestart) {
+            setTimeout(function () {
+              if (!completed && isListening) { _startListen(); }
+            }, res.delay);
+          } else if (res.paused) {
+            isListening = false;
+            if (micBtn) { micBtn.textContent = '🎙️ Start Speaking'; }
+            var pb = document.getElementById('live-paused-banner');
+            if (pb) { pb.style.display = 'block'; }
+          }
+        },
+        onerror: function (msg, code) {
+          if (completed) { return; }
+          if (code === 'not-allowed' || code === 'not-supported') {
+            isListening = false;
+            if (micBtn) { micBtn.textContent = '🎙️ Start Speaking'; }
+            UI.toast(msg, 'warning');
+          }
+        }
+      });
+    }
+
+    if (micBtn) {
+      micBtn.addEventListener('click', function () {
+        if (isListening) {
+          isListening = false;
+          SPEECH.stopListening();
+          micBtn.textContent = '🎙️ Start Speaking';
+        } else {
+          completed = false;
+          _startListen();
+        }
+      });
+    }
+
+    var resumeBtn = document.getElementById('live-resume-btn');
+    if (resumeBtn) {
+      resumeBtn.addEventListener('click', function () {
+        restartTracker.resume();
+        _startListen();
+      });
+    }
+
+    function _checkTyped() {
+      var input = document.getElementById('live-typed-input');
+      var val = input ? input.value.trim() : '';
+      if (!val) { return; }
+      var match = LIVE_COACH.matchPrefix(target, val);
+      var chipsEl = document.getElementById('live-chips-area');
+      if (chipsEl) {
+        chipsEl.innerHTML = LIVE_COACH.renderChipHTML(target, match);
+      }
+      if (match.isComplete) {
+        _finishDrill(true);
+      } else {
+        _handleInterrupt(match);
+      }
+    }
+
+    var typedBtn = document.getElementById('live-typed-submit');
+    if (typedBtn) { typedBtn.addEventListener('click', _checkTyped); }
+    var typedInput = document.getElementById('live-typed-input');
+    if (typedInput) {
+      typedInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { _checkTyped(); }
+      });
+    }
+  },
+
   render: function (el) {
     'use strict';
     var self = this;
+    if (self._mode === 'drill') {
+      self._renderDrill(el);
+      return;
+    }
     var settings = STORE.get('settings') || {};
     var hasKey = !!(settings.geminiKey && settings.geminiKey.trim().length > 10);
     var history = self._getHistory();
@@ -61,7 +355,10 @@ VIEWS.coach = {
     var html = '<div class="view-coach">' +
       '<div class="nova-header">' +
       '<h1>🤖 Nova — AI Coach</h1>' +
+      '<div style="display:flex;gap:8px;">' +
+      '<button class="btn-ghost btn-sm" id="nova-quick-drill">🎙️ Live Drill</button>' +
       '<button class="btn-ghost btn-sm" id="nova-clear-history" title="Clear conversation">Clear chat</button>' +
+      '</div>' +
       '</div>' +
       '<p class="sub">' + (hasKey
         ? '✅ Gemini connected — real AI active.'
@@ -71,6 +368,7 @@ VIEWS.coach = {
       '<div class="coach-modes">' +
       '<button class="tab-btn' + (self._mode === 'chat' ? ' active' : '') + '" id="mode-chat">💬 Chat</button>' +
       '<button class="tab-btn' + (self._mode === 'interview' ? ' active' : '') + '" id="mode-interview">🎤 Mock Interview</button>' +
+      '<button class="tab-btn' + (self._mode === 'drill' ? ' active' : '') + '" id="mode-drill">🎙️ Live Drill</button>' +
       modeDocBtn +
       '</div>' +
       '<div class="chat-window" id="chat-window">';
@@ -118,6 +416,18 @@ VIEWS.coach = {
     document.getElementById('mode-interview').addEventListener('click', function () {
       self._mode = 'interview'; self._interviewQ = 0; self.render(el);
     });
+    var drillBtn = document.getElementById('mode-drill');
+    if (drillBtn) {
+      drillBtn.addEventListener('click', function () {
+        self._mode = 'drill'; self.render(el);
+      });
+    }
+    var quickDrill = document.getElementById('nova-quick-drill');
+    if (quickDrill) {
+      quickDrill.addEventListener('click', function () {
+        self._mode = 'drill'; self.render(el);
+      });
+    }
     var docModeBtn = document.getElementById('mode-document');
     if (docModeBtn) {
       docModeBtn.addEventListener('click', function () {
@@ -201,6 +511,50 @@ VIEWS.coach = {
       var h = self._getHistory();
       h.push({role: 'user', text: _esc(text)});
       self._saveHistory();
+
+      /* Part B: Free Talk Live */
+      var settings = STORE.get('settings') || {};
+      if (settings.liveCorrect) {
+        var fixes = [];
+        var words = (typeof U !== 'undefined' && U.tokenise) ? U.tokenise(text).length : text.split(/\s+/).filter(Boolean).length;
+        for (var ri = 0; ri < COACH_RULES.length; ri++) {
+          if (COACH_RULES[ri].pat.test(text)) {
+            fixes.push(COACH_RULES[ri].fix);
+          }
+        }
+        var honest = (typeof isHonest === 'function') ? isHonest() : false;
+        var liveChipText = '';
+        if (honest) {
+          var score = Math.max(1, Math.min(10, 10 - (fixes.length * 2) - (words < 4 ? 2 : 0)));
+          var color = score < 6 ? '#ef4444' : (score <= 8 ? '#f59e0b' : '#10b981');
+          liveChipText = '<span class="live-verdict-chip" style="display:inline-block;margin-top:6px;font-size:0.75rem;padding:2px 8px;border-radius:10px;background:' + color + '22;color:' + color + ';border:1px solid ' + color + ';">⚡ Live Score: ' + score + '/10' + (fixes.length > 0 ? ' · ' + _esc(fixes[0]) : '') + '</span>';
+        } else if (fixes.length > 0) {
+          liveChipText = '<span class="live-verdict-chip" style="display:inline-block;margin-top:6px;font-size:0.75rem;padding:2px 8px;border-radius:10px;background:rgba(245,158,11,0.15);color:var(--warn);border:1px solid rgba(245,158,11,0.3);">⚡ Live Correction: ' + _esc(fixes[0]) + '</span>';
+        }
+
+        if (settings.bargeIn) {
+          var hiFix = LIVE_COACH.detectHighSeverityFix(text);
+          if (hiFix) {
+            if (LIVE_COACH.bargeInThrottle.canExecute(Date.now(), self._inFlightReply)) {
+              SPEECH.speak(hiFix.spoken);
+              LIVE_COACH.bargeInThrottle.record(Date.now());
+            } else {
+              liveChipText += '<span class="live-barge-chip" style="display:inline-block;margin-top:4px;margin-left:6px;font-size:0.72rem;padding:1px 6px;border-radius:8px;background:rgba(124,92,255,0.15);color:var(--acc2);">🎙️ ' + _esc(hiFix.spoken) + '</span>';
+            }
+          }
+        }
+
+        if (liveChipText && chatWin) {
+          var userBubbles = chatWin.querySelectorAll('.bubble.user');
+          if (userBubbles.length > 0) {
+            var lastBubble = userBubbles[userBubbles.length - 1];
+            var chipDiv = document.createElement('div');
+            chipDiv.innerHTML = liveChipText;
+            lastBubble.appendChild(chipDiv);
+          }
+        }
+      }
+
       _novaRespond(text, self, el);
     }
 
@@ -648,6 +1002,21 @@ VIEWS.settings = {
       '<p class="setting-hint">When enabled, Nova scores every message out of 10, lists every mistake with ▸, and gives zero sugarcoated praise.</p>' +
       '</div>' +
 
+      '<div class="setting-group">' +
+      '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+      '<input type="checkbox" id="s-live-correct"' + (settings.liveCorrect ? ' checked' : '') + ' style="width:18px;height:18px;" />' +
+      '<span>⚡ Live corrections while I talk</span>' +
+      '</label>' +
+      '<p class="setting-hint">Instantly evaluates your speech after each utterance and posts inline chips.</p>' +
+      '<div style="margin-left:26px;margin-top:8px;">' +
+      '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+      '<input type="checkbox" id="s-barge-in"' + (settings.bargeIn ? ' checked' : '') + ' style="width:18px;height:18px;" />' +
+      '<span>🎙️ Barge-in speech alerts (high severity only)</span>' +
+      '</label>' +
+      '<p class="setting-hint">Nova speaks short ≤6-word voice corrections (throttled to 1 per 20s) for missing verbs, auxiliaries, or articles.</p>' +
+      '</div>' +
+      '</div>' +
+
       '<button class="btn-primary" id="s-save">💾 Save Settings</button>' +
 
       '<div class="setting-group danger-zone">' +
@@ -670,18 +1039,42 @@ VIEWS.settings = {
       });
     }
 
+    var liveEl = document.getElementById('s-live-correct');
+    if (liveEl) {
+      liveEl.addEventListener('change', function () {
+        var s = STORE.get('settings') || {};
+        s.liveCorrect = this.checked;
+        STORE.set('settings', s);
+        UI.toast(this.checked ? '⚡ Live corrections ON' : 'Live corrections OFF', 'info');
+      });
+    }
+
+    var bargeEl = document.getElementById('s-barge-in');
+    if (bargeEl) {
+      bargeEl.addEventListener('change', function () {
+        var s = STORE.get('settings') || {};
+        s.bargeIn = this.checked;
+        STORE.set('settings', s);
+        UI.toast(this.checked ? '🎙️ Barge-in alerts ON' : 'Barge-in alerts OFF', 'info');
+      });
+    }
+
     document.getElementById('s-save').addEventListener('click', function () {
       var voice = document.getElementById('s-voice').value;
       var rate = parseFloat(document.getElementById('s-rate').value);
       var goal = parseInt(document.getElementById('s-goal').value, 10);
       var geminiKey = document.getElementById('s-gemini').value.trim();
       var honestMode = document.getElementById('s-honest') ? document.getElementById('s-honest').checked : false;
+      var liveCorrect = document.getElementById('s-live-correct') ? document.getElementById('s-live-correct').checked : false;
+      var bargeIn = document.getElementById('s-barge-in') ? document.getElementById('s-barge-in').checked : false;
       var curSettings = STORE.get('settings') || {};
       curSettings.voice = voice;
       curSettings.rate = rate;
       curSettings.dailyGoal = goal;
       curSettings.geminiKey = geminiKey;
       curSettings.honestMode = honestMode;
+      curSettings.liveCorrect = liveCorrect;
+      curSettings.bargeIn = bargeIn;
       STORE.set('settings', curSettings);
       SPEECH.setRate(rate);
       if (voice) { SPEECH.setVoiceByName(voice); }

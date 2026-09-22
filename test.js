@@ -1298,6 +1298,191 @@ tryv('M7: Toggle persists after reload', function () {
   return true;
 });
 
+/* ── M9 Live Coach ─────────────────────────────────────────────────── */
+console.log('\n🎙️ M9 Live Coach — Offline Word-Level Matching & Interrupts');
+
+tryv('M9: matchPrefix fixtures (full/partial/wrong-order/contractions)', function () {
+  var target = "She sells seashells by the seashore";
+
+  // 1. Full match
+  var mFull = LIVE_COACH.matchPrefix(target, "She sells seashells by the seashore");
+  if (!mFull.isComplete || mFull.matchedCount !== 6 || mFull.unexpectedCount !== 0) { return false; }
+
+  // 2. Partial match
+  var mPart = LIVE_COACH.matchPrefix(target, "She sells");
+  if (mPart.isComplete || mPart.matchedCount !== 2 || mPart.nextExpected !== 'seashells' || mPart.unexpectedCount !== 0) { return false; }
+
+  // 3. Wrong order (skipped prefix word)
+  var mWrong = LIVE_COACH.matchPrefix(target, "seashells by the seashore");
+  if (mWrong.matchedCount !== 0 || mWrong.isComplete) { return false; }
+
+  // 4. Contractions (expanded in target and/or partial)
+  var mContr1 = LIVE_COACH.matchPrefix("I don't think that's right", "I do not think that is right");
+  if (!mContr1.isComplete || mContr1.matchedCount !== 7) { return false; }
+
+  var mContr2 = LIVE_COACH.matchPrefix("I do not think that is right", "I don't think that's right");
+  if (!mContr2.isComplete || mContr2.matchedCount !== 7) { return false; }
+
+  return true;
+});
+
+tryv('M9: interrupt decision fn (500ms rule + 3-cap)', function () {
+  var target = "The quick brown fox";
+  var mBad = LIVE_COACH.matchPrefix(target, "The quick blue");
+
+  // Rule 1: silenceMs < 500 does NOT interrupt even if mismatched
+  var intUnder500 = LIVE_COACH.shouldInterrupt({
+    interruptCount: 0,
+    silenceMs: 450,
+    match: mBad
+  });
+  if (intUnder500 !== false) { return false; }
+
+  // Rule 2: silenceMs >= 500 with mismatch candidate DOES interrupt
+  var intOver500 = LIVE_COACH.shouldInterrupt({
+    interruptCount: 0,
+    silenceMs: 500,
+    match: mBad
+  });
+  if (intOver500 !== true) { return false; }
+
+  // Rule 3: 2+ unexpected words leaked triggers interrupt
+  var mLeaked = LIVE_COACH.matchPrefix(target, "The quick blue green");
+  var intLeaked = LIVE_COACH.shouldInterrupt({
+    interruptCount: 1,
+    silenceMs: 550,
+    match: mLeaked
+  });
+  if (intLeaked !== true) { return false; }
+
+  // Rule 4: 3-cap rule: interruptCount >= 3 never interrupts
+  var intCapped = LIVE_COACH.shouldInterrupt({
+    interruptCount: 3,
+    silenceMs: 600,
+    match: mBad
+  });
+  if (intCapped !== false) { return false; }
+
+  // Rule 5: complete match never interrupts
+  var mDone = LIVE_COACH.matchPrefix(target, "The quick brown fox");
+  var intDone = LIVE_COACH.shouldInterrupt({
+    interruptCount: 0,
+    silenceMs: 800,
+    match: mDone
+  });
+  if (intDone !== false) { return false; }
+
+  // Rule 6: normal pause on prefix (no mismatch, no leaked words) does NOT interrupt
+  var mPrefixPause = LIVE_COACH.matchPrefix(target, "The quick");
+  var intPrefixPause = LIVE_COACH.shouldInterrupt({
+    interruptCount: 0,
+    silenceMs: 600,
+    match: mPrefixPause
+  });
+  if (intPrefixPause !== false) { return false; }
+
+  return true;
+});
+
+tryv('M9: throttle window fixtures', function () {
+  var throttle = LIVE_COACH.createThrottle(20000);
+
+  // Initial call allowed
+  if (!throttle.canExecute(1000, false)) { return false; }
+  throttle.record(1000);
+
+  // Before 20s: blocked
+  if (throttle.canExecute(5000, false) !== false) { return false; }
+  if (throttle.canExecute(20999, false) !== false) { return false; }
+
+  // At 20s: allowed
+  if (!throttle.canExecute(21000, false)) { return false; }
+
+  // In-flight reply always blocks regardless of time
+  if (throttle.canExecute(25000, true) !== false) { return false; }
+
+  return true;
+});
+
+tryv('M9: chip states render', function () {
+  var target = "she sells seashells";
+  var chips = LIVE_COACH.getChipStates(target, "she");
+
+  if (chips.length !== 3) { return false; }
+  if (chips[0].word !== 'she' || chips[0].state !== 'matched') { return false; }
+  if (chips[1].word !== 'sells' || chips[1].state !== 'current') { return false; }
+  if (chips[2].word !== 'seashells' || chips[2].state !== 'upcoming') { return false; }
+
+  var html = LIVE_COACH.renderChipHTML(target, "she");
+  if (html.indexOf('chip-matched') === -1) { return false; }
+  if (html.indexOf('chip-current') === -1) { return false; }
+  if (html.indexOf('chip-upcoming') === -1) { return false; }
+
+  return true;
+});
+
+tryv('M9: restart state machine via injected events', function () {
+  var tracker = LIVE_COACH.createRestartTracker({ maxFails: 3, baseDelay: 250 });
+
+  // Event 1: unexpected onEnd (fail 1)
+  var r1 = tracker.onEnd(false);
+  if (!r1.shouldRestart || r1.delay !== 250 || r1.failCount !== 1) { return false; }
+
+  // Event 2: unexpected onEnd (fail 2)
+  var r2 = tracker.onEnd(false);
+  if (!r2.shouldRestart || r2.delay !== 500 || r2.failCount !== 2) { return false; }
+
+  // Event 3: unexpected onEnd (fail 3)
+  var r3 = tracker.onEnd(false);
+  if (!r3.shouldRestart || r3.delay !== 1000 || r3.failCount !== 3) { return false; }
+
+  // Event 4: unexpected onEnd (> 3 fails -> pause state)
+  var r4 = tracker.onEnd(false);
+  if (r4.shouldRestart !== false || !r4.paused || r4.message !== 'paused — tap to resume') { return false; }
+  if (tracker.isPaused() !== true) { return false; }
+
+  // Event 5: user taps resume
+  tracker.resume();
+  if (tracker.isPaused() !== false || tracker.getFails() !== 0) { return false; }
+
+  // Event 6: success resets fails
+  tracker.onEnd(false);
+  tracker.onSuccess();
+  if (tracker.getFails() !== 0) { return false; }
+
+  // Event 7: expected onEnd (normal stop) does not restart
+  var r7 = tracker.onEnd(true);
+  if (r7.shouldRestart !== false || r7.paused !== false) { return false; }
+
+  return true;
+});
+
+tryv('M9: scan for new network calls (only existing Gemini endpoint allowed)', function () {
+  var fs = require('fs');
+  var path = require('path');
+  var srcFiles = ['data.js','data2.js','data3.js','speech.js','core.js',
+                  'views-a.js','views-b.js','views-c.js','views-d.js','views-e.js','views-f.js'];
+  var ALLOWED_HOSTS = ['generativelanguage.googleapis.com'];
+  var LOAD_PAT = /(?:fetch\s*\(|new\s+XMLHttpRequest|new\s+Worker\s*\(|import\s*\()([^"'\)]*https?:\/\/[^"'\)]+)/gi;
+  var violations = [];
+
+  for (var i = 0; i < srcFiles.length; i++) {
+    var fname = srcFiles[i];
+    var code = fs.readFileSync(path.join(__dirname, 'src', fname), 'utf8');
+    var m;
+    while ((m = LOAD_PAT.exec(code)) !== null) {
+      var url = m[1];
+      var allowed = ALLOWED_HOSTS.some(function(h) { return url.indexOf(h) !== -1; });
+      if (!allowed) { violations.push(fname + ': ' + url.slice(0, 60)); }
+    }
+    LOAD_PAT.lastIndex = 0;
+  }
+  if (violations.length > 0) {
+    throw new Error('Unauthorized network calls: ' + violations.join(' | '));
+  }
+  return true;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

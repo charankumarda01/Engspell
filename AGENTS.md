@@ -92,6 +92,7 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **M8**: UI Polish & Design Tokens, structured nav groupings, mobile bar — **SHIPPED** (2026-09-22 · `927d86d`)
 - **M6**: Today's Flow, 5-step sequence lock, streak retrofix, global chip — **SHIPPED** (2026-09-22)
 - **M7**: Honest Mode, brutal honesty toggle, /10 scoring, offline uncapped fixes, resume review persona — **SHIPPED** (2026-09-22)
+- **M9**: Live Coach, word-level offline matching, interrupt decision engine, Android backoff loop, free talk live & barge-in — **SHIPPED** (2026-09-22)
 
 ---
 
