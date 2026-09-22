@@ -62,6 +62,10 @@ artifact but is NOT required to run the app in dev.
 - All other data is local. Preview iframes have no network access — everything must
   render from local data.
 
+### INV-9 — SW Stamping & Production Artifact Guard (SW-GUARD)
+- NEVER git checkout/restore `sw.js`; the stamped `sw.js` is a production artifact and must be committed.
+- Build→commit is atomic: `bash build.sh` injects `CACHE_NAME = 'engspell-' + UTC date stamp` into `sw.js`, and the resulting stamped file must be committed with the release.
+
 ---
 
 ## Script Load Order (index.html)
@@ -71,6 +75,7 @@ Must be loaded in exactly this order — each file depends on the previous:
 src/data.js       → LETTERS, SOUNDS, WORDS, PAIRS, TWISTERS, SPELLING, COACH_RULES
 src/data2.js      → COURSE, CLARITY_DATA, IDIOMS, PVS, QUOTES, DAILY_SEEDS
 src/data3.js      → ATLAS, PASSAGES, ASSESSMENT_POOLS, SKILL_META
+src/data4.js      → DATA4 (GEN_LESSONS, GEN_SCENARIOS, GEN_PASSAGES)
 src/speech.js     → SPEECH (TTS + STT wrapper)
 src/core.js       → STORE, TRAINER, U, UI, router, nav
 src/views-a.js    → VIEWS.home, VIEWS.foundations, VIEWS.pronunciation
@@ -98,6 +103,7 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **M12**: Local Reminders (NTFY-01), aligned hour scheduling, notification permission gate, graceful degradation — **SHIPPED** (2026-09-22)
 - **M13**: Moat-First Home (HOME-01), Live Coach & Learn-from-YOUR-book hero cards, docs-aware subtitle — **SHIPPED** (2026-09-22)
 - **M14**: Engineering to 10 (ENG-10), GitHub Actions CI, SW cache autobump on build, comprehensive A11Y sweep — **SHIPPED** (2026-09-22)
+- **M15**: Content Pipeline (CNT-GEN), deterministic generator (tools/genpack.js), drift gate, +24 lessons / +12 scenarios / +12 passages — **SHIPPED** (2026-09-22)
 
 ---
 

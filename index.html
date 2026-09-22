@@ -1668,6 +1668,7 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 <script src="src/data.js"></script>
 <script src="src/data2.js"></script>
 <script src="src/data3.js"></script>
+<script src="src/data4.js"></script>
 <script src="src/speech.js"></script>
 <script src="src/core.js"></script>
 <script src="src/views-a.js"></script>
@@ -1678,6 +1679,11 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 <script src="src/views-f.js"></script>
 
 <script>
+/* ── Content merge (M15) ── */
+if (typeof DATA4 !== 'undefined' && DATA4 && typeof DATA4.merge === 'function') {
+  DATA4.merge();
+}
+
 /* ── Topbar XP/Streak live update ── */
 (function () {
   function updateTopbar() {

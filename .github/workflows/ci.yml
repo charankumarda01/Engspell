@@ -27,6 +27,16 @@ jobs:
       - name: Run unit test suite (INV-3)
         run: node test.js
 
+      - name: Verify service worker cache stamp committed (SW-GUARD)
+        run: |
+          if grep -q "__CACHE_STAMP__" sw.js; then
+            echo "placeholder committed — run build.sh and commit sw.js"
+            exit 1
+          fi
+
+      - name: Verify content generator drift gate (M15)
+        run: node tools/genpack.js --check
+
       - name: Build standalone HTML (INV-4)
         run: |
           bash build.sh

@@ -51,6 +51,7 @@ function loadSrc(relPath) {
 loadSrc('src/data.js');
 loadSrc('src/data2.js');
 loadSrc('src/data3.js');
+loadSrc('src/data4.js');
 loadSrc('src/speech.js');
 loadSrc('src/core.js');
 loadSrc('src/views-a.js');
@@ -835,6 +836,11 @@ tryv('manifest theme_color is set', function () {
 
 tryv('sw.js exists', function () {
   return _fs.existsSync(_path.join(__dirname, 'sw.js'));
+});
+tryv('sw.js CACHE_NAME matches /^engspell-\\d{14}$/ (SW-GUARD)', function () {
+  var swContent = _fs.readFileSync(_path.join(__dirname, 'sw.js'), 'utf8');
+  var m = swContent.match(/var CACHE_NAME = '([^']+)';/);
+  return !!(m && /^engspell-\d{14}$/.test(m[1]));
 });
 tryv('Service worker asset list: every file it lists exists on disk', function () {
   var swContent = _fs.readFileSync(_path.join(__dirname, 'sw.js'), 'utf8');
@@ -2099,6 +2105,141 @@ tryv('M14: A11Y sweep: index.html contains :focus-visible ring and prefers-reduc
   var hasFocusVisible = html.indexOf(':focus-visible') !== -1 && html.indexOf('outline:') !== -1;
   var hasReducedMotion = html.indexOf('prefers-reduced-motion: reduce') !== -1;
   return hasFocusVisible && hasReducedMotion;
+});
+
+/* ── M15: CONTENT PIPELINE (CNT-GEN) ─────────────────────────── */
+var _genpack = require('./tools/genpack.js');
+var _cp = require('child_process');
+
+tryv('M15: DATA4 exact counts: 24 lessons, 12 scenarios, 12 passages', function () {
+  return typeof DATA4 !== 'undefined' &&
+         Array.isArray(DATA4.lessons) && DATA4.lessons.length === 24 &&
+         Array.isArray(DATA4.scenarios) && DATA4.scenarios.length === 12 &&
+         Array.isArray(DATA4.passages) && DATA4.passages.length === 12;
+});
+
+tryv('M15: DATA4 schema validation on all emitted items', function () {
+  var lOk = DATA4.lessons.every(function (l) {
+    var hasId = /^gl-\d{2}$/.test(l.id);
+    var hasTitle = typeof l.title === 'string' && l.title.length > 0;
+    var hasLevel = ['A2', 'B1', 'B2'].indexOf(l.level) !== -1;
+    var hasStage = l.stage >= 2 && l.stage <= 4;
+    var hasPattern = Array.isArray(l.pattern) && l.pattern.length >= 3;
+    var hasMissions = Array.isArray(l.missions) && l.missions.length >= 2;
+    var hasSpeaking = typeof l.speakingLine === 'string' && l.speakingLine.length > 0;
+    var hasMcqs = Array.isArray(l.mcqs) && l.mcqs.length >= 4 && l.mcqs.length <= 6 &&
+                  l.mcqs.every(function (m) { return m.q && Array.isArray(m.opts) && typeof m.ans === 'number' && m.ans >= 0 && m.ans < m.opts.length; });
+    var hasTypeAns = Array.isArray(l.typeAnswers) && l.typeAnswers.length === 2 &&
+                     l.typeAnswers.every(function (t) { return t.q && t.expected; });
+    return hasId && hasTitle && hasLevel && hasStage && hasPattern && hasMissions && hasSpeaking && hasMcqs && hasTypeAns;
+  });
+
+  var sOk = DATA4.scenarios.every(function (s) {
+    var hasId = /^sc-\d{2}$/.test(s.id);
+    var hasTitle = typeof s.title === 'string' && s.title.length > 0;
+    var hasLevel = ['A2', 'B1', 'B2'].indexOf(s.level) !== -1;
+    var hasContext = typeof s.context === 'string' && s.context.length > 0;
+    var hasGuides = Array.isArray(s.guideQuestions) && s.guideQuestions.length === 3;
+    var hasVocab = Array.isArray(s.targetVocab) && s.targetVocab.length >= 3;
+    var hasTurns = Array.isArray(s.turns) && s.turns.length >= 4;
+    return hasId && hasTitle && hasLevel && hasContext && hasGuides && hasVocab && hasTurns;
+  });
+
+  var pOk = DATA4.passages.every(function (p) {
+    var hasId = /^ps-\d{2}$/.test(p.id);
+    var hasTitle = typeof p.title === 'string' && p.title.length > 0;
+    var hasLevel = ['A2', 'B1', 'B2', 'C1'].indexOf(p.level) !== -1;
+    var words = p.text.trim().split(/\s+/).length;
+    var hasWordCount = words >= 80 && words <= 140;
+    var hasQuestions = Array.isArray(p.questions) && p.questions.length === 3 &&
+                       p.questions.every(function (q) { return q.q && Array.isArray(q.opts) && typeof q.ans === 'number' && q.ans >= 0 && q.ans < q.opts.length; });
+    var hasDictation = typeof p.dictation === 'string' && p.dictation.length > 0;
+    return hasId && hasTitle && hasLevel && hasWordCount && hasQuestions && hasDictation;
+  });
+
+  return lOk && sOk && pOk;
+});
+
+tryv('M15: genpack determinism: two in-process runs byte-identical', function () {
+  var p1 = _genpack.generatePack(0x5a17e942);
+  var p2 = _genpack.generatePack(0x5a17e942);
+  var s1 = _genpack.buildFullSource(p1);
+  var s2 = _genpack.buildFullSource(p2);
+  return s1 === s2 && s1.length > 1000;
+});
+
+tryv('M15: every lint gate fires on a doctored bad item', function () {
+  // 1. Duplicate ID gate
+  var badIds = _genpack.generatePack();
+  badIds.lessons[1].id = badIds.lessons[0].id;
+  var err1 = _genpack.runLintGates(badIds);
+  var g1 = err1.some(function (e) { return e.indexOf('Duplicate ID') !== -1; });
+
+  // 2. Out of range MCQ answer gate
+  var badAns = _genpack.generatePack();
+  badAns.lessons[0].mcqs[0].ans = 99;
+  var err2 = _genpack.runLintGates(badAns);
+  var g2 = err2.some(function (e) { return e.indexOf('out of options range') !== -1; });
+
+  // 3. Duplicate question string gate
+  var badQ = _genpack.generatePack();
+  badQ.lessons[1].mcqs[0].q = badQ.lessons[0].mcqs[0].q;
+  var err3 = _genpack.runLintGates(badQ);
+  var g3 = err3.some(function (e) { return e.indexOf('Duplicate question string') !== -1; });
+
+  // 4. Passage word count gate (<80 words)
+  var badWc = _genpack.generatePack();
+  badWc.passages[0].text = 'Too short text with only seven words here.';
+  var err4 = _genpack.runLintGates(badWc);
+  var g4 = err4.some(function (e) { return e.indexOf('outside [80, 140]') !== -1; });
+
+  // 5. B1 ratio gate (<40%)
+  var badRatio = _genpack.generatePack();
+  badRatio.lessons.forEach(function (l) { l.level = 'A2'; });
+  badRatio.scenarios.forEach(function (s) { s.level = 'A2'; });
+  badRatio.passages.forEach(function (p) { p.level = 'A2'; });
+  var err5 = _genpack.runLintGates(badRatio);
+  var g5 = err5.some(function (e) { return e.indexOf('below required 40% threshold') !== -1; });
+
+  return g1 && g2 && g3 && g4 && g5;
+});
+
+tryv('M15: merged lists visible from app data layer', function () {
+  var origCourseLen = COURSE.length;
+  var origScenariosLen = SCENARIOS.length;
+  var origPassagesLen = PASSAGES.length;
+
+  DATA4.merge();
+
+  var cOk = COURSE.length === origCourseLen + 24 && COURSE.some(function (l) { return l.id === 'gl-01'; });
+  var sOk = SCENARIOS.length === origScenariosLen + 12 && SCENARIOS.some(function (s) { return s.id === 'sc-01'; });
+  var pOk = PASSAGES.length === origPassagesLen + 12 && PASSAGES.some(function (p) { return p.id === 'ps-01'; });
+
+  // Calling merge again is idempotent (does not duplicate)
+  DATA4.merge();
+  var idemOk = (COURSE.length === origCourseLen + 24) && (SCENARIOS.length === origScenariosLen + 12);
+
+  return cOk && sOk && pOk && idemOk;
+});
+
+tryv('M15: src/data4.js passes node --check', function () {
+  var res = _cp.spawnSync(process.execPath, ['--check', _path.join(__dirname, 'src', 'data4.js')]);
+  return res.status === 0;
+});
+
+tryv('M15: drift gate: pass on match + fail on tamper', function () {
+  // 1. Pass on exact match
+  var checkRes = _cp.spawnSync(process.execPath, [_path.join(__dirname, 'tools', 'genpack.js'), '--check']);
+  if (checkRes.status !== 0) { return false; }
+
+  // 2. Fail on simulated tampered content
+  var pack = _genpack.generatePack();
+  var cleanSrc = _genpack.buildFullSource(pack);
+  var tampered = cleanSrc.replace(/gl-01/, 'gl-99');
+  var expectedHash = _genpack.computeHash(_genpack.serializeData4(pack));
+  var tamperedHash = _genpack.computeHash(tampered);
+
+  return expectedHash !== tamperedHash;
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
