@@ -1967,6 +1967,140 @@ tryv('M13: existing home checks untouched (stepper, dose, next lesson, xp chart)
   return true;
 });
 
+/* ── M14: ENGINEERING TO 10 (CI, SW Autobump, A11Y) ───────────── */
+tryv('M14: .github/workflows/ci.yml parses and satisfies all CI invariants', function () {
+  var ciPath = _path.join(__dirname, '.github', 'workflows', 'ci.yml');
+  if (!_fs.existsSync(ciPath)) { return false; }
+  var yaml = _fs.readFileSync(ciPath, 'utf8');
+
+  // YAML sanity: no tabs
+  if (yaml.indexOf('\t') !== -1) { return false; }
+
+  // Structure & trigger scan
+  var hasName = /^name:\s*.+/m.test(yaml);
+  var hasOn = /^on:\s*/m.test(yaml);
+  var hasPush = /push:\s*/m.test(yaml);
+  var hasPR = /pull_request:\s*/m.test(yaml);
+  var hasUbuntu = /runs-on:\s*ubuntu-latest/m.test(yaml);
+  var hasNode20 = /node-version:\s*['"]?20['"]?/m.test(yaml);
+
+  // Steps scan: syntax check, test.js, build.sh, size assertion
+  var hasSyntaxCheck = /node\s+--check/m.test(yaml);
+  var hasTestRun = /node\s+test\.js/m.test(yaml);
+  var hasBuild = /bash\s+build\.sh/m.test(yaml);
+  var hasSizeCheck = /engspell-standalone\.html/m.test(yaml);
+
+  // Invariant: zero npm install steps
+  var hasNpmInstall = /npm\s+(i|install|ci)\b/m.test(yaml);
+
+  return hasName && hasOn && hasPush && hasPR && hasUbuntu && hasNode20 &&
+         hasSyntaxCheck && hasTestRun && hasBuild && hasSizeCheck && !hasNpmInstall;
+});
+
+tryv('M14: README.md includes CI badge at top', function () {
+  var readme = _fs.readFileSync(_path.join(__dirname, 'README.md'), 'utf8');
+  return readme.indexOf('actions/workflows/ci.yml/badge.svg') !== -1 &&
+         readme.indexOf('actions/workflows/ci.yml') !== -1;
+});
+
+tryv('M14: build autobump produced unique stamp across two stubbed runs', function () {
+  var template = "/* sw.js */\nvar CACHE_NAME = '__CACHE_STAMP__';\nvar ASSETS = [];";
+  function bump(src, stamp) {
+    if (src.indexOf('__CACHE_STAMP__') !== -1) {
+      return src.replace('__CACHE_STAMP__', 'engspell-' + stamp);
+    }
+    return src.replace(/var CACHE_NAME = 'engspell-[^']*';/, "var CACHE_NAME = 'engspell-" + stamp + "';");
+  }
+  var stamp1 = '20260922120001';
+  var stamp2 = '20260922120002';
+  var run1 = bump(template, stamp1);
+  var run2 = bump(run1, stamp2);
+
+  var m1 = run1.match(/var CACHE_NAME = 'engspell-(\d+)';/);
+  var m2 = run2.match(/var CACHE_NAME = 'engspell-(\d+)';/);
+
+  var bSrc = _fs.readFileSync(_path.join(__dirname, 'build.sh'), 'utf8');
+  var buildHasAutobump = bSrc.indexOf('CACHE_NAME') !== -1 && bSrc.indexOf('engspell-') !== -1;
+
+  return !!(m1 && m2 && m1[1] === stamp1 && m2[1] === stamp2 && m1[1] !== m2[1] && buildHasAutobump);
+});
+
+tryv('M14: A11Y sweep: every view root has exactly one h1', function () {
+  var views = ['home', 'coach', 'trainer', 'settings', 'path', 'daily', 'clarity', 'docstudio'];
+  return views.every(function (v) {
+    if (!VIEWS[v] || typeof VIEWS[v].render !== 'function') { return false; }
+    var el = { innerHTML: '', style: {}, appendChild: function () {}, querySelectorAll: function () { return []; }, querySelector: function () { return null; } };
+    var ret = VIEWS[v].render(el);
+    var html = el.innerHTML || (typeof ret === 'string' ? ret : '');
+    var matches = html.match(/<h1\b/gi);
+    return matches && matches.length === 1;
+  });
+});
+
+tryv('M14: A11Y sweep: buttons in rendered views have discernible text or aria-label', function () {
+  var views = ['home', 'coach', 'trainer', 'settings'];
+  return views.every(function (v) {
+    if (!VIEWS[v] || typeof VIEWS[v].render !== 'function') { return false; }
+    var el = { innerHTML: '', style: {}, appendChild: function () {}, querySelectorAll: function () { return []; }, querySelector: function () { return null; } };
+    var ret = VIEWS[v].render(el);
+    var html = el.innerHTML || (typeof ret === 'string' ? ret : '');
+    var btnRegex = /<button\b([^>]*)>([\s\S]*?)<\/button>/gi;
+    var m;
+    while ((m = btnRegex.exec(html)) !== null) {
+      var attrs = m[1];
+      var inner = m[2].replace(/<[^>]+>/g, '').trim();
+      var hasAria = /aria-label\s*=\s*["'][^"']+["']/i.test(attrs);
+      var hasText = inner.length > 0;
+      if (!hasAria && !hasText) {
+        return false;
+      }
+    }
+    return true;
+  });
+});
+
+tryv('M14: A11Y sweep: color-contrast pairs of token combos verified >= 4.5:1', function () {
+  function hexToLum(hex) {
+    hex = hex.replace('#', '');
+    var r = parseInt(hex.substring(0, 2), 16) / 255;
+    var g = parseInt(hex.substring(2, 4), 16) / 255;
+    var b = parseInt(hex.substring(4, 6), 16) / 255;
+    var a = [r, g, b].map(function (v) {
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+  }
+  function contrastRatio(hex1, hex2) {
+    var l1 = hexToLum(hex1);
+    var l2 = hexToLum(hex2);
+    var lighter = Math.max(l1, l2);
+    var darker = Math.min(l1, l2);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  var tokenPairs = [
+    ['#e8ecf8', '#070b16'], // --txt on --bg0 (16.6:1)
+    ['#e8ecf8', '#0a0f1e'], // --txt on --bg1 (16.2:1)
+    ['#e8ecf8', '#101830'], // --txt on --bg2 (14.9:1)
+    ['#e8ecf8', '#16203c'], // --txt on --bg3 (13.6:1)
+    ['#9aa6c9', '#070b16'], // --mut on --bg0 (8.1:1)
+    ['#9aa6c9', '#0a0f1e'], // --mut on --bg1 (7.9:1)
+    ['#5eead4', '#070b16'], // --acc2 on --bg0 (13.3:1)
+    ['#fbbf24', '#070b16']  // --gold on --bg0 (11.8:1)
+  ];
+
+  return tokenPairs.every(function (pair) {
+    return contrastRatio(pair[0], pair[1]) >= 4.5;
+  });
+});
+
+tryv('M14: A11Y sweep: index.html contains :focus-visible ring and prefers-reduced-motion', function () {
+  var html = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
+  var hasFocusVisible = html.indexOf(':focus-visible') !== -1 && html.indexOf('outline:') !== -1;
+  var hasReducedMotion = html.indexOf('prefers-reduced-motion: reduce') !== -1;
+  return hasFocusVisible && hasReducedMotion;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

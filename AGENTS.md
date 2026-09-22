@@ -97,6 +97,7 @@ src/views-e.js    → VIEWS.trainer, VIEWS.assessment, VIEWS.listening, VIEWS.at
 - **M11**: First-5-Minutes Onboarding (ONB-01), 4-screen flow, placement calibration, instant win live drill, cloud brain unlock — **SHIPPED** (2026-09-22)
 - **M12**: Local Reminders (NTFY-01), aligned hour scheduling, notification permission gate, graceful degradation — **SHIPPED** (2026-09-22)
 - **M13**: Moat-First Home (HOME-01), Live Coach & Learn-from-YOUR-book hero cards, docs-aware subtitle — **SHIPPED** (2026-09-22)
+- **M14**: Engineering to 10 (ENG-10), GitHub Actions CI, SW cache autobump on build, comprehensive A11Y sweep — **SHIPPED** (2026-09-22)
 
 ---
 

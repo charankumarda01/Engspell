@@ -16,6 +16,13 @@ for f in src/data.js src/data2.js src/data3.js src/speech.js src/core.js \
   node --check "$f" && echo "  ✓ $f"
 done
 
+# SW cache autobump (M14)
+if [ -f sw.js ]; then
+  STAMP=$(date -u +"%Y%m%d%H%M%S")
+  node -e "var fs=require('fs'); var c=fs.readFileSync('sw.js','utf8'); c=c.replace(/var CACHE_NAME = '(__CACHE_STAMP__|engspell-[^']*)';/, \"var CACHE_NAME = 'engspell-$STAMP';\"); fs.writeFileSync('sw.js',c);"
+  echo "  ✓ sw.js CACHE_NAME bumped to engspell-$STAMP"
+fi
+
 # Concatenate JS in dependency order
 cat src/data.js src/data2.js src/data3.js src/speech.js src/core.js \
     src/views-a.js src/views-b.js src/views-c.js src/views-d.js src/views-e.js src/views-f.js \

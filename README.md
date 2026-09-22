@@ -1,5 +1,7 @@
 # EngSpell
 
+[![CI](https://github.com/charankumarda01/Engspell/actions/workflows/ci.yml/badge.svg)](https://github.com/charankumarda01/Engspell/actions/workflows/ci.yml)
+
 **EngSpell — Speak · Spell · Shine**
 The complete English mastery studio: foundations → fluency, powered by an adaptive trainer
 and Nova, a speaking coach you actually talk to.

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check syntax on all source files (INV-6)
+        run: |
+          for f in src/*.js; do
+            node --check "$f"
+          done
+
+      - name: Run unit test suite (INV-3)
+        run: node test.js
+
+      - name: Build standalone HTML (INV-4)
+        run: |
+          bash build.sh
+          test -f engspell-standalone.html
+          SIZE=$(wc -c < engspell-standalone.html)
+          echo "Standalone file size: $SIZE bytes"
+          # Sanity check: standalone must be larger than baseline (> 350,000 bytes)
+          if [ "$SIZE" -lt 350000 ]; then
+            echo "Standalone file is smaller than expected baseline!"
+            exit 1
+          fi
