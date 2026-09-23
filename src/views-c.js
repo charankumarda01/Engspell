@@ -231,7 +231,15 @@ VIEWS.coach = {
           restartTracker.onSuccess();
           lastPartialTs = Date.now();
 
-          var match = LIVE_COACH.matchPrefix(target, transcript);
+          var candidates = [transcript];
+          if (alts && alts.length) {
+            for (var a = 0; a < alts.length; a++) {
+              if (candidates.indexOf(alts[a]) === -1) { candidates.push(alts[a]); }
+            }
+          }
+          var match = (typeof LIVE_COACH !== 'undefined' && LIVE_COACH.matchBest)
+            ? LIVE_COACH.matchBest(target, candidates)
+            : LIVE_COACH.matchPrefix(target, transcript);
 
           if (self._drillRaf) { cancelAnimationFrame(self._drillRaf); }
           self._drillRaf = requestAnimationFrame(function () {

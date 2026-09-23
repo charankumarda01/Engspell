@@ -2006,6 +2006,8 @@ var UI = (function () {
    * Renders a mic/text fallback practice UI into el
    */
   function practiceBar(el, opts) {
+    if (!el) { return; }
+    opts = opts || {};
     var canListen = SPEECH.canListen();
     var inst = 'pb' + Math.floor(Math.random() * 1000000);
     var micId = inst + '-mic';
@@ -2013,17 +2015,22 @@ var UI = (function () {
     var inputId = inst + '-input';
     var checkId = inst + '-check';
     var resultId = inst + '-result';
+    var isListening = false;
+
+    var rawText = opts.expected || opts.prompt || '';
+    var cleanTarget = rawText.replace(/^Say:\s*["']?|["']$/gi, '').trim();
+    var promptDisplay = opts.prompt ? opts.prompt : ('Say it: ' + rawText);
 
     var html = '<div class="practice-bar">';
     html += '<div class="practice-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;">';
-    html += '<p class="practice-prompt" style="margin:0;"><strong>Say it:</strong> ' + opts.expected + '</p>';
+    html += '<p class="practice-prompt" style="margin:0;"><strong>' + (promptDisplay.indexOf('Say it:') === 0 ? '' : 'Say it: ') + promptDisplay + '</strong></p>';
     html += '<button class="btn-sm btn-ghost pb-hear-btn" id="' + hearId + '" title="Listen to native model">🔊 Model</button>';
     html += '</div>';
     if (canListen) {
       html += '<button class="btn-mic" id="' + micId + '">🎤 Start Speaking</button>';
     }
     html += '<div class="pb-typing" id="' + inst + '-typing-area">';
-    html += '<input type="text" id="' + inputId + '" placeholder="Type if mic unavailable..." />';
+    html += '<input type="text" id="' + inputId + '" placeholder="Type or speak words here..." />';
     html += '<button class="btn-check" id="' + checkId + '">Check</button>';
     html += '</div>';
     html += '<div id="' + resultId + '"></div>';
@@ -2033,14 +2040,17 @@ var UI = (function () {
     var resultEl = (el && el.querySelector ? el.querySelector('#' + resultId) : null) || document.getElementById(resultId);
     var inputEl = (el && el.querySelector ? el.querySelector('#' + inputId) : null) || document.getElementById(inputId);
     var hearBtn = (el && el.querySelector ? el.querySelector('#' + hearId) : null) || document.getElementById(hearId);
+    var micBtn = canListen ? ((el && el.querySelector ? el.querySelector('#' + micId) : null) || document.getElementById(micId)) : null;
+
     if (hearBtn) {
       hearBtn.addEventListener('click', function () {
-        SPEECH.speak(opts.expected);
+        SPEECH.speak(cleanTarget || rawText);
       });
     }
 
     function _evaluate(heard) {
-      var aligned = U.align(opts.expected, heard);
+      if (!heard || !heard.trim()) { return; }
+      var aligned = U.align(cleanTarget || rawText, heard);
       var v = U.verdict(aligned);
       if (resultEl) {
         resultEl.innerHTML = scoreHTML(aligned);
@@ -2059,36 +2069,49 @@ var UI = (function () {
       }
     }
 
-    if (canListen) {
-      var micBtn = (el && el.querySelector ? el.querySelector('#' + micId) : null) || document.getElementById(micId);
+    function _resetMic() {
+      isListening = false;
       if (micBtn) {
-        micBtn.addEventListener('click', function () {
-          micBtn.textContent = '🔴 Listening…';
-          micBtn.className = 'btn-mic listening';
-          micBtn.disabled = true;
-          SPEECH.listen({
-            interim: false,
-            onresult: function (transcript) {
-              if (inputEl) { inputEl.value = transcript; }
-              _evaluate(transcript);
-              micBtn.textContent = '🎤 Start Speaking';
-              micBtn.className = 'btn-mic';
-              micBtn.disabled = false;
-            },
-            onend: function () {
-              micBtn.textContent = '🎤 Start Speaking';
-              micBtn.className = 'btn-mic';
-              micBtn.disabled = false;
-            },
-            onerror: function (msg) {
-              UI.toast(msg, 'error');
-              micBtn.textContent = '🎤 Start Speaking';
-              micBtn.className = 'btn-mic';
-              micBtn.disabled = false;
-            }
-          });
-        });
+        micBtn.textContent = '🎤 Start Speaking';
+        micBtn.className = 'btn-mic';
+        micBtn.disabled = false;
       }
+    }
+
+    if (canListen && micBtn) {
+      micBtn.addEventListener('click', function () {
+        if (isListening) {
+          SPEECH.stopListening();
+          _resetMic();
+          return;
+        }
+        isListening = true;
+        micBtn.textContent = '⏹️ Stop Listening';
+        micBtn.className = 'btn-mic listening pulse';
+        SPEECH.listen({
+          interim: true,
+          continuous: true,
+          onresult: function (transcript, isFinal) {
+            if (inputEl) { inputEl.value = transcript; }
+            if (isFinal) {
+              _evaluate(transcript);
+              _resetMic();
+            }
+          },
+          onend: function () {
+            if (isListening && inputEl && inputEl.value) {
+              _evaluate(inputEl.value);
+            }
+            _resetMic();
+          },
+          onerror: function (msg, code) {
+            _resetMic();
+            if (code !== 'aborted') {
+              UI.toast(msg, 'warning');
+            }
+          }
+        });
+      });
     }
 
     var checkBtn = (el && el.querySelector ? el.querySelector('#' + checkId) : null) || document.getElementById(checkId);
@@ -2402,8 +2425,16 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     if (viewEl && !_saySbound) {
       viewEl.addEventListener('click', function (e) {
         var t = e.target;
-        if (t && t.getAttribute && t.getAttribute('data-say')) {
-          SPEECH.speakSlow(t.getAttribute('data-say'));
+        var btn = (t && t.closest) ? t.closest('[data-say]') : ((t && t.getAttribute && t.getAttribute('data-say')) ? t : null);
+        if (btn) {
+          var sayText = btn.getAttribute('data-say');
+          if (sayText) {
+            if ((btn.classList && btn.classList.contains('bad')) || btn.getAttribute('data-slow') === '1') {
+              SPEECH.speakSlow(sayText);
+            } else {
+              SPEECH.speak(sayText);
+            }
+          }
         }
       });
       _saySbound = true;

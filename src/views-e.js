@@ -328,50 +328,135 @@ VIEWS.assessment = {
       <div class="assess-prompt">${task.prompt}</div>
       ${task.text ? `<div class="assess-passage">${task.text}</div>` : ''}
       <div class="assess-timer" id="assess-timer">00:30</div>
-      ${SPEECH.canListen()
-        ? `<button class="btn-primary" id="assess-start">🎤 Start Recording (30s)</button>`
-        : `<div><textarea id="assess-typed" rows="4" placeholder="Type your response (mic not available)..."></textarea><button class="btn-primary" id="assess-typed-submit">Submit</button></div>`
-      }
+      <div style="display:flex;gap:10px;justify-content:center;margin:12px 0;flex-wrap:wrap;">
+        <button class="btn-primary" id="assess-start">🎤 Start Recording (30s)</button>
+        <button class="btn-secondary" id="assess-finish" style="display:none;">⏹️ Finish Task</button>
+      </div>
+      <div id="assess-live-card" style="display:none;background:var(--bg1);border:1px solid var(--accent);border-radius:12px;padding:14px;margin:14px 0;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.85rem;">
+          <span style="color:var(--accent);font-weight:700;">🎙️ LIVE RECOGNITION</span>
+          <span style="color:var(--mut);">Words: <strong id="assess-live-wc" style="color:var(--pri);">0</strong> &bull; Fillers: <strong id="assess-live-fc" style="color:var(--warn);">0</strong></span>
+        </div>
+        <div id="assess-live-text" style="font-size:1rem;color:var(--txt);line-height:1.5;min-height:36px;font-style:italic;">Listening... speak naturally now.</div>
+      </div>
+      <div id="assess-typed-wrap" style="${SPEECH.canListen() ? 'display:none;' : ''}">
+        <textarea id="assess-typed" rows="4" placeholder="Type your response here..."></textarea>
+        <button class="btn-primary" id="assess-typed-submit" style="margin-top:8px;">Submit Typed Response</button>
+      </div>
       <div id="assess-fb"></div>
     </div>`;
 
-    if (SPEECH.canListen()) {
-      document.getElementById('assess-start').addEventListener('click', () => {
-        const startBtn = document.getElementById('assess-start');
-        const timerEl = document.getElementById('assess-timer');
-        startBtn.disabled = true;
-        startBtn.textContent = '🔴 Recording…';
-        let seconds = 30;
-        let words = [], fillers = 0;
-        const FILLERS = ['um','uh','er','ah','like','you know','basically','actually','literally'];
-        const timer = setInterval(() => {
+    const startBtn = document.getElementById('assess-start');
+    const finishBtn = document.getElementById('assess-finish');
+    const timerEl = document.getElementById('assess-timer');
+    const liveCard = document.getElementById('assess-live-card');
+    const liveTextEl = document.getElementById('assess-live-text');
+    const liveWcEl = document.getElementById('assess-live-wc');
+    const liveFcEl = document.getElementById('assess-live-fc');
+    let isRecording = false;
+    let seconds = 30;
+    let timer = null;
+    let words = [], fillers = 0;
+    const FILLERS = ['um','uh','er','ah','like','you know','basically','actually','literally'];
+
+    function _onTranscript(t) {
+      words = U.tokenise(t);
+      fillers = words.filter(w => FILLERS.indexOf(w) !== -1).length;
+      if (liveTextEl) { liveTextEl.textContent = t || 'Listening...'; }
+      if (liveWcEl) { liveWcEl.textContent = words.length; }
+      if (liveFcEl) { liveFcEl.textContent = fillers; }
+    }
+
+    function _finishAssessment() {
+      if (!isRecording) return;
+      isRecording = false;
+      if (timer) { clearInterval(timer); }
+      SPEECH.stopListening();
+      if (startBtn) { startBtn.disabled = true; startBtn.textContent = '✅ Completed'; }
+      if (finishBtn) { finishBtn.style.display = 'none'; }
+      const elapsedSecs = Math.max(5, 30 - seconds);
+      const wpm = Math.round((words.length / elapsedSecs) * 60);
+      const fillerRate = words.length ? fillers / words.length : 0;
+      self._results.push({task: task.label, wpm, fillerRate, words: words.length, fillers});
+      const fbEl = document.getElementById('assess-fb');
+      if (fbEl) {
+        fbEl.innerHTML = `<p class="verdict pass">✅ Task Recorded! ${words.length} words in ${elapsedSecs}s &bull; WPM ≈ ${wpm} &bull; Fillers: ${fillers}</p>`;
+      }
+      setTimeout(() => { self._task++; self.render(el); }, 1400);
+    }
+
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        if (!SPEECH.canListen()) {
+          UI.toast('Microphone not available on this browser. Please type your response.', 'warning');
+          const typedWrap = document.getElementById('assess-typed-wrap');
+          if (typedWrap) typedWrap.style.display = 'block';
+          return;
+        }
+        if (isRecording) return;
+        isRecording = true;
+        startBtn.style.display = 'none';
+        if (finishBtn) { finishBtn.style.display = 'inline-block'; }
+        if (liveCard) { liveCard.style.display = 'block'; }
+        seconds = 30;
+        timer = setInterval(() => {
           seconds--;
-          timerEl.textContent = '00:' + String(seconds).padStart(2, '0');
-          if (seconds <= 0) { clearInterval(timer); SPEECH.stopListening(); }
+          if (timerEl) { timerEl.textContent = '00:' + String(Math.max(0, seconds)).padStart(2, '0'); }
+          if (seconds <= 0) {
+            _finishAssessment();
+          }
         }, 1000);
 
-        SPEECH.listen({
-          interim: true,
-          onresult: (t, isFinal) => {
-            if (isFinal) {
-              words = U.tokenise(t);
-              fillers = words.filter(w => FILLERS.indexOf(w) !== -1).length;
+          SPEECH.listen({
+            interim: true,
+            continuous: true,
+            onresult: (t) => {
+              if (!isRecording) return;
+              _onTranscript(t);
+            },
+            onend: () => {
+              if (isRecording) {
+                if (seconds > 2 && words.length === 0) {
+                  SPEECH.listen({
+                    interim: true,
+                    continuous: true,
+                    onresult: _onTranscript,
+                    onend: () => { if (isRecording && seconds <= 2) _finishAssessment(); },
+                    onerror: () => {}
+                  });
+                } else {
+                  _finishAssessment();
+                }
+              }
+            },
+            onerror: (msg, code) => {
+              if (code === 'not-allowed') {
+                if (timer) clearInterval(timer);
+                isRecording = false;
+                const typedWrap = document.getElementById('assess-typed-wrap');
+                if (typedWrap) typedWrap.style.display = 'block';
+                if (liveCard) liveCard.style.display = 'none';
+                if (startBtn) startBtn.style.display = 'none';
+                if (finishBtn) finishBtn.style.display = 'none';
+                UI.toast('Microphone permission denied. Please type your response.', 'warning');
+              } else if (code !== 'aborted') {
+                UI.toast(msg, 'warning');
+              }
             }
-          },
-          onend: () => {
-            clearInterval(timer);
-            const wpm = Math.round(words.length * 2); // ~30s session
-            const fillerRate = words.length ? fillers / words.length : 0;
-            self._results.push({task: task.label, wpm, fillerRate, words: words.length, fillers});
-            document.getElementById('assess-fb').innerHTML = `<p>✅ Recorded. WPM ≈ ${wpm} · Fillers: ${fillers}</p>`;
-            setTimeout(() => { self._task++; self.render(el); }, 1500);
-          },
-          onerror: msg => { clearInterval(timer); UI.toast(msg, 'error'); startBtn.disabled = false; startBtn.textContent = '🎤 Start Recording (30s)'; }
+          });
         });
-      });
-    } else {
-      document.getElementById('assess-typed-submit').addEventListener('click', () => {
-        const text = document.getElementById('assess-typed').value.trim();
+      }
+
+      if (finishBtn) {
+        finishBtn.addEventListener('click', () => {
+          _finishAssessment();
+        });
+      }
+
+    const typedSubmit = document.getElementById('assess-typed-submit');
+    if (typedSubmit) {
+      typedSubmit.addEventListener('click', () => {
+        const text = (document.getElementById('assess-typed').value || '').trim();
         const words = U.tokenise(text);
         self._results.push({task: task.label, wpm: words.length * 2, fillerRate: 0, words: words.length, fillers: 0});
         self._task++;
@@ -500,10 +585,11 @@ VIEWS.listening = {
       content = `
       <div class="listening-dict">
         <p class="sub">Listen to the sentence, then type what you hear.</p>
-        <div class="dict-sentence">${passage.dictation}</div>
-        <div class="dict-controls">
+        <div class="dict-sentence" id="dict-revealed-sentence" style="display:none;background:var(--bg1);padding:10px 14px;border-radius:10px;margin-bottom:12px;border:1px solid var(--border);font-style:italic;">${passage.dictation}</div>
+        <div class="dict-controls" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
           <button class="btn-primary" data-say="${passage.dictation}">🔊 Normal</button>
           <button class="btn-secondary" id="dict-slow">🐢 Slow</button>
+          <button class="btn-sm btn-ghost" id="dict-peek-btn">👁️ Peek Hint</button>
         </div>
         <input type="text" id="dict-input" placeholder="Type what you heard..." autocorrect="off" spellcheck="false" />
         <button class="btn-primary" id="dict-check">Check</button>
@@ -555,8 +641,19 @@ VIEWS.listening = {
         });
       });
     } else {
+      const peekBtn = document.getElementById('dict-peek-btn');
+      if (peekBtn) {
+        peekBtn.addEventListener('click', () => {
+          const sentEl = document.getElementById('dict-revealed-sentence');
+          if (sentEl) {
+            sentEl.style.display = sentEl.style.display === 'none' ? 'block' : 'none';
+          }
+        });
+      }
       document.getElementById('dict-slow').addEventListener('click', () => SPEECH.speakSlow(passage.dictation));
       document.getElementById('dict-check').addEventListener('click', () => {
+        const sentEl = document.getElementById('dict-revealed-sentence');
+        if (sentEl) { sentEl.style.display = 'block'; }
         const ans = document.getElementById('dict-input').value.trim();
         const aligned = U.align(passage.dictation, ans);
         const v = U.verdict(aligned);
@@ -610,6 +707,8 @@ VIEWS.atlas = {
           <ul class="tense-examples">${examples}</ul>
           <div class="warn-box">⚠️ ${tense.desiTrap}</div>
           <div class="detective-clue">🕵️ Detective clue: ${tense.detectiveClue}</div>
+          <div class="section-title">🎤 Practice Speaking an Example</div>
+          <div id="atlas-practice-slot"></div>
         </div>`;
       }
     } else {
@@ -637,6 +736,18 @@ VIEWS.atlas = {
 
     document.getElementById('atlas-browse').addEventListener('click', () => { self._mode = 'browse'; self.render(el); });
     document.getElementById('atlas-detective').addEventListener('click', () => { self._mode = 'detective'; self.render(el); });
+
+    if (selected && mode === 'browse') {
+      const tense = ATLAS.find(t => t.id === selected);
+      const slot = document.getElementById('atlas-practice-slot');
+      if (tense && slot && tense.examples && tense.examples.length) {
+        UI.practiceBar(slot, {
+          prompt: 'Say: "' + tense.examples[0] + '"',
+          expected: tense.examples[0],
+          skill: 'grammar'
+        });
+      }
+    }
 
     if (mode === 'detective') {
       const detOpts = document.getElementById('det-opts');

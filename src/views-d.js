@@ -144,22 +144,31 @@ VIEWS.daily = {
         return;
       }
       const btn = document.getElementById('daily-quote-btn');
-      btn.textContent = '🔴 Listening…'; btn.disabled = true;
+      btn.textContent = '🔊 Playing model…'; btn.disabled = true;
       SPEECH.speak(quote.text, {
         onend: () => {
+          btn.textContent = '🔴 Listening… speak now!';
+          btn.classList.add('pulse');
           SPEECH.listen({
-            onresult: t => {
-              const aligned = U.align(quote.text, t);
-              const v = U.verdict(aligned);
-              document.getElementById('quote-fb').innerHTML = UI.scoreHTML(aligned);
-              _markDone('quote', done, today);
-              TRAINER.log({skill: 'fluency', delta: v === 'pass' ? 2 : 1, source: 'daily/quote'});
-              STORE.addXP(5);
-              btn.textContent = '🎤 Shadow it'; btn.disabled = false;
+            interim: true,
+            continuous: true,
+            onresult: (t, isFinal) => {
+              if (isFinal) {
+                const aligned = U.align(quote.text, t);
+                const v = U.verdict(aligned);
+                document.getElementById('quote-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Great fluency!' : '🟡 Good practice!'}</p>`;
+                _markDone('quote', done, today);
+                TRAINER.log({skill: 'fluency', delta: v === 'pass' ? 2 : 1, source: 'daily/quote'});
+                STORE.addXP(5);
+                btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse');
+              }
             },
-            onend: () => { btn.textContent = '🎤 Shadow it'; btn.disabled = false; },
-            onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Shadow it'; btn.disabled = false; }
+            onend: () => { btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse'); },
+            onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse'); }
           });
+        },
+        onerror: () => {
+          btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse');
         }
       });
     });
@@ -361,14 +370,19 @@ VIEWS.lesson = {
       }
     }
 
+    const m1 = lesson.missions[0];
+    const m2 = lesson.missions[1];
+
     UI.practiceBar(document.getElementById('mission1'), {
-      expected: lesson.missions[0].prompt,
+      prompt: m1.prompt,
+      expected: m1.expected || m1.prompt.replace(/^Say:\s*["']?|["']$/g, '').trim(),
       skill: 'fluency',
       onPass: () => { m1done = true; checkComplete(); }
     });
 
     UI.practiceBar(document.getElementById('mission2'), {
-      expected: lesson.missions[1].prompt,
+      prompt: m2.prompt,
+      expected: m2.expected || m2.prompt.replace(/^Say:\s*["']?|["']$/g, '').trim(),
       skill: 'fluency',
       onPass: () => { m2done = true; checkComplete(); }
     });
@@ -391,39 +405,77 @@ VIEWS.clarity = {
     let content = '';
     if (tab === 'stress') {
       content = `<div class="stress-grid">` +
-        CLARITY_DATA.stress.map(s => `
-          <div class="stress-card">
-            <div class="stress-word">${s.word}</div>
-            <div class="stress-row">
-              <button class="btn-sm" data-say="${s.word}">🔊 Noun</button>
-              <span class="stress-note">${s.note}</span>
-              <button class="btn-sm" data-say="${s.word}">🔊 Verb</button>
+        CLARITY_DATA.stress.map(s => {
+          const nounContext = (/^[aeiou]/i.test(s.word) ? 'an ' : 'a ') + s.word;
+          const verbContext = 'to ' + s.word;
+          return `
+          <div class="stress-card" style="padding:16px;background:var(--bg1);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <strong style="font-size:1.2rem;color:var(--pri);text-transform:capitalize;">${s.word}</strong>
+              <button class="btn-sm btn-primary cl-practice-trigger" data-target="${s.word}">🎤 Practice</button>
             </div>
-          </div>`).join('') + `</div>`;
+            <div class="stress-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn-sm btn-ghost" data-say="${nounContext}" title="Hear first-syllable noun stress">🔊 Noun (${nounContext})</button>
+              <span class="stress-note" style="color:var(--mut);font-size:0.9rem;">${s.note}</span>
+              <button class="btn-sm btn-ghost" data-say="${verbContext}" title="Hear second-syllable verb stress">🔊 Verb (${verbContext})</button>
+            </div>
+          </div>`;
+        }).join('') + `</div>`;
     } else if (tab === 'rhythm') {
       content = `<div class="rhythm-list">` +
         CLARITY_DATA.rhythm.map(r => `
-          <div class="rhythm-card">
-            <p class="rhythm-sent" data-say="${r.sent}">${r.sent} <button class="btn-sm" data-say="${r.sent}">🔊</button></p>
-            <div class="rhythm-stressed">Stressed: ${r.stressed.map(w => `<strong>${w}</strong>`).join(', ')}</div>
-            <div class="rhythm-note">${r.note}</div>
+          <div class="rhythm-card" style="padding:16px;background:var(--bg1);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <p class="rhythm-sent" data-say="${r.sent}" style="margin:0;font-size:1.05rem;font-weight:700;">${r.sent}</p>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm btn-ghost" data-say="${r.sent}">🔊 Hear</button>
+                <button class="btn-sm btn-primary cl-practice-trigger" data-target="${r.sent}">🎤 Practice</button>
+              </div>
+            </div>
+            <div class="rhythm-stressed" style="font-size:0.9rem;color:var(--accent);margin-bottom:4px;">Stressed words: ${r.stressed.map(w => `<strong>${w}</strong>`).join(', ')}</div>
+            <div class="rhythm-note" style="font-size:0.85rem;color:var(--mut);">${r.note}</div>
           </div>`).join('') + `</div>`;
     } else {
       content = `<div class="connected-grid">` +
         CLARITY_DATA.connected.map(c => `
-          <div class="connected-card">
-            <span class="conn-normal">${c.normal}</span>
-            <span class="conn-arrow">→</span>
-            <span class="conn-natural" data-say="${c.natural}">${c.natural} 🔊</span>
-            <div class="conn-note">${c.note}</div>
+          <div class="connected-card" style="padding:16px;background:var(--bg1);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <div>
+                <span class="conn-normal" style="color:var(--mut);">${c.normal}</span>
+                <span class="conn-arrow" style="margin:0 8px;">→</span>
+                <strong class="conn-natural" data-say="${c.natural}" style="color:var(--pri);font-size:1.1rem;">${c.natural} 🔊</strong>
+              </div>
+              <button class="btn-sm btn-primary cl-practice-trigger" data-target="${c.natural}">🎤 Practice</button>
+            </div>
+            <div class="conn-note" style="font-size:0.85rem;color:var(--mut);">${c.note}</div>
           </div>`).join('') + `</div>`;
     }
 
-    el.innerHTML = `<div class="view-clarity"><h1>🎯 Clarity Studio</h1><p class="sub">Stress · Rhythm · Intonation · Connected Speech</p>${tabBar}<div class="tab-content">${content}</div></div>`;
+    el.innerHTML = `<div class="view-clarity">
+      <h1>🎯 Clarity Studio</h1>
+      <p class="sub">Stress · Rhythm · Intonation · Connected Speech</p>
+      ${tabBar}
+      <div class="tab-content">
+        ${content}
+        <div id="clarity-practice-slot" style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;"></div>
+      </div>
+    </div>`;
 
     document.getElementById('tab-stress').addEventListener('click', () => { self._tab = 'stress'; self.render(el); });
     document.getElementById('tab-rhythm').addEventListener('click', () => { self._tab = 'rhythm'; self.render(el); });
     document.getElementById('tab-connected').addEventListener('click', () => { self._tab = 'connected'; self.render(el); });
+
+    const triggers = el.querySelectorAll('.cl-practice-trigger');
+    triggers.forEach(trig => {
+      trig.addEventListener('click', () => {
+        const target = trig.getAttribute('data-target');
+        const slot = document.getElementById('clarity-practice-slot');
+        if (slot && target) {
+          UI.practiceBar(slot, { prompt: 'Say: "' + target + '"', expected: target, skill: 'clarity' });
+          slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
   }
 };
 
@@ -576,13 +628,62 @@ VIEWS.doctor = {
     el.innerHTML = `
     <div class="view-doctor">
       <h1>🩺 Sentence Doctor</h1>
-      <p class="sub">Paste any sentence — get instant diagnosis with fixes.</p>
+      <p class="sub">Paste or speak any sentence — get instant diagnosis with fixes.</p>
       <div class="doctor-input">
-        <textarea id="doctor-text" rows="4" placeholder="Type or paste a sentence or paragraph here..."></textarea>
-        <button class="btn-primary" id="doctor-check">🩺 Diagnose</button>
+        <textarea id="doctor-text" rows="4" placeholder="Type, paste, or speak a sentence or paragraph here..."></textarea>
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-primary" id="doctor-check">🩺 Diagnose</button>
+          <button class="btn-secondary" id="doctor-mic">🎙️ Speak Sentence</button>
+        </div>
       </div>
       <div id="doctor-results"></div>
     </div>`;
+
+    const micBtn = document.getElementById('doctor-mic');
+    if (micBtn) {
+      let isListening = false;
+      micBtn.addEventListener('click', () => {
+        if (!SPEECH.canListen()) {
+          UI.toast('Speech recognition not available on this browser. Type your sentence above.', 'warning');
+          return;
+        }
+        if (isListening) {
+          SPEECH.stopListening();
+          isListening = false;
+          micBtn.textContent = '🎙️ Speak Sentence';
+          micBtn.classList.remove('pulse');
+          return;
+        }
+        isListening = true;
+        micBtn.textContent = '⏹️ Stop Listening';
+        micBtn.classList.add('pulse');
+        SPEECH.listen({
+          interim: true,
+          continuous: true,
+          onresult: (t, isFinal) => {
+            const ta = document.getElementById('doctor-text');
+            if (ta) { ta.value = t; }
+            if (isFinal) {
+              isListening = false;
+              micBtn.textContent = '🎙️ Speak Sentence';
+              micBtn.classList.remove('pulse');
+              document.getElementById('doctor-check').click();
+            }
+          },
+          onend: () => {
+            isListening = false;
+            micBtn.textContent = '🎙️ Speak Sentence';
+            micBtn.classList.remove('pulse');
+          },
+          onerror: (msg, code) => {
+            isListening = false;
+            micBtn.textContent = '🎙️ Speak Sentence';
+            micBtn.classList.remove('pulse');
+            if (code !== 'aborted') { UI.toast(msg, 'warning'); }
+          }
+        });
+      });
+    }
 
     document.getElementById('doctor-check').addEventListener('click', () => {
       const text = document.getElementById('doctor-text').value.trim();

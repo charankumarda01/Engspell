@@ -3,6 +3,10 @@
    VIEWS.spelling, VIEWS.phrases, VIEWS.scenarios
    ===================================================================== */
 
+function _escB(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /* ── SPELLING TRAINER ───────────────────────────────────────────────── */
 VIEWS.spelling = {
   _level: 1,
@@ -25,12 +29,14 @@ VIEWS.spelling = {
     levelBtns += '</div>';
 
     var mastery = STORE.getMastery('spell_' + current.w);
+    var clueHtml = current.def ? ('<div class="spell-clue" style="font-size:0.9rem;color:var(--txt);background:var(--bg1);padding:8px 12px;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);">💡 <strong>Definition clue:</strong> ' + _escB(current.def) + '</div>') : '';
 
     el.innerHTML = '<div class="view-spelling">' +
       '<h1>🔤 Spelling Trainer</h1>' +
       levelBtns +
       '<div class="spell-game">' +
       '<p class="sub">Listen to the word and type what you hear.</p>' +
+      clueHtml +
       '<div class="spell-progress">' + (self._idx + 1) + ' / ' + self._round.length + '</div>' +
       '<div class="mastery-dots big">' + _masteryDots(mastery) + '</div>' +
       '<button class="btn-primary" id="spell-play">🔊 Hear the Word</button>' +
@@ -61,7 +67,8 @@ VIEWS.spelling = {
       var ans = document.getElementById('spell-ans').value.trim().toLowerCase();
       var fb = document.getElementById('spell-feedback');
       if (ans === current.w) {
-        fb.innerHTML = '<p class="verdict pass">✅ Correct! The word is: <strong>' + current.w + '</strong></p>';
+        var ruleHtml = current.rule ? ('<div style="margin-top:6px;font-size:0.85rem;color:var(--ok);">💡 <strong>Rule:</strong> ' + _escB(current.rule) + '</div>') : '';
+        fb.innerHTML = '<p class="verdict pass">✅ Correct! The word is: <strong>' + _escB(current.w) + '</strong></p>' + ruleHtml;
         STORE.master('spell_' + current.w, true);
         TRAINER.log({skill: 'spelling', delta: 2, source: 'spelling/correct'});
         STORE.addXP(5);
@@ -70,7 +77,8 @@ VIEWS.spelling = {
           self.render(el);
         }, 1500);
       } else {
-        fb.innerHTML = '<p class="verdict fail">❌ The correct spelling is: <strong>' + current.w + '</strong></p>';
+        var wrongRuleHtml = current.rule ? ('<div style="margin-top:8px;padding:8px 12px;background:rgba(245,158,11,0.1);border-left:4px solid var(--warn);border-radius:6px;font-size:0.9rem;color:var(--txt);text-align:left;">💡 <strong>Spelling rule / mnemonic:</strong> ' + _escB(current.rule) + '</div>') : '';
+        fb.innerHTML = '<p class="verdict fail">❌ The correct spelling is: <strong>' + _escB(current.w) + '</strong></p>' + wrongRuleHtml;
         STORE.master('spell_' + current.w, false);
         TRAINER.log({skill: 'spelling', delta: -1, source: 'spelling/wrong'});
       }
@@ -238,12 +246,16 @@ VIEWS.phrases = {
           var mStr = itm.m || '';
           var sStr = itm.sit || '';
           content += '<div class="phrase-card" style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:14px;">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">' +
-            '<span class="phrase-text" style="font-size:1.05rem;font-weight:700;color:var(--txt);" data-say="' + pStr + '">' + pStr + '</span>' +
-            '<button class="btn-sm btn-ghost" data-say="' + pStr + '" title="Hear native pronunciation">🔊 Hear</button>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">' +
+            '<span class="phrase-text" style="font-size:1.05rem;font-weight:700;color:var(--txt);" data-say="' + _escB(pStr) + '">' + _escB(pStr) + '</span>' +
+            '<div style="display:flex;gap:6px;align-items:center;">' +
+            '<button class="btn-sm btn-ghost" data-say="' + _escB(pStr) + '" title="Hear native pronunciation">🔊 Hear</button>' +
+            '<button class="btn-sm btn-primary pb-practise-phrase-btn" data-phrase="' + _escB(pStr) + '">🎤 Practice</button>' +
             '</div>' +
-            (mStr ? '<div style="font-size:0.9rem;color:var(--mut);margin-bottom:4px;">💡 <strong>What it means:</strong> ' + mStr + '</div>' : '') +
-            (sStr ? '<div style="font-size:0.85rem;color:var(--ok);">🎯 <strong>When to use:</strong> ' + sStr + '</div>' : '') +
+            '</div>' +
+            (mStr ? '<div style="font-size:0.9rem;color:var(--mut);margin-bottom:4px;">💡 <strong>What it means:</strong> ' + _escB(mStr) + '</div>' : '') +
+            (sStr ? '<div style="font-size:0.85rem;color:var(--ok);">🎯 <strong>When to use:</strong> ' + _escB(sStr) + '</div>' : '') +
+            '<div class="phrase-inline-practice" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);"></div>' +
             '</div>';
         }
         content += '</div></div>';
@@ -256,6 +268,32 @@ VIEWS.phrases = {
     document.getElementById('tab-builds').addEventListener('click', function () { self._tab = 'builds'; self.render(el); });
     document.getElementById('tab-blanks').addEventListener('click', function () { self._tab = 'blanks'; self.render(el); });
     document.getElementById('tab-phrasebook').addEventListener('click', function () { self._tab = 'phrasebook'; self.render(el); });
+
+    if (tab === 'phrasebook') {
+      var practiceBtns = el.querySelectorAll ? el.querySelectorAll('.pb-practise-phrase-btn') : [];
+      for (var pbi = 0; pbi < practiceBtns.length; pbi++) {
+        (function (pBtn) {
+          pBtn.addEventListener('click', function () {
+            var phrase = pBtn.getAttribute('data-phrase');
+            var card = pBtn.closest ? pBtn.closest('.phrase-card') : null;
+            if (card) {
+              var box = card.querySelector('.phrase-inline-practice');
+              if (box) {
+                if (box.style.display === 'none') {
+                  box.style.display = 'block';
+                  UI.practiceBar(box, { prompt: 'Say: "' + phrase + '"', expected: phrase, skill: 'fluency' });
+                  pBtn.textContent = '✕ Close';
+                } else {
+                  box.style.display = 'none';
+                  box.innerHTML = '';
+                  pBtn.textContent = '🎤 Practice';
+                }
+              }
+            }
+          });
+        }(practiceBtns[pbi]));
+      }
+    }
 
     if (tab === 'builds') {
       document.getElementById('phrase-show').addEventListener('click', function () {
@@ -378,14 +416,30 @@ function _renderScenario(el, sc) {
       micBtn.addEventListener('click', function () {
         micBtn.textContent = '🔴 Listening…';
         micBtn.disabled = true;
+        micBtn.classList.add('pulse');
         SPEECH.listen({
-          onresult: function (t) {
-            document.getElementById('sc-input').value = t;
+          interim: true,
+          continuous: true,
+          onresult: function (t, isFinal) {
+            var inp = document.getElementById('sc-input');
+            if (inp) { inp.value = t; }
+            if (isFinal) {
+              micBtn.textContent = '🎤 Speak';
+              micBtn.disabled = false;
+              micBtn.classList.remove('pulse');
+            }
+          },
+          onend: function () {
             micBtn.textContent = '🎤 Speak';
             micBtn.disabled = false;
+            micBtn.classList.remove('pulse');
           },
-          onend: function () { micBtn.textContent = '🎤 Speak'; micBtn.disabled = false; },
-          onerror: function (m) { UI.toast(m, 'error'); micBtn.textContent = '🎤 Speak'; micBtn.disabled = false; }
+          onerror: function (m, code) {
+            micBtn.textContent = '🎤 Speak';
+            micBtn.disabled = false;
+            micBtn.classList.remove('pulse');
+            if (code !== 'aborted') { UI.toast(m, 'error'); }
+          }
         });
       });
     }

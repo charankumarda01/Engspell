@@ -3303,6 +3303,82 @@ tryv('Instant Win: SPEECH.listen accumulates multi-segment continuous transcript
   }
 });
 
+console.log('\n🌟 Complete 10/10 WebApp Excellence & Speech Diagnostic Verification');
+
+tryv('10/10: SPELLING has def and rule on all 60 items', function () {
+  if (!SPELLING || SPELLING.length !== 60) return false;
+  return SPELLING.every(function (item) {
+    return typeof item.w === 'string' &&
+           typeof item.def === 'string' && item.def.length > 5 &&
+           typeof item.rule === 'string' && item.rule.length > 5;
+  });
+});
+
+tryv('10/10: VIEWS.spelling renders definition clue', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.spelling._level = 1;
+  VIEWS.spelling._round = [];
+  VIEWS.spelling.render(mockEl);
+  return mockEl.innerHTML.indexOf('spell-clue') !== -1 &&
+         mockEl.innerHTML.indexOf('Definition clue:') !== -1;
+});
+
+tryv('10/10: VIEWS.phrases renders practice buttons for phrasebook items', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.phrases._tab = 'phrasebook';
+  VIEWS.phrases.render(mockEl);
+  return mockEl.innerHTML.indexOf('pb-practise-phrase-btn') !== -1 &&
+         mockEl.innerHTML.indexOf('phrase-inline-practice') !== -1;
+});
+
+tryv('10/10: Speaking assessment renders live card and word counters', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.assessment._task = 0;
+  VIEWS.assessment.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('assess-live-card') !== -1 &&
+         html.indexOf('assess-live-wc') !== -1 &&
+         html.indexOf('assess-finish') !== -1 &&
+         html.indexOf('assess-typed-wrap') !== -1;
+});
+
+tryv('10/10: Listening Lab dictation hides sentence by default and provides peek button', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.listening._tab = 'dictation';
+  VIEWS.listening.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('dict-revealed-sentence') !== -1 &&
+         html.indexOf('style="display:none;') !== -1 &&
+         html.indexOf('dict-peek-btn') !== -1;
+});
+
+tryv('10/10: Sentence Doctor renders mic button for spoken diagnosis', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.doctor.render(mockEl);
+  return mockEl.innerHTML.indexOf('doctor-mic') !== -1 &&
+         mockEl.innerHTML.indexOf('🎙️ Speak Sentence') !== -1;
+});
+
+tryv('10/10: Clarity Studio renders contextual noun/verb audio and practice slot', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.clarity._tab = 'stress';
+  VIEWS.clarity.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('data-say="a present"') !== -1 &&
+         html.indexOf('data-say="to present"') !== -1 &&
+         html.indexOf('clarity-practice-slot') !== -1 &&
+         html.indexOf('cl-practice-trigger') !== -1;
+});
+
+tryv('10/10: Grammar Atlas tense detail renders practice slot', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.atlas._mode = 'browse';
+  VIEWS.atlas._selected = 't1';
+  VIEWS.atlas.render(mockEl);
+  return mockEl.innerHTML.indexOf('atlas-practice-slot') !== -1 &&
+         mockEl.innerHTML.indexOf('Practice Speaking an Example') !== -1;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

@@ -3317,23 +3317,68 @@ var TWISTERS = [
 
 var SPELLING = [
   // Level 1
-  {w:'receive',lvl:1},{w:'believe',lvl:1},{w:'achieve',lvl:1},{w:'friend',lvl:1},
-  {w:'because',lvl:1},{w:'different',lvl:1},{w:'people',lvl:1},{w:'every',lvl:1},
-  {w:'really',lvl:1},{w:'again',lvl:1},{w:'always',lvl:1},{w:'another',lvl:1},
-  {w:'before',lvl:1},{w:'coming',lvl:1},{w:'doesn\'t',lvl:1},{w:'enough',lvl:1},
-  {w:'especially',lvl:1},{w:'finally',lvl:1},{w:'government',lvl:1},{w:'happened',lvl:1},
+  {w:'receive', lvl:1, def:"To get or accept something sent or given.", rule:"i before e except after c (r-e-c-e-i-v-e)."},
+  {w:'believe', lvl:1, def:"To accept as true or feel sure about.", rule:"Never be-lie-ve a lie — there is a \"lie\" in believe."},
+  {w:'achieve', lvl:1, def:"To successfully reach a desired objective or goal.", rule:"i before e: a-c-h-i-e-v-e."},
+  {w:'friend', lvl:1, def:"A person you know well and regard with affection.", rule:"A fri-end to the end — ends in e-n-d."},
+  {w:'because', lvl:1, def:"For the reason that; since.", rule:"Mnemonic: Big Elephants Can Always Understand Small Elephants."},
+  {w:'different', lvl:1, def:"Not the same as another; distinct.", rule:"Double f, ends in -ent (d-i-f-f-e-r-e-n-t)."},
+  {w:'people', lvl:1, def:"Human beings in general or collectively.", rule:"Mnemonic: People Eat Omelettes People Like Eggs."},
+  {w:'every', lvl:1, def:"All the individual items or members in a group.", rule:"Starts with e-v-e-r (not evry)."},
+  {w:'really', lvl:1, def:"In actual fact; genuinely or truly.", rule:"real + ly = double l (r-e-a-l-l-y)."},
+  {w:'again', lvl:1, def:"Another time; once more.", rule:"a + gain: a-g-a-i-n (not agen)."},
+  {w:'always', lvl:1, def:"At all times; on every occasion.", rule:"Single l: al-ways (never allways)."},
+  {w:'another', lvl:1, def:"One more in addition to what exists.", rule:"an + other = single word (a-n-o-t-h-e-r)."},
+  {w:'before', lvl:1, def:"During the period preceding a time or event.", rule:"be + fore (ends in silent e)."},
+  {w:'coming', lvl:1, def:"Moving or travelling toward a destination.", rule:"Drop the silent e from \"come\" before adding -ing."},
+  {w:"doesn't", lvl:1, def:"Contraction of \"does not\".", rule:"does + n't (apostrophe replaces the missing o)."},
+  {w:'enough', lvl:1, def:"As much or as many as required.", rule:"Ends in -ough sounding like \"uff\" (e-n-o-u-g-h)."},
+  {w:'especially', lvl:1, def:"Used to single out one person or thing above all.", rule:"e + specially (starts with e, not ex)."},
+  {w:'finally', lvl:1, def:"After a long time, typically involving difficulty.", rule:"final + ly = double l (f-i-n-a-l-l-y)."},
+  {w:'government', lvl:1, def:"The group of people with authority to govern.", rule:"Remember the silent n: govern + ment."},
+  {w:'happened', lvl:1, def:"Took place or came about by chance.", rule:"Double p, regular past tense ends in -ed."},
   // Level 2
-  {w:'necessary',lvl:2},{w:'occurrence',lvl:2},{w:'accommodation',lvl:2},{w:'separate',lvl:2},
-  {w:'embarrass',lvl:2},{w:'definitely',lvl:2},{w:'immediately',lvl:2},{w:'successful',lvl:2},
-  {w:'experience',lvl:2},{w:'beautiful',lvl:2},{w:'knowledge',lvl:2},{w:'environment',lvl:2},
-  {w:'opportunity',lvl:2},{w:'communication',lvl:2},{w:'unfortunately',lvl:2},{w:'behaviour',lvl:2},
-  {w:'interesting',lvl:2},{w:'development',lvl:2},{w:'information',lvl:2},{w:'professional',lvl:2},
+  {w:'necessary', lvl:2, def:"Required to be done, achieved, or present; essential.", rule:"1 Collar, 2 Sleeves: 1 c and 2 s's (n-e-c-e-s-s-a-r-y)."},
+  {w:'occurrence', lvl:2, def:"An incident or event that happens.", rule:"Double c and double r: o-c-c-u-r-r-e-n-c-e."},
+  {w:'accommodation', lvl:2, def:"A room or building in which someone may stay.", rule:"2 Cats, 2 Mice: 2 c's and 2 m's (a-c-c-o-m-m-o-d-a-t-i-o-n)."},
+  {w:'separate', lvl:2, def:"Forming or viewed as a unit by itself; not joined.", rule:"There is \"a rat\" in sep-a-rat-e."},
+  {w:'embarrass', lvl:2, def:"Cause someone to feel awkward or ashamed.", rule:"2 Red roses, 2 Sweet kisses: 2 r's and 2 s's."},
+  {w:'definitely', lvl:2, def:"Without doubt; clearly and unambiguously.", rule:"Contains the word \"finite\": de-finite-ly (no \"a\")."},
+  {w:'immediately', lvl:2, def:"At once; instantly without delay.", rule:"Double m, ends in -ately (i-m-m-e-d-i-a-t-e-l-y)."},
+  {w:'successful', lvl:2, def:"Accomplishing an aim or desired result.", rule:"Double c, double s, single l at the end."},
+  {w:'experience', lvl:2, def:"Practical contact with and observation of facts.", rule:"Starts with ex-, ends with -ience (e-x-p-e-r-i-e-n-c-e)."},
+  {w:'beautiful', lvl:2, def:"Pleasing the senses or mind aesthetically.", rule:"Mnemonic: Big Elephants Are Under The Tree (B-E-A-U-tiful)."},
+  {w:'knowledge', lvl:2, def:"Facts, information, and skills acquired through learning.", rule:"Silent k, ends with d-g-e (k-n-o-w-l-e-d-g-e)."},
+  {w:'environment', lvl:2, def:"The surroundings or conditions in which one lives.", rule:"Remember the middle n: envi-ron-ment."},
+  {w:'opportunity', lvl:2, def:"A set of circumstances making it possible to do something.", rule:"Double p, single t (o-p-p-o-r-t-u-n-i-t-y)."},
+  {w:'communication', lvl:2, def:"Imparting or exchanging information by speaking or writing.", rule:"Double m: com-mu-ni-ca-tion."},
+  {w:'unfortunately', lvl:2, def:"Regrettably or unluckily.", rule:"un + fortune + ate + ly (u-n-f-o-r-t-u-n-a-t-e-l-y)."},
+  {w:'behaviour', lvl:2, def:"The way in which one acts or conducts oneself.", rule:"International/British spelling keeps the -our ending."},
+  {w:'interesting', lvl:2, def:"Arousing curiosity or holding attention.", rule:"Four syllables: in-ter-est-ing (don't drop the first e)."},
+  {w:'development', lvl:2, def:"The process of developing, growing, or maturing.", rule:"No \"e\" after p: de-vel-op-ment (not developement)."},
+  {w:'information', lvl:2, def:"Facts provided or learned about something.", rule:"in-for-ma-tion (always uncountable; no -s)."},
+  {w:'professional', lvl:2, def:"Relating to or connected with a profession.", rule:"Single f, double s (p-r-o-f-e-s-s-i-o-n-a-l)."},
   // Level 3
-  {w:'conscientious',lvl:3},{w:'bureaucracy',lvl:3},{w:'reconnaissance',lvl:3},{w:'lieutenant',lvl:3},
-  {w:'onomatopoeia',lvl:3},{w:'entrepreneurial',lvl:3},{w:'unequivocally',lvl:3},{w:'pseudonym',lvl:3},
-  {w:'pneumonia',lvl:3},{w:'phlegm',lvl:3},{w:'colonel',lvl:3},{w:'miscellaneous',lvl:3},
-  {w:'mediterranean',lvl:3},{w:'perseverance',lvl:3},{w:'conscientiously',lvl:3},{w:'entrepreneur',lvl:3},
-  {w:'acquaintance',lvl:3},{w:'questionnaire',lvl:3},{w:'unnecessary',lvl:3},{w:'sophisticated',lvl:3}
+  {w:'conscientious', lvl:3, def:"Wishing to do one's work thoroughly and well.", rule:"sci (science) + ent + ious: con-sci-en-tious."},
+  {w:'bureaucracy', lvl:3, def:"System of government with many non-elected officials.", rule:"French root bureau (desk) + cracy: b-u-r-e-a-u-c-r-a-c-y."},
+  {w:'reconnaissance', lvl:3, def:"Military observation of a region to locate an enemy.", rule:"Double n, double s: r-e-c-o-n-n-a-i-s-s-a-n-c-e."},
+  {w:'lieutenant', lvl:3, def:"A deputy or military officer holding commission.", rule:"French \"lieu\" (place) + tenant: l-i-e-u-t-e-n-a-n-t."},
+  {w:'onomatopoeia', lvl:3, def:"The naming of a thing by a vocal imitation of its sound.", rule:"o-n-o-m-a-t-o-p-o-e-i-a (ends in -oeia)."},
+  {w:'entrepreneurial', lvl:3, def:"Characterized by taking financial risks with initiative.", rule:"entre + pre + neur + i + al."},
+  {w:'unequivocally', lvl:3, def:"In a way that leaves no doubt; unambiguously.", rule:"un + equi + vocal + ly (u-n-e-q-u-i-v-o-c-a-l-l-y)."},
+  {w:'pseudonym', lvl:3, def:"A fictitious name, especially one used by an author.", rule:"Silent p: pseudo (false) + nym (name)."},
+  {w:'pneumonia', lvl:3, def:"Lung inflammation caused by bacterial or viral infection.", rule:"Silent p: p-n-e-u-m-o-n-i-a."},
+  {w:'phlegm', lvl:3, def:"Thick mucus secreted in the respiratory passages.", rule:"Silent g before m: p-h-l-e-g-m."},
+  {w:'colonel', lvl:3, def:"An officer of high rank in the armed forces.", rule:"Pronounced \"kernel\", spelled c-o-l-o-n-e-l."},
+  {w:'miscellaneous', lvl:3, def:"Composed of members or elements of different kinds.", rule:"Double l, ends in -eous: m-i-s-c-e-l-l-a-n-e-o-u-s."},
+  {w:'mediterranean', lvl:3, def:"The sea between southern Europe and northern Africa.", rule:"medi + terr (earth) + anean: double r, single n."},
+  {w:'perseverance', lvl:3, def:"Persistence in doing something despite difficulty or delay.", rule:"per-se-ver-ance (ends in -ance, not -ence)."},
+  {w:'conscientiously', lvl:3, def:"In a thorough, vigilant, and careful manner.", rule:"conscientious + ly (c-o-n-s-c-i-e-n-t-i-o-u-s-l-y)."},
+  {w:'entrepreneur', lvl:3, def:"A person who sets up a business, taking financial risks.", rule:"French ending -neur: e-n-t-r-e-p-r-e-n-e-u-r."},
+  {w:'acquaintance', lvl:3, def:"A person one knows slightly, but who is not a close friend.", rule:"c before qu: a-c-q-u-a-i-n-t-a-n-c-e."},
+  {w:'questionnaire', lvl:3, def:"A written set of questions formulated to obtain information.", rule:"question + n + aire: double n (q-u-e-s-t-i-o-n-n-a-i-r-e)."},
+  {w:'unnecessary', lvl:3, def:"Not needed; more than is required.", rule:"un + necessary: double n, 1 c, 2 s (u-n-n-e-c-e-s-s-a-r-y)."},
+  {w:'sophisticated', lvl:3, def:"Having worldly experience and knowledge of fashion or culture.", rule:"ph produces the f sound: s-o-p-h-i-s-t-i-c-a-t-e-d."}
 ];
 
 var SCENARIOS = [
@@ -11881,6 +11926,8 @@ var UI = (function () {
    * Renders a mic/text fallback practice UI into el
    */
   function practiceBar(el, opts) {
+    if (!el) { return; }
+    opts = opts || {};
     var canListen = SPEECH.canListen();
     var inst = 'pb' + Math.floor(Math.random() * 1000000);
     var micId = inst + '-mic';
@@ -11888,17 +11935,22 @@ var UI = (function () {
     var inputId = inst + '-input';
     var checkId = inst + '-check';
     var resultId = inst + '-result';
+    var isListening = false;
+
+    var rawText = opts.expected || opts.prompt || '';
+    var cleanTarget = rawText.replace(/^Say:\s*["']?|["']$/gi, '').trim();
+    var promptDisplay = opts.prompt ? opts.prompt : ('Say it: ' + rawText);
 
     var html = '<div class="practice-bar">';
     html += '<div class="practice-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;">';
-    html += '<p class="practice-prompt" style="margin:0;"><strong>Say it:</strong> ' + opts.expected + '</p>';
+    html += '<p class="practice-prompt" style="margin:0;"><strong>' + (promptDisplay.indexOf('Say it:') === 0 ? '' : 'Say it: ') + promptDisplay + '</strong></p>';
     html += '<button class="btn-sm btn-ghost pb-hear-btn" id="' + hearId + '" title="Listen to native model">🔊 Model</button>';
     html += '</div>';
     if (canListen) {
       html += '<button class="btn-mic" id="' + micId + '">🎤 Start Speaking</button>';
     }
     html += '<div class="pb-typing" id="' + inst + '-typing-area">';
-    html += '<input type="text" id="' + inputId + '" placeholder="Type if mic unavailable..." />';
+    html += '<input type="text" id="' + inputId + '" placeholder="Type or speak words here..." />';
     html += '<button class="btn-check" id="' + checkId + '">Check</button>';
     html += '</div>';
     html += '<div id="' + resultId + '"></div>';
@@ -11908,14 +11960,17 @@ var UI = (function () {
     var resultEl = (el && el.querySelector ? el.querySelector('#' + resultId) : null) || document.getElementById(resultId);
     var inputEl = (el && el.querySelector ? el.querySelector('#' + inputId) : null) || document.getElementById(inputId);
     var hearBtn = (el && el.querySelector ? el.querySelector('#' + hearId) : null) || document.getElementById(hearId);
+    var micBtn = canListen ? ((el && el.querySelector ? el.querySelector('#' + micId) : null) || document.getElementById(micId)) : null;
+
     if (hearBtn) {
       hearBtn.addEventListener('click', function () {
-        SPEECH.speak(opts.expected);
+        SPEECH.speak(cleanTarget || rawText);
       });
     }
 
     function _evaluate(heard) {
-      var aligned = U.align(opts.expected, heard);
+      if (!heard || !heard.trim()) { return; }
+      var aligned = U.align(cleanTarget || rawText, heard);
       var v = U.verdict(aligned);
       if (resultEl) {
         resultEl.innerHTML = scoreHTML(aligned);
@@ -11934,36 +11989,49 @@ var UI = (function () {
       }
     }
 
-    if (canListen) {
-      var micBtn = (el && el.querySelector ? el.querySelector('#' + micId) : null) || document.getElementById(micId);
+    function _resetMic() {
+      isListening = false;
       if (micBtn) {
-        micBtn.addEventListener('click', function () {
-          micBtn.textContent = '🔴 Listening…';
-          micBtn.className = 'btn-mic listening';
-          micBtn.disabled = true;
-          SPEECH.listen({
-            interim: false,
-            onresult: function (transcript) {
-              if (inputEl) { inputEl.value = transcript; }
-              _evaluate(transcript);
-              micBtn.textContent = '🎤 Start Speaking';
-              micBtn.className = 'btn-mic';
-              micBtn.disabled = false;
-            },
-            onend: function () {
-              micBtn.textContent = '🎤 Start Speaking';
-              micBtn.className = 'btn-mic';
-              micBtn.disabled = false;
-            },
-            onerror: function (msg) {
-              UI.toast(msg, 'error');
-              micBtn.textContent = '🎤 Start Speaking';
-              micBtn.className = 'btn-mic';
-              micBtn.disabled = false;
-            }
-          });
-        });
+        micBtn.textContent = '🎤 Start Speaking';
+        micBtn.className = 'btn-mic';
+        micBtn.disabled = false;
       }
+    }
+
+    if (canListen && micBtn) {
+      micBtn.addEventListener('click', function () {
+        if (isListening) {
+          SPEECH.stopListening();
+          _resetMic();
+          return;
+        }
+        isListening = true;
+        micBtn.textContent = '⏹️ Stop Listening';
+        micBtn.className = 'btn-mic listening pulse';
+        SPEECH.listen({
+          interim: true,
+          continuous: true,
+          onresult: function (transcript, isFinal) {
+            if (inputEl) { inputEl.value = transcript; }
+            if (isFinal) {
+              _evaluate(transcript);
+              _resetMic();
+            }
+          },
+          onend: function () {
+            if (isListening && inputEl && inputEl.value) {
+              _evaluate(inputEl.value);
+            }
+            _resetMic();
+          },
+          onerror: function (msg, code) {
+            _resetMic();
+            if (code !== 'aborted') {
+              UI.toast(msg, 'warning');
+            }
+          }
+        });
+      });
     }
 
     var checkBtn = (el && el.querySelector ? el.querySelector('#' + checkId) : null) || document.getElementById(checkId);
@@ -12277,8 +12345,16 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     if (viewEl && !_saySbound) {
       viewEl.addEventListener('click', function (e) {
         var t = e.target;
-        if (t && t.getAttribute && t.getAttribute('data-say')) {
-          SPEECH.speakSlow(t.getAttribute('data-say'));
+        var btn = (t && t.closest) ? t.closest('[data-say]') : ((t && t.getAttribute && t.getAttribute('data-say')) ? t : null);
+        if (btn) {
+          var sayText = btn.getAttribute('data-say');
+          if (sayText) {
+            if ((btn.classList && btn.classList.contains('bad')) || btn.getAttribute('data-slow') === '1') {
+              SPEECH.speakSlow(sayText);
+            } else {
+              SPEECH.speak(sayText);
+            }
+          }
         }
       });
       _saySbound = true;
@@ -13505,6 +13581,10 @@ function _masteryDots(m) {
    VIEWS.spelling, VIEWS.phrases, VIEWS.scenarios
    ===================================================================== */
 
+function _escB(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /* ── SPELLING TRAINER ───────────────────────────────────────────────── */
 VIEWS.spelling = {
   _level: 1,
@@ -13527,12 +13607,14 @@ VIEWS.spelling = {
     levelBtns += '</div>';
 
     var mastery = STORE.getMastery('spell_' + current.w);
+    var clueHtml = current.def ? ('<div class="spell-clue" style="font-size:0.9rem;color:var(--txt);background:var(--bg1);padding:8px 12px;border-radius:8px;margin-bottom:12px;border:1px solid var(--border);">💡 <strong>Definition clue:</strong> ' + _escB(current.def) + '</div>') : '';
 
     el.innerHTML = '<div class="view-spelling">' +
       '<h1>🔤 Spelling Trainer</h1>' +
       levelBtns +
       '<div class="spell-game">' +
       '<p class="sub">Listen to the word and type what you hear.</p>' +
+      clueHtml +
       '<div class="spell-progress">' + (self._idx + 1) + ' / ' + self._round.length + '</div>' +
       '<div class="mastery-dots big">' + _masteryDots(mastery) + '</div>' +
       '<button class="btn-primary" id="spell-play">🔊 Hear the Word</button>' +
@@ -13563,7 +13645,8 @@ VIEWS.spelling = {
       var ans = document.getElementById('spell-ans').value.trim().toLowerCase();
       var fb = document.getElementById('spell-feedback');
       if (ans === current.w) {
-        fb.innerHTML = '<p class="verdict pass">✅ Correct! The word is: <strong>' + current.w + '</strong></p>';
+        var ruleHtml = current.rule ? ('<div style="margin-top:6px;font-size:0.85rem;color:var(--ok);">💡 <strong>Rule:</strong> ' + _escB(current.rule) + '</div>') : '';
+        fb.innerHTML = '<p class="verdict pass">✅ Correct! The word is: <strong>' + _escB(current.w) + '</strong></p>' + ruleHtml;
         STORE.master('spell_' + current.w, true);
         TRAINER.log({skill: 'spelling', delta: 2, source: 'spelling/correct'});
         STORE.addXP(5);
@@ -13572,7 +13655,8 @@ VIEWS.spelling = {
           self.render(el);
         }, 1500);
       } else {
-        fb.innerHTML = '<p class="verdict fail">❌ The correct spelling is: <strong>' + current.w + '</strong></p>';
+        var wrongRuleHtml = current.rule ? ('<div style="margin-top:8px;padding:8px 12px;background:rgba(245,158,11,0.1);border-left:4px solid var(--warn);border-radius:6px;font-size:0.9rem;color:var(--txt);text-align:left;">💡 <strong>Spelling rule / mnemonic:</strong> ' + _escB(current.rule) + '</div>') : '';
+        fb.innerHTML = '<p class="verdict fail">❌ The correct spelling is: <strong>' + _escB(current.w) + '</strong></p>' + wrongRuleHtml;
         STORE.master('spell_' + current.w, false);
         TRAINER.log({skill: 'spelling', delta: -1, source: 'spelling/wrong'});
       }
@@ -13740,12 +13824,16 @@ VIEWS.phrases = {
           var mStr = itm.m || '';
           var sStr = itm.sit || '';
           content += '<div class="phrase-card" style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:14px;">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">' +
-            '<span class="phrase-text" style="font-size:1.05rem;font-weight:700;color:var(--txt);" data-say="' + pStr + '">' + pStr + '</span>' +
-            '<button class="btn-sm btn-ghost" data-say="' + pStr + '" title="Hear native pronunciation">🔊 Hear</button>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">' +
+            '<span class="phrase-text" style="font-size:1.05rem;font-weight:700;color:var(--txt);" data-say="' + _escB(pStr) + '">' + _escB(pStr) + '</span>' +
+            '<div style="display:flex;gap:6px;align-items:center;">' +
+            '<button class="btn-sm btn-ghost" data-say="' + _escB(pStr) + '" title="Hear native pronunciation">🔊 Hear</button>' +
+            '<button class="btn-sm btn-primary pb-practise-phrase-btn" data-phrase="' + _escB(pStr) + '">🎤 Practice</button>' +
             '</div>' +
-            (mStr ? '<div style="font-size:0.9rem;color:var(--mut);margin-bottom:4px;">💡 <strong>What it means:</strong> ' + mStr + '</div>' : '') +
-            (sStr ? '<div style="font-size:0.85rem;color:var(--ok);">🎯 <strong>When to use:</strong> ' + sStr + '</div>' : '') +
+            '</div>' +
+            (mStr ? '<div style="font-size:0.9rem;color:var(--mut);margin-bottom:4px;">💡 <strong>What it means:</strong> ' + _escB(mStr) + '</div>' : '') +
+            (sStr ? '<div style="font-size:0.85rem;color:var(--ok);">🎯 <strong>When to use:</strong> ' + _escB(sStr) + '</div>' : '') +
+            '<div class="phrase-inline-practice" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);"></div>' +
             '</div>';
         }
         content += '</div></div>';
@@ -13758,6 +13846,32 @@ VIEWS.phrases = {
     document.getElementById('tab-builds').addEventListener('click', function () { self._tab = 'builds'; self.render(el); });
     document.getElementById('tab-blanks').addEventListener('click', function () { self._tab = 'blanks'; self.render(el); });
     document.getElementById('tab-phrasebook').addEventListener('click', function () { self._tab = 'phrasebook'; self.render(el); });
+
+    if (tab === 'phrasebook') {
+      var practiceBtns = el.querySelectorAll ? el.querySelectorAll('.pb-practise-phrase-btn') : [];
+      for (var pbi = 0; pbi < practiceBtns.length; pbi++) {
+        (function (pBtn) {
+          pBtn.addEventListener('click', function () {
+            var phrase = pBtn.getAttribute('data-phrase');
+            var card = pBtn.closest ? pBtn.closest('.phrase-card') : null;
+            if (card) {
+              var box = card.querySelector('.phrase-inline-practice');
+              if (box) {
+                if (box.style.display === 'none') {
+                  box.style.display = 'block';
+                  UI.practiceBar(box, { prompt: 'Say: "' + phrase + '"', expected: phrase, skill: 'fluency' });
+                  pBtn.textContent = '✕ Close';
+                } else {
+                  box.style.display = 'none';
+                  box.innerHTML = '';
+                  pBtn.textContent = '🎤 Practice';
+                }
+              }
+            }
+          });
+        }(practiceBtns[pbi]));
+      }
+    }
 
     if (tab === 'builds') {
       document.getElementById('phrase-show').addEventListener('click', function () {
@@ -13880,14 +13994,30 @@ function _renderScenario(el, sc) {
       micBtn.addEventListener('click', function () {
         micBtn.textContent = '🔴 Listening…';
         micBtn.disabled = true;
+        micBtn.classList.add('pulse');
         SPEECH.listen({
-          onresult: function (t) {
-            document.getElementById('sc-input').value = t;
+          interim: true,
+          continuous: true,
+          onresult: function (t, isFinal) {
+            var inp = document.getElementById('sc-input');
+            if (inp) { inp.value = t; }
+            if (isFinal) {
+              micBtn.textContent = '🎤 Speak';
+              micBtn.disabled = false;
+              micBtn.classList.remove('pulse');
+            }
+          },
+          onend: function () {
             micBtn.textContent = '🎤 Speak';
             micBtn.disabled = false;
+            micBtn.classList.remove('pulse');
           },
-          onend: function () { micBtn.textContent = '🎤 Speak'; micBtn.disabled = false; },
-          onerror: function (m) { UI.toast(m, 'error'); micBtn.textContent = '🎤 Speak'; micBtn.disabled = false; }
+          onerror: function (m, code) {
+            micBtn.textContent = '🎤 Speak';
+            micBtn.disabled = false;
+            micBtn.classList.remove('pulse');
+            if (code !== 'aborted') { UI.toast(m, 'error'); }
+          }
         });
       });
     }
@@ -14165,7 +14295,15 @@ VIEWS.coach = {
           restartTracker.onSuccess();
           lastPartialTs = Date.now();
 
-          var match = LIVE_COACH.matchPrefix(target, transcript);
+          var candidates = [transcript];
+          if (alts && alts.length) {
+            for (var a = 0; a < alts.length; a++) {
+              if (candidates.indexOf(alts[a]) === -1) { candidates.push(alts[a]); }
+            }
+          }
+          var match = (typeof LIVE_COACH !== 'undefined' && LIVE_COACH.matchBest)
+            ? LIVE_COACH.matchBest(target, candidates)
+            : LIVE_COACH.matchPrefix(target, transcript);
 
           if (self._drillRaf) { cancelAnimationFrame(self._drillRaf); }
           self._drillRaf = requestAnimationFrame(function () {
@@ -16024,22 +16162,31 @@ VIEWS.daily = {
         return;
       }
       const btn = document.getElementById('daily-quote-btn');
-      btn.textContent = '🔴 Listening…'; btn.disabled = true;
+      btn.textContent = '🔊 Playing model…'; btn.disabled = true;
       SPEECH.speak(quote.text, {
         onend: () => {
+          btn.textContent = '🔴 Listening… speak now!';
+          btn.classList.add('pulse');
           SPEECH.listen({
-            onresult: t => {
-              const aligned = U.align(quote.text, t);
-              const v = U.verdict(aligned);
-              document.getElementById('quote-fb').innerHTML = UI.scoreHTML(aligned);
-              _markDone('quote', done, today);
-              TRAINER.log({skill: 'fluency', delta: v === 'pass' ? 2 : 1, source: 'daily/quote'});
-              STORE.addXP(5);
-              btn.textContent = '🎤 Shadow it'; btn.disabled = false;
+            interim: true,
+            continuous: true,
+            onresult: (t, isFinal) => {
+              if (isFinal) {
+                const aligned = U.align(quote.text, t);
+                const v = U.verdict(aligned);
+                document.getElementById('quote-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Great fluency!' : '🟡 Good practice!'}</p>`;
+                _markDone('quote', done, today);
+                TRAINER.log({skill: 'fluency', delta: v === 'pass' ? 2 : 1, source: 'daily/quote'});
+                STORE.addXP(5);
+                btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse');
+              }
             },
-            onend: () => { btn.textContent = '🎤 Shadow it'; btn.disabled = false; },
-            onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Shadow it'; btn.disabled = false; }
+            onend: () => { btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse'); },
+            onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse'); }
           });
+        },
+        onerror: () => {
+          btn.textContent = '🎤 Shadow it'; btn.disabled = false; btn.classList.remove('pulse');
         }
       });
     });
@@ -16241,14 +16388,19 @@ VIEWS.lesson = {
       }
     }
 
+    const m1 = lesson.missions[0];
+    const m2 = lesson.missions[1];
+
     UI.practiceBar(document.getElementById('mission1'), {
-      expected: lesson.missions[0].prompt,
+      prompt: m1.prompt,
+      expected: m1.expected || m1.prompt.replace(/^Say:\s*["']?|["']$/g, '').trim(),
       skill: 'fluency',
       onPass: () => { m1done = true; checkComplete(); }
     });
 
     UI.practiceBar(document.getElementById('mission2'), {
-      expected: lesson.missions[1].prompt,
+      prompt: m2.prompt,
+      expected: m2.expected || m2.prompt.replace(/^Say:\s*["']?|["']$/g, '').trim(),
       skill: 'fluency',
       onPass: () => { m2done = true; checkComplete(); }
     });
@@ -16271,39 +16423,77 @@ VIEWS.clarity = {
     let content = '';
     if (tab === 'stress') {
       content = `<div class="stress-grid">` +
-        CLARITY_DATA.stress.map(s => `
-          <div class="stress-card">
-            <div class="stress-word">${s.word}</div>
-            <div class="stress-row">
-              <button class="btn-sm" data-say="${s.word}">🔊 Noun</button>
-              <span class="stress-note">${s.note}</span>
-              <button class="btn-sm" data-say="${s.word}">🔊 Verb</button>
+        CLARITY_DATA.stress.map(s => {
+          const nounContext = (/^[aeiou]/i.test(s.word) ? 'an ' : 'a ') + s.word;
+          const verbContext = 'to ' + s.word;
+          return `
+          <div class="stress-card" style="padding:16px;background:var(--bg1);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <strong style="font-size:1.2rem;color:var(--pri);text-transform:capitalize;">${s.word}</strong>
+              <button class="btn-sm btn-primary cl-practice-trigger" data-target="${s.word}">🎤 Practice</button>
             </div>
-          </div>`).join('') + `</div>`;
+            <div class="stress-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn-sm btn-ghost" data-say="${nounContext}" title="Hear first-syllable noun stress">🔊 Noun (${nounContext})</button>
+              <span class="stress-note" style="color:var(--mut);font-size:0.9rem;">${s.note}</span>
+              <button class="btn-sm btn-ghost" data-say="${verbContext}" title="Hear second-syllable verb stress">🔊 Verb (${verbContext})</button>
+            </div>
+          </div>`;
+        }).join('') + `</div>`;
     } else if (tab === 'rhythm') {
       content = `<div class="rhythm-list">` +
         CLARITY_DATA.rhythm.map(r => `
-          <div class="rhythm-card">
-            <p class="rhythm-sent" data-say="${r.sent}">${r.sent} <button class="btn-sm" data-say="${r.sent}">🔊</button></p>
-            <div class="rhythm-stressed">Stressed: ${r.stressed.map(w => `<strong>${w}</strong>`).join(', ')}</div>
-            <div class="rhythm-note">${r.note}</div>
+          <div class="rhythm-card" style="padding:16px;background:var(--bg1);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <p class="rhythm-sent" data-say="${r.sent}" style="margin:0;font-size:1.05rem;font-weight:700;">${r.sent}</p>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-sm btn-ghost" data-say="${r.sent}">🔊 Hear</button>
+                <button class="btn-sm btn-primary cl-practice-trigger" data-target="${r.sent}">🎤 Practice</button>
+              </div>
+            </div>
+            <div class="rhythm-stressed" style="font-size:0.9rem;color:var(--accent);margin-bottom:4px;">Stressed words: ${r.stressed.map(w => `<strong>${w}</strong>`).join(', ')}</div>
+            <div class="rhythm-note" style="font-size:0.85rem;color:var(--mut);">${r.note}</div>
           </div>`).join('') + `</div>`;
     } else {
       content = `<div class="connected-grid">` +
         CLARITY_DATA.connected.map(c => `
-          <div class="connected-card">
-            <span class="conn-normal">${c.normal}</span>
-            <span class="conn-arrow">→</span>
-            <span class="conn-natural" data-say="${c.natural}">${c.natural} 🔊</span>
-            <div class="conn-note">${c.note}</div>
+          <div class="connected-card" style="padding:16px;background:var(--bg1);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <div>
+                <span class="conn-normal" style="color:var(--mut);">${c.normal}</span>
+                <span class="conn-arrow" style="margin:0 8px;">→</span>
+                <strong class="conn-natural" data-say="${c.natural}" style="color:var(--pri);font-size:1.1rem;">${c.natural} 🔊</strong>
+              </div>
+              <button class="btn-sm btn-primary cl-practice-trigger" data-target="${c.natural}">🎤 Practice</button>
+            </div>
+            <div class="conn-note" style="font-size:0.85rem;color:var(--mut);">${c.note}</div>
           </div>`).join('') + `</div>`;
     }
 
-    el.innerHTML = `<div class="view-clarity"><h1>🎯 Clarity Studio</h1><p class="sub">Stress · Rhythm · Intonation · Connected Speech</p>${tabBar}<div class="tab-content">${content}</div></div>`;
+    el.innerHTML = `<div class="view-clarity">
+      <h1>🎯 Clarity Studio</h1>
+      <p class="sub">Stress · Rhythm · Intonation · Connected Speech</p>
+      ${tabBar}
+      <div class="tab-content">
+        ${content}
+        <div id="clarity-practice-slot" style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;"></div>
+      </div>
+    </div>`;
 
     document.getElementById('tab-stress').addEventListener('click', () => { self._tab = 'stress'; self.render(el); });
     document.getElementById('tab-rhythm').addEventListener('click', () => { self._tab = 'rhythm'; self.render(el); });
     document.getElementById('tab-connected').addEventListener('click', () => { self._tab = 'connected'; self.render(el); });
+
+    const triggers = el.querySelectorAll('.cl-practice-trigger');
+    triggers.forEach(trig => {
+      trig.addEventListener('click', () => {
+        const target = trig.getAttribute('data-target');
+        const slot = document.getElementById('clarity-practice-slot');
+        if (slot && target) {
+          UI.practiceBar(slot, { prompt: 'Say: "' + target + '"', expected: target, skill: 'clarity' });
+          slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
   }
 };
 
@@ -16456,13 +16646,62 @@ VIEWS.doctor = {
     el.innerHTML = `
     <div class="view-doctor">
       <h1>🩺 Sentence Doctor</h1>
-      <p class="sub">Paste any sentence — get instant diagnosis with fixes.</p>
+      <p class="sub">Paste or speak any sentence — get instant diagnosis with fixes.</p>
       <div class="doctor-input">
-        <textarea id="doctor-text" rows="4" placeholder="Type or paste a sentence or paragraph here..."></textarea>
-        <button class="btn-primary" id="doctor-check">🩺 Diagnose</button>
+        <textarea id="doctor-text" rows="4" placeholder="Type, paste, or speak a sentence or paragraph here..."></textarea>
+        <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-primary" id="doctor-check">🩺 Diagnose</button>
+          <button class="btn-secondary" id="doctor-mic">🎙️ Speak Sentence</button>
+        </div>
       </div>
       <div id="doctor-results"></div>
     </div>`;
+
+    const micBtn = document.getElementById('doctor-mic');
+    if (micBtn) {
+      let isListening = false;
+      micBtn.addEventListener('click', () => {
+        if (!SPEECH.canListen()) {
+          UI.toast('Speech recognition not available on this browser. Type your sentence above.', 'warning');
+          return;
+        }
+        if (isListening) {
+          SPEECH.stopListening();
+          isListening = false;
+          micBtn.textContent = '🎙️ Speak Sentence';
+          micBtn.classList.remove('pulse');
+          return;
+        }
+        isListening = true;
+        micBtn.textContent = '⏹️ Stop Listening';
+        micBtn.classList.add('pulse');
+        SPEECH.listen({
+          interim: true,
+          continuous: true,
+          onresult: (t, isFinal) => {
+            const ta = document.getElementById('doctor-text');
+            if (ta) { ta.value = t; }
+            if (isFinal) {
+              isListening = false;
+              micBtn.textContent = '🎙️ Speak Sentence';
+              micBtn.classList.remove('pulse');
+              document.getElementById('doctor-check').click();
+            }
+          },
+          onend: () => {
+            isListening = false;
+            micBtn.textContent = '🎙️ Speak Sentence';
+            micBtn.classList.remove('pulse');
+          },
+          onerror: (msg, code) => {
+            isListening = false;
+            micBtn.textContent = '🎙️ Speak Sentence';
+            micBtn.classList.remove('pulse');
+            if (code !== 'aborted') { UI.toast(msg, 'warning'); }
+          }
+        });
+      });
+    }
 
     document.getElementById('doctor-check').addEventListener('click', () => {
       const text = document.getElementById('doctor-text').value.trim();
@@ -16833,50 +17072,135 @@ VIEWS.assessment = {
       <div class="assess-prompt">${task.prompt}</div>
       ${task.text ? `<div class="assess-passage">${task.text}</div>` : ''}
       <div class="assess-timer" id="assess-timer">00:30</div>
-      ${SPEECH.canListen()
-        ? `<button class="btn-primary" id="assess-start">🎤 Start Recording (30s)</button>`
-        : `<div><textarea id="assess-typed" rows="4" placeholder="Type your response (mic not available)..."></textarea><button class="btn-primary" id="assess-typed-submit">Submit</button></div>`
-      }
+      <div style="display:flex;gap:10px;justify-content:center;margin:12px 0;flex-wrap:wrap;">
+        <button class="btn-primary" id="assess-start">🎤 Start Recording (30s)</button>
+        <button class="btn-secondary" id="assess-finish" style="display:none;">⏹️ Finish Task</button>
+      </div>
+      <div id="assess-live-card" style="display:none;background:var(--bg1);border:1px solid var(--accent);border-radius:12px;padding:14px;margin:14px 0;text-align:left;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.85rem;">
+          <span style="color:var(--accent);font-weight:700;">🎙️ LIVE RECOGNITION</span>
+          <span style="color:var(--mut);">Words: <strong id="assess-live-wc" style="color:var(--pri);">0</strong> &bull; Fillers: <strong id="assess-live-fc" style="color:var(--warn);">0</strong></span>
+        </div>
+        <div id="assess-live-text" style="font-size:1rem;color:var(--txt);line-height:1.5;min-height:36px;font-style:italic;">Listening... speak naturally now.</div>
+      </div>
+      <div id="assess-typed-wrap" style="${SPEECH.canListen() ? 'display:none;' : ''}">
+        <textarea id="assess-typed" rows="4" placeholder="Type your response here..."></textarea>
+        <button class="btn-primary" id="assess-typed-submit" style="margin-top:8px;">Submit Typed Response</button>
+      </div>
       <div id="assess-fb"></div>
     </div>`;
 
-    if (SPEECH.canListen()) {
-      document.getElementById('assess-start').addEventListener('click', () => {
-        const startBtn = document.getElementById('assess-start');
-        const timerEl = document.getElementById('assess-timer');
-        startBtn.disabled = true;
-        startBtn.textContent = '🔴 Recording…';
-        let seconds = 30;
-        let words = [], fillers = 0;
-        const FILLERS = ['um','uh','er','ah','like','you know','basically','actually','literally'];
-        const timer = setInterval(() => {
+    const startBtn = document.getElementById('assess-start');
+    const finishBtn = document.getElementById('assess-finish');
+    const timerEl = document.getElementById('assess-timer');
+    const liveCard = document.getElementById('assess-live-card');
+    const liveTextEl = document.getElementById('assess-live-text');
+    const liveWcEl = document.getElementById('assess-live-wc');
+    const liveFcEl = document.getElementById('assess-live-fc');
+    let isRecording = false;
+    let seconds = 30;
+    let timer = null;
+    let words = [], fillers = 0;
+    const FILLERS = ['um','uh','er','ah','like','you know','basically','actually','literally'];
+
+    function _onTranscript(t) {
+      words = U.tokenise(t);
+      fillers = words.filter(w => FILLERS.indexOf(w) !== -1).length;
+      if (liveTextEl) { liveTextEl.textContent = t || 'Listening...'; }
+      if (liveWcEl) { liveWcEl.textContent = words.length; }
+      if (liveFcEl) { liveFcEl.textContent = fillers; }
+    }
+
+    function _finishAssessment() {
+      if (!isRecording) return;
+      isRecording = false;
+      if (timer) { clearInterval(timer); }
+      SPEECH.stopListening();
+      if (startBtn) { startBtn.disabled = true; startBtn.textContent = '✅ Completed'; }
+      if (finishBtn) { finishBtn.style.display = 'none'; }
+      const elapsedSecs = Math.max(5, 30 - seconds);
+      const wpm = Math.round((words.length / elapsedSecs) * 60);
+      const fillerRate = words.length ? fillers / words.length : 0;
+      self._results.push({task: task.label, wpm, fillerRate, words: words.length, fillers});
+      const fbEl = document.getElementById('assess-fb');
+      if (fbEl) {
+        fbEl.innerHTML = `<p class="verdict pass">✅ Task Recorded! ${words.length} words in ${elapsedSecs}s &bull; WPM ≈ ${wpm} &bull; Fillers: ${fillers}</p>`;
+      }
+      setTimeout(() => { self._task++; self.render(el); }, 1400);
+    }
+
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        if (!SPEECH.canListen()) {
+          UI.toast('Microphone not available on this browser. Please type your response.', 'warning');
+          const typedWrap = document.getElementById('assess-typed-wrap');
+          if (typedWrap) typedWrap.style.display = 'block';
+          return;
+        }
+        if (isRecording) return;
+        isRecording = true;
+        startBtn.style.display = 'none';
+        if (finishBtn) { finishBtn.style.display = 'inline-block'; }
+        if (liveCard) { liveCard.style.display = 'block'; }
+        seconds = 30;
+        timer = setInterval(() => {
           seconds--;
-          timerEl.textContent = '00:' + String(seconds).padStart(2, '0');
-          if (seconds <= 0) { clearInterval(timer); SPEECH.stopListening(); }
+          if (timerEl) { timerEl.textContent = '00:' + String(Math.max(0, seconds)).padStart(2, '0'); }
+          if (seconds <= 0) {
+            _finishAssessment();
+          }
         }, 1000);
 
-        SPEECH.listen({
-          interim: true,
-          onresult: (t, isFinal) => {
-            if (isFinal) {
-              words = U.tokenise(t);
-              fillers = words.filter(w => FILLERS.indexOf(w) !== -1).length;
+          SPEECH.listen({
+            interim: true,
+            continuous: true,
+            onresult: (t) => {
+              if (!isRecording) return;
+              _onTranscript(t);
+            },
+            onend: () => {
+              if (isRecording) {
+                if (seconds > 2 && words.length === 0) {
+                  SPEECH.listen({
+                    interim: true,
+                    continuous: true,
+                    onresult: _onTranscript,
+                    onend: () => { if (isRecording && seconds <= 2) _finishAssessment(); },
+                    onerror: () => {}
+                  });
+                } else {
+                  _finishAssessment();
+                }
+              }
+            },
+            onerror: (msg, code) => {
+              if (code === 'not-allowed') {
+                if (timer) clearInterval(timer);
+                isRecording = false;
+                const typedWrap = document.getElementById('assess-typed-wrap');
+                if (typedWrap) typedWrap.style.display = 'block';
+                if (liveCard) liveCard.style.display = 'none';
+                if (startBtn) startBtn.style.display = 'none';
+                if (finishBtn) finishBtn.style.display = 'none';
+                UI.toast('Microphone permission denied. Please type your response.', 'warning');
+              } else if (code !== 'aborted') {
+                UI.toast(msg, 'warning');
+              }
             }
-          },
-          onend: () => {
-            clearInterval(timer);
-            const wpm = Math.round(words.length * 2); // ~30s session
-            const fillerRate = words.length ? fillers / words.length : 0;
-            self._results.push({task: task.label, wpm, fillerRate, words: words.length, fillers});
-            document.getElementById('assess-fb').innerHTML = `<p>✅ Recorded. WPM ≈ ${wpm} · Fillers: ${fillers}</p>`;
-            setTimeout(() => { self._task++; self.render(el); }, 1500);
-          },
-          onerror: msg => { clearInterval(timer); UI.toast(msg, 'error'); startBtn.disabled = false; startBtn.textContent = '🎤 Start Recording (30s)'; }
+          });
         });
-      });
-    } else {
-      document.getElementById('assess-typed-submit').addEventListener('click', () => {
-        const text = document.getElementById('assess-typed').value.trim();
+      }
+
+      if (finishBtn) {
+        finishBtn.addEventListener('click', () => {
+          _finishAssessment();
+        });
+      }
+
+    const typedSubmit = document.getElementById('assess-typed-submit');
+    if (typedSubmit) {
+      typedSubmit.addEventListener('click', () => {
+        const text = (document.getElementById('assess-typed').value || '').trim();
         const words = U.tokenise(text);
         self._results.push({task: task.label, wpm: words.length * 2, fillerRate: 0, words: words.length, fillers: 0});
         self._task++;
@@ -17005,10 +17329,11 @@ VIEWS.listening = {
       content = `
       <div class="listening-dict">
         <p class="sub">Listen to the sentence, then type what you hear.</p>
-        <div class="dict-sentence">${passage.dictation}</div>
-        <div class="dict-controls">
+        <div class="dict-sentence" id="dict-revealed-sentence" style="display:none;background:var(--bg1);padding:10px 14px;border-radius:10px;margin-bottom:12px;border:1px solid var(--border);font-style:italic;">${passage.dictation}</div>
+        <div class="dict-controls" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
           <button class="btn-primary" data-say="${passage.dictation}">🔊 Normal</button>
           <button class="btn-secondary" id="dict-slow">🐢 Slow</button>
+          <button class="btn-sm btn-ghost" id="dict-peek-btn">👁️ Peek Hint</button>
         </div>
         <input type="text" id="dict-input" placeholder="Type what you heard..." autocorrect="off" spellcheck="false" />
         <button class="btn-primary" id="dict-check">Check</button>
@@ -17060,8 +17385,19 @@ VIEWS.listening = {
         });
       });
     } else {
+      const peekBtn = document.getElementById('dict-peek-btn');
+      if (peekBtn) {
+        peekBtn.addEventListener('click', () => {
+          const sentEl = document.getElementById('dict-revealed-sentence');
+          if (sentEl) {
+            sentEl.style.display = sentEl.style.display === 'none' ? 'block' : 'none';
+          }
+        });
+      }
       document.getElementById('dict-slow').addEventListener('click', () => SPEECH.speakSlow(passage.dictation));
       document.getElementById('dict-check').addEventListener('click', () => {
+        const sentEl = document.getElementById('dict-revealed-sentence');
+        if (sentEl) { sentEl.style.display = 'block'; }
         const ans = document.getElementById('dict-input').value.trim();
         const aligned = U.align(passage.dictation, ans);
         const v = U.verdict(aligned);
@@ -17115,6 +17451,8 @@ VIEWS.atlas = {
           <ul class="tense-examples">${examples}</ul>
           <div class="warn-box">⚠️ ${tense.desiTrap}</div>
           <div class="detective-clue">🕵️ Detective clue: ${tense.detectiveClue}</div>
+          <div class="section-title">🎤 Practice Speaking an Example</div>
+          <div id="atlas-practice-slot"></div>
         </div>`;
       }
     } else {
@@ -17142,6 +17480,18 @@ VIEWS.atlas = {
 
     document.getElementById('atlas-browse').addEventListener('click', () => { self._mode = 'browse'; self.render(el); });
     document.getElementById('atlas-detective').addEventListener('click', () => { self._mode = 'detective'; self.render(el); });
+
+    if (selected && mode === 'browse') {
+      const tense = ATLAS.find(t => t.id === selected);
+      const slot = document.getElementById('atlas-practice-slot');
+      if (tense && slot && tense.examples && tense.examples.length) {
+        UI.practiceBar(slot, {
+          prompt: 'Say: "' + tense.examples[0] + '"',
+          expected: tense.examples[0],
+          skill: 'grammar'
+        });
+      }
+    }
 
     if (mode === 'detective') {
       const detOpts = document.getElementById('det-opts');
