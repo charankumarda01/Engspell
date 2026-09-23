@@ -929,41 +929,199 @@ function _renderQuizResult(el, answers, questions) {
 /* ── WORD BANK ─────────────────────────────────────────────────────── */
 VIEWS.wordbank = {
   _search: '',
+  _filterTag: 'all',
+  _selectedWord: null,
   render: function (el) {
     'use strict';
     var self = this;
-    var query = self._search.toLowerCase();
-    var filtered = query
-      ? WORDS.filter(function (w) { return w.w.indexOf(query) !== -1; })
-      : WORDS;
+    var query = (self._search || '').toLowerCase().trim();
+    var tag = self._filterTag || 'all';
+
+    var filtered = WORDS.filter(function (w) {
+      if (tag !== 'all' && (w.tag || 'daily') !== tag) {
+        return false;
+      }
+      if (!query) { return true; }
+      return (w.w && w.w.toLowerCase().indexOf(query) !== -1) ||
+             (w.def && w.def.toLowerCase().indexOf(query) !== -1) ||
+             (w.sit && w.sit.toLowerCase().indexOf(query) !== -1) ||
+             (w.tag && w.tag.toLowerCase().indexOf(query) !== -1);
+    });
+
+    var tags = [
+      {id:'all', label:'All Words', count: WORDS.length},
+      {id:'workplace', label:'💼 Workplace', count: WORDS.filter(function(x){return x.tag==='workplace';}).length},
+      {id:'professional', label:'🎯 Professional', count: WORDS.filter(function(x){return x.tag==='professional';}).length},
+      {id:'daily', label:'☀️ Daily Life', count: WORDS.filter(function(x){return x.tag==='daily';}).length},
+      {id:'social', label:'☕ Social & Small Talk', count: WORDS.filter(function(x){return x.tag==='social';}).length},
+      {id:'academic', label:'📚 Academic', count: WORDS.filter(function(x){return x.tag==='academic';}).length}
+    ];
+
+    var pillsHtml = '<div class="wb-pill-group" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:14px;">';
+    for (var ti = 0; ti < tags.length; ti++) {
+      var t = tags[ti];
+      var activeClass = (tag === t.id) ? ' btn-primary' : ' btn-ghost';
+      pillsHtml += '<button class="btn-sm' + activeClass + ' wb-pill" data-tag="' + t.id + '">' + t.label + ' (' + t.count + ')</button>';
+    }
+    pillsHtml += '</div>';
 
     var rows = '';
     for (var i = 0; i < filtered.length; i++) {
       var w = filtered[i];
       var m = STORE.getMastery('spell_' + w.w);
-      rows += '<tr>' +
-        '<td class="wb-word" data-say="' + w.w + '">' + w.w + '</td>' +
-        '<td class="wb-ipa">' + w.ipa + '</td>' +
-        '<td class="wb-lvl"><span class="level-badge ' + w.lvl + '">' + w.lvl + '</span></td>' +
+      rows += '<tr class="wb-row" data-word="' + _esc(w.w) + '" style="cursor:pointer;">' +
+        '<td class="wb-word"><strong style="color:var(--pri);">' + _esc(w.w) + '</strong></td>' +
+        '<td class="wb-ipa">' + _esc(w.ipa || '') + '</td>' +
+        '<td class="wb-def" style="max-width:260px;font-size:0.85rem;color:var(--txt);">' + _esc(w.def || '') + '</td>' +
+        '<td class="wb-lvl"><span class="level-badge ' + _esc(w.lvl) + '">' + _esc(w.lvl) + '</span></td>' +
         '<td class="wb-mastery">' + _masteryDots(m) + '</td>' +
-        '<td><button class="btn-sm" data-say="' + w.w + '">🔊</button></td>' +
+        '<td style="white-space:nowrap;">' +
+        '<button class="btn-sm btn-ghost wb-listen-btn" data-say="' + _esc(w.w) + '" title="Quick listen" style="margin-right:4px;">🔊</button>' +
+        '<button class="btn-sm btn-primary wb-detail-btn" data-word="' + _esc(w.w) + '">📖 Situational Guide</button>' +
+        '</td>' +
         '</tr>';
     }
 
+    var modalHtml = '';
+    if (self._selectedWord) {
+      var sw = null;
+      for (var k = 0; k < WORDS.length; k++) {
+        if (WORDS[k].w === self._selectedWord) { sw = WORDS[k]; break; }
+      }
+      if (sw) {
+        var sm = STORE.getMastery('spell_' + sw.w);
+        modalHtml = '<div class="wb-modal-overlay" id="wb-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:900;display:flex;align-items:center;justify-content:center;padding:16px;">' +
+          '<div class="wb-modal-card" style="background:var(--bg0);border:1px solid var(--accent);border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 16px 48px rgba(0,0,0,0.6);position:relative;">' +
+          '<button class="btn-sm btn-ghost" id="wb-modal-close" style="position:absolute;top:16px;right:16px;font-size:1.2rem;">✕</button>' +
+          '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+          '<h2 style="margin:0;font-size:1.8rem;color:var(--pri);">' + _esc(sw.w) + '</h2>' +
+          '<span class="level-badge ' + _esc(sw.lvl) + '">' + _esc(sw.lvl) + '</span>' +
+          '<span class="badge" style="background:rgba(124,58,237,0.15);color:var(--accent);">' + _esc(sw.tag ? sw.tag.toUpperCase() : 'VOCAB') + '</span>' +
+          '</div>' +
+          '<div style="font-family:monospace;font-size:1.1rem;color:var(--mut);margin-bottom:12px;">' + _esc(sw.ipa || '') + ' &bull; Mastery: ' + _masteryDots(sm) + '</div>' +
+          '<div style="display:flex;gap:8px;margin-bottom:16px;">' +
+          '<button class="btn-sm btn-primary" id="wb-modal-say">🔊 Native Pronunciation</button>' +
+          '<button class="btn-sm btn-ghost" id="wb-modal-slow">🐢 Slow Replay</button>' +
+          '</div>' +
+          '<div style="background:var(--bg1);border-radius:12px;padding:14px;margin-bottom:12px;">' +
+          '<div style="font-size:0.8rem;text-transform:uppercase;color:var(--mut);font-weight:700;margin-bottom:4px;">💡 What is it? (Simple Definition)</div>' +
+          '<div style="font-size:1rem;color:var(--txt);line-height:1.4;">' + _esc(sw.def || 'Standard vocabulary word.') + '</div>' +
+          '</div>' +
+          '<div style="background:var(--bg1);border-radius:12px;padding:14px;margin-bottom:12px;">' +
+          '<div style="font-size:0.8rem;text-transform:uppercase;color:var(--ok);font-weight:700;margin-bottom:4px;">🎯 What exact situation do we use it in?</div>' +
+          '<div style="font-size:0.95rem;color:var(--txt);line-height:1.4;">' + _esc(sw.sit || 'Everyday and professional conversations.') + '</div>' +
+          '</div>' +
+          '<div style="background:var(--bg1);border-radius:12px;padding:14px;margin-bottom:12px;">' +
+          '<div style="font-size:0.8rem;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px;">🛠️ How do we use it? (Pattern & Tone)</div>' +
+          '<div style="font-size:0.95rem;color:var(--txt);line-height:1.4;">' + _esc(sw.how || 'Use in a standard complete sentence.') + '</div>' +
+          '</div>' +
+          '<div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);border-radius:12px;padding:14px;margin-bottom:16px;">' +
+          '<div style="font-size:0.8rem;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px;">💬 Real-World Conversation Example</div>' +
+          '<div style="font-size:0.95rem;color:var(--txt);font-style:italic;line-height:1.4;">' + _esc(sw.eg || '') + '</div>' +
+          '</div>' +
+          '<div style="border-top:1px solid var(--border);padding-top:16px;">' +
+          '<div style="font-size:0.9rem;font-weight:700;margin-bottom:8px;">🎙️ Test Your Pronunciation</div>' +
+          '<div id="wb-modal-practice"></div>' +
+          '</div>' +
+          '</div>' +
+          '</div>';
+      }
+    }
+
     el.innerHTML = '<div class="view-wordbank">' +
-      '<h1>📖 Word Bank</h1>' +
+      '<h1>📖 Word Bank & Situational Guide</h1>' +
+      '<p class="sub" style="margin-bottom:16px;">Master 150 essential words with plain-English definitions, exact real-world situations, and spoken practice.</p>' +
+      pillsHtml +
       '<div class="wb-search-row">' +
-      '<input type="search" id="wb-search" value="' + self._search + '" placeholder="Search words..." />' +
-      '<span class="wb-count">' + filtered.length + ' words</span>' +
+      '<input type="search" id="wb-search" value="' + _esc(self._search) + '" placeholder="Search by word, definition, or situation (e.g. \'interview\', \'cloud\', \'apologise\')..." />' +
+      '<span class="wb-count">' + filtered.length + ' of ' + WORDS.length + ' words</span>' +
       '</div>' +
-      '<table class="wb-table"><thead><tr><th>Word</th><th>IPA</th><th>Level</th><th>Mastery</th><th>Listen</th></tr></thead>' +
-      '<tbody>' + rows + '</tbody></table>' +
+      '<table class="wb-table"><thead><tr><th>Word</th><th>IPA</th><th>Simple Definition</th><th>Level</th><th>Mastery</th><th>Actions</th></tr></thead>' +
+      '<tbody>' + (rows || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--mut);">No matching words found. Try a different search term or category.</td></tr>') + '</tbody></table>' +
+      modalHtml +
       '</div>';
 
-    document.getElementById('wb-search').addEventListener('input', function () {
-      self._search = this.value;
-      self.render(el);
-    });
+    var searchInput = document.getElementById('wb-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        self._search = this.value;
+        self.render(el);
+      });
+    }
+
+    var pillBtns = el.querySelectorAll ? el.querySelectorAll('.wb-pill') : [];
+    for (var pi = 0; pi < pillBtns.length; pi++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          self._filterTag = btn.getAttribute('data-tag');
+          self.render(el);
+        });
+      }(pillBtns[pi]));
+    }
+
+    var detailBtns = el.querySelectorAll ? el.querySelectorAll('.wb-detail-btn') : [];
+    for (var di = 0; di < detailBtns.length; di++) {
+      (function (dBtn) {
+        dBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          self._selectedWord = dBtn.getAttribute('data-word');
+          self.render(el);
+        });
+      }(detailBtns[di]));
+    }
+
+    var rowsList = el.querySelectorAll ? el.querySelectorAll('.wb-row') : [];
+    for (var ri = 0; ri < rowsList.length; ri++) {
+      (function (row) {
+        row.addEventListener('click', function () {
+          self._selectedWord = row.getAttribute('data-word');
+          self.render(el);
+        });
+      }(rowsList[ri]));
+    }
+
+    if (self._selectedWord) {
+      var modalClose = document.getElementById('wb-modal-close');
+      if (modalClose) {
+        modalClose.addEventListener('click', function () {
+          self._selectedWord = null;
+          self.render(el);
+        });
+      }
+      var modalBackdrop = document.getElementById('wb-modal');
+      if (modalBackdrop) {
+        modalBackdrop.addEventListener('click', function (e) {
+          if (e.target === modalBackdrop) {
+            self._selectedWord = null;
+            self.render(el);
+          }
+        });
+      }
+      var modalSay = document.getElementById('wb-modal-say');
+      if (modalSay) {
+        modalSay.addEventListener('click', function () {
+          SPEECH.speak(self._selectedWord);
+        });
+      }
+      var modalSlow = document.getElementById('wb-modal-slow');
+      if (modalSlow) {
+        modalSlow.addEventListener('click', function () {
+          SPEECH.speakSlow(self._selectedWord);
+        });
+      }
+      var practiceEl = document.getElementById('wb-modal-practice');
+      if (practiceEl) {
+        UI.practiceBar(practiceEl, {
+          expected: self._selectedWord,
+          skill: 'vocab',
+          onPass: function () {
+            STORE.master('spell_' + self._selectedWord, true);
+            STORE.addXP(10);
+            UI.toast('Pronunciation matched! +10 XP', 'success');
+          }
+        });
+      }
+    }
   }
 };
 

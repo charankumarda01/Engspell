@@ -454,14 +454,21 @@ VIEWS.idioms = {
         data.map(item => {
           const key = (tab === 'idioms' ? 'idn_' : 'pv_') + item.id;
           const m = STORE.getMastery(key);
-          return `<div class="idiom-card">
-            <div class="idiom-head">
-              <span class="idiom-text">${item.text}</span>
-              <button class="btn-sm" data-say="${item.text}">🔊</button>
+          return `<div class="idiom-card" style="padding:16px;border-radius:14px;background:var(--bg1);border:1px solid var(--border);margin-bottom:14px;">
+            <div class="idiom-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span class="idiom-text" style="font-size:1.15rem;font-weight:700;color:var(--pri);">${item.text}</span>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <button class="btn-sm btn-ghost" data-say="${item.text}">🔊 Hear</button>
+              </div>
             </div>
-            <div class="idiom-meaning">${item.meaning}</div>
-            <div class="idiom-eg"><em>"${item.eg}"</em></div>
-            <div class="mastery-dots">${_masteryDots(m)}</div>
+            <div class="idiom-meaning" style="font-size:1rem;margin-bottom:6px;">💡 <strong>What it means:</strong> ${item.meaning}</div>
+            ${item.sit ? `<div style="font-size:0.9rem;color:var(--ok);margin-bottom:6px;">🎯 <strong>When & where to use:</strong> ${item.sit}</div>` : ''}
+            ${item.how ? `<div style="font-size:0.85rem;color:var(--txt);margin-bottom:6px;">🛠️ <strong>How to use:</strong> ${item.how}</div>` : ''}
+            ${item.dialogue ? `<div style="font-size:0.85rem;font-style:italic;color:var(--accent);background:rgba(124,58,237,0.06);padding:8px 12px;border-radius:8px;margin-bottom:8px;">💬 <strong>Dialogue:</strong> ${item.dialogue}</div>` : `<div class="idiom-eg"><em>"${item.eg}"</em></div>`}
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+              <div class="mastery-dots">${_masteryDots(m)}</div>
+              <button class="btn-sm btn-ghost" data-say="${item.text}">🎤 Practice Saying</button>
+            </div>
           </div>`;
         }).join('') + `</div>`;
     } else {
@@ -590,8 +597,16 @@ VIEWS.doctor = {
         TRAINER.log({skill: 'grammar', delta: 1, source: 'doctor/clean'});
       } else {
         resultsEl.innerHTML = `<div class="doctor-issues">
-          <h3>⚠️ ${results.length} issue${results.length > 1 ? 's' : ''} found:</h3>
-          <ul>${results.map(r => `<li>${r}</li>`).join('')}</ul>
+          <h3 style="margin-bottom:12px;color:var(--warn);">⚠️ ${results.length} issue${results.length > 1 ? 's' : ''} detected:</h3>
+          <div style="display:flex;flex-direction:column;gap:10px;">${results.map((r, idx) => `
+            <div class="doctor-issue-card" style="background:var(--bg1);border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <strong style="color:var(--warn);font-size:0.95rem;">Diagnosis #${idx + 1}</strong>
+                <span class="badge" style="font-size:0.75rem;">Grammar Doctor</span>
+              </div>
+              <div style="font-size:0.95rem;color:var(--txt);line-height:1.4;">${r}</div>
+            </div>
+          `).join('')}</div>
         </div>`;
         TRAINER.log({skill: 'grammar', delta: -1, source: 'doctor/issues'});
       }

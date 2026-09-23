@@ -1943,73 +1943,101 @@ var UI = (function () {
    */
   function practiceBar(el, opts) {
     var canListen = SPEECH.canListen();
+    var inst = 'pb' + Math.floor(Math.random() * 1000000);
+    var micId = inst + '-mic';
+    var hearId = inst + '-hear';
+    var inputId = inst + '-input';
+    var checkId = inst + '-check';
+    var resultId = inst + '-result';
+
     var html = '<div class="practice-bar">';
-    html += '<p class="practice-prompt"><strong>Say it:</strong> ' + opts.expected + '</p>';
-    if (canListen) {
-      html += '<button class="btn-mic" id="pb-mic">🎤 Start Speaking</button>';
-    }
-    html += '<div class="pb-typing" id="pb-typing-area">';
-    html += '<input type="text" id="pb-input" placeholder="Type if mic unavailable..." />';
-    html += '<button class="btn-check" id="pb-check">Check</button>';
+    html += '<div class="practice-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;">';
+    html += '<p class="practice-prompt" style="margin:0;"><strong>Say it:</strong> ' + opts.expected + '</p>';
+    html += '<button class="btn-sm btn-ghost pb-hear-btn" id="' + hearId + '" title="Listen to native model">🔊 Model</button>';
     html += '</div>';
-    html += '<div id="pb-result"></div>';
+    if (canListen) {
+      html += '<button class="btn-mic" id="' + micId + '">🎤 Start Speaking</button>';
+    }
+    html += '<div class="pb-typing" id="' + inst + '-typing-area">';
+    html += '<input type="text" id="' + inputId + '" placeholder="Type if mic unavailable..." />';
+    html += '<button class="btn-check" id="' + checkId + '">Check</button>';
+    html += '</div>';
+    html += '<div id="' + resultId + '"></div>';
     html += '</div>';
     el.innerHTML = html;
 
-    var resultEl = document.getElementById('pb-result');
-    var inputEl = document.getElementById('pb-input');
+    var resultEl = (el && el.querySelector ? el.querySelector('#' + resultId) : null) || document.getElementById(resultId);
+    var inputEl = (el && el.querySelector ? el.querySelector('#' + inputId) : null) || document.getElementById(inputId);
+    var hearBtn = (el && el.querySelector ? el.querySelector('#' + hearId) : null) || document.getElementById(hearId);
+    if (hearBtn) {
+      hearBtn.addEventListener('click', function () {
+        SPEECH.speak(opts.expected);
+      });
+    }
 
     function _evaluate(heard) {
       var aligned = U.align(opts.expected, heard);
       var v = U.verdict(aligned);
-      resultEl.innerHTML = scoreHTML(aligned);
-      if (v === 'pass') {
-        resultEl.innerHTML += '<p class="verdict pass">✅ Excellent!</p>';
-        TRAINER.log({skill: opts.skill || 'fluency', delta: 2, source: 'practiceBar'});
-        if (opts.onPass) { opts.onPass(); }
-      } else if (v === 'almost') {
-        resultEl.innerHTML += '<p class="verdict almost">🟡 Almost! Try again.</p>';
-        TRAINER.log({skill: opts.skill || 'fluency', delta: 1, source: 'practiceBar'});
-      } else {
-        resultEl.innerHTML += '<p class="verdict fail">❌ Keep trying — click red words to hear them slowly.</p>';
-        TRAINER.log({skill: opts.skill || 'fluency', delta: -1, source: 'practiceBar'});
-        if (opts.onFail) { opts.onFail(); }
+      if (resultEl) {
+        resultEl.innerHTML = scoreHTML(aligned);
+        if (v === 'pass') {
+          resultEl.innerHTML += '<p class="verdict pass">✅ Excellent!</p>';
+          TRAINER.log({skill: opts.skill || 'fluency', delta: 2, source: 'practiceBar'});
+          if (opts.onPass) { opts.onPass(); }
+        } else if (v === 'almost') {
+          resultEl.innerHTML += '<p class="verdict almost">🟡 Almost! Try again.</p>';
+          TRAINER.log({skill: opts.skill || 'fluency', delta: 1, source: 'practiceBar'});
+        } else {
+          resultEl.innerHTML += '<p class="verdict fail">❌ Keep trying — click red words to hear them slowly.</p>';
+          TRAINER.log({skill: opts.skill || 'fluency', delta: -1, source: 'practiceBar'});
+          if (opts.onFail) { opts.onFail(); }
+        }
       }
     }
 
     if (canListen) {
-      var micBtn = document.getElementById('pb-mic');
-      micBtn.addEventListener('click', function () {
-        micBtn.textContent = '🔴 Listening…';
-        micBtn.disabled = true;
-        SPEECH.listen({
-          interim: false,
-          onresult: function (transcript) {
-            inputEl.value = transcript;
-            _evaluate(transcript);
-            micBtn.textContent = '🎤 Start Speaking';
-            micBtn.disabled = false;
-          },
-          onend: function () {
-            micBtn.textContent = '🎤 Start Speaking';
-            micBtn.disabled = false;
-          },
-          onerror: function (msg) {
-            UI.toast(msg, 'error');
-            micBtn.textContent = '🎤 Start Speaking';
-            micBtn.disabled = false;
-          }
+      var micBtn = (el && el.querySelector ? el.querySelector('#' + micId) : null) || document.getElementById(micId);
+      if (micBtn) {
+        micBtn.addEventListener('click', function () {
+          micBtn.textContent = '🔴 Listening…';
+          micBtn.className = 'btn-mic listening';
+          micBtn.disabled = true;
+          SPEECH.listen({
+            interim: false,
+            onresult: function (transcript) {
+              if (inputEl) { inputEl.value = transcript; }
+              _evaluate(transcript);
+              micBtn.textContent = '🎤 Start Speaking';
+              micBtn.className = 'btn-mic';
+              micBtn.disabled = false;
+            },
+            onend: function () {
+              micBtn.textContent = '🎤 Start Speaking';
+              micBtn.className = 'btn-mic';
+              micBtn.disabled = false;
+            },
+            onerror: function (msg) {
+              UI.toast(msg, 'error');
+              micBtn.textContent = '🎤 Start Speaking';
+              micBtn.className = 'btn-mic';
+              micBtn.disabled = false;
+            }
+          });
         });
-      });
+      }
     }
 
-    var checkBtn = document.getElementById('pb-check');
-    checkBtn.addEventListener('click', function () {
-      _evaluate(inputEl.value);
-    });
-    inputEl.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { _evaluate(inputEl.value); }
-    });
+    var checkBtn = (el && el.querySelector ? el.querySelector('#' + checkId) : null) || document.getElementById(checkId);
+    if (checkBtn) {
+      checkBtn.addEventListener('click', function () {
+        if (inputEl) { _evaluate(inputEl.value); }
+      });
+    }
+    if (inputEl) {
+      inputEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { _evaluate(inputEl.value); }
+      });
+    }
   }
 
   /** Render a XP pop animation near an element */

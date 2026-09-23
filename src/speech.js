@@ -103,15 +103,15 @@ var SPEECH = (function () {
     return STT_CTOR !== null;
   }
 
-  /* Error taxonomy — maps DOMException names to human messages */
+  /* Error taxonomy — maps DOMException names to clear, actionable guidance */
   var STT_ERRORS = {
-    'not-allowed': 'Microphone permission was denied. Please allow mic access and try again.',
-    'no-speech':   'No speech detected. Please speak clearly and try again.',
-    'audio-capture': 'No microphone found. Please connect a microphone.',
-    'network':     'Network error. Voice recognition needs internet in some browsers.',
+    'not-allowed': 'Microphone permission was denied. Tap the 🔒 lock or settings icon near your address bar to allow microphone access, or use the "Type instead" box below.',
+    'no-speech':   'No speech detected. Please speak clearly into your mic, or tap "Type instead" to verify your answer.',
+    'audio-capture': 'No microphone found. Please connect a microphone or use the "Type instead" fallback.',
+    'network':     'Network glitch in browser speech engine. Tap "Type instead" or retry in a moment.',
     'aborted':     'Listening was stopped.',
-    'service-not-allowed': 'Speech service not available on this page.',
-    'bad-grammar': 'Could not recognise speech. Please try again.',
+    'service-not-allowed': 'Speech recognition not available on this page (ensure you are on HTTPS or localhost).',
+    'bad-grammar': 'Could not recognise speech clearly. Please try again or type your answer.',
     'language-not-supported': 'Language not supported by your browser\'s speech engine.'
   };
 

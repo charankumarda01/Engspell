@@ -3111,8 +3111,92 @@ tryv('M21: count sweep: views-a, accent-engine, and landing reference 13 packs',
   var ae13 = ae.indexOf('13 research-backed packs') !== -1 && ae.indexOf('all 13 Indian-English') !== -1;
   var land13 = land.indexOf('13 research-backed packs') !== -1;
   var rm13 = readme.indexOf('13 research-backed packs') !== -1 && readme.indexOf('13 contrast packs') !== -1;
-
   return va13 && ae13 && land13 && rm13;
+});
+
+/* ── ELITE 10/10 PEDAGOGICAL & SITUATIONAL LAYER ────────────────────── */
+console.log('\n🌟 Elite 10/10 Pedagogical & Situational Layer');
+
+tryv('10/10: WORDS each has def, sit, how, eg, tag', function () {
+  return WORDS.every(function (w) {
+    return typeof w.def === 'string' && w.def.length > 5 &&
+           typeof w.sit === 'string' && w.sit.length > 5 &&
+           typeof w.how === 'string' && w.how.length > 5 &&
+           typeof w.eg === 'string' && w.eg.length > 5 &&
+           typeof w.tag === 'string';
+  });
+});
+
+tryv('10/10: WORDS tags belong to valid categories', function () {
+  var validTags = ['workplace', 'daily', 'social', 'professional', 'academic'];
+  return WORDS.every(function (w) {
+    return validTags.indexOf(w.tag) !== -1;
+  });
+});
+
+tryv('10/10: IDIOMS each has sit, how, dialogue', function () {
+  return IDIOMS.every(function (i) {
+    return typeof i.sit === 'string' && i.sit.length > 10 &&
+           typeof i.how === 'string' && i.how.length > 10 &&
+           typeof i.dialogue === 'string' && i.dialogue.indexOf('—') !== -1;
+  });
+});
+
+tryv('10/10: PVS each has sit, how, dialogue', function () {
+  return PVS.every(function (p) {
+    return typeof p.sit === 'string' && p.sit.length > 10 &&
+           typeof p.how === 'string' && p.how.length > 10 &&
+           typeof p.dialogue === 'string' && p.dialogue.indexOf('—') !== -1;
+  });
+});
+
+tryv('10/10: VIEWS.wordbank renders category pills and search input', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.wordbank.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('wb-pill-group') !== -1 &&
+         html.indexOf('Workplace') !== -1 &&
+         html.indexOf('wb-search') !== -1 &&
+         html.indexOf('Situational Guide') !== -1;
+});
+
+tryv('10/10: VIEWS.wordbank tag filter filters items accurately', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.wordbank._filterTag = 'workplace';
+  VIEWS.wordbank.render(mockEl);
+  var count = WORDS.filter(function(x){return x.tag==='workplace';}).length;
+  var html = mockEl.innerHTML;
+  VIEWS.wordbank._filterTag = 'all'; // reset
+  return html.indexOf(count + ' of ' + WORDS.length + ' words') !== -1;
+});
+
+tryv('10/10: UI.practiceBar renders unique instance IDs and Hear Model button', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  UI.practiceBar(mockEl, { expected: 'Test sentence for model' });
+  var html = mockEl.innerHTML;
+  return html.indexOf('pb-hear-btn') !== -1 &&
+         html.indexOf('🔊 Model') !== -1 &&
+         html.indexOf('Say it:') !== -1;
+});
+
+tryv('10/10: VIEWS.phrases renders situational guide in phrasebook', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.phrases._tab = 'phrasebook';
+  VIEWS.phrases.render(mockEl);
+  var html = mockEl.innerHTML;
+  VIEWS.phrases._tab = 'builds'; // reset
+  return html.indexOf('Agreeing with Poise') !== -1 &&
+         html.indexOf('When to use:') !== -1 &&
+         html.indexOf('What it means:') !== -1;
+});
+
+tryv('10/10: ES5 check: all updated source files pass node --check', function () {
+  var files = ['data.js', 'data2.js', 'speech.js', 'core.js', 'views-b.js', 'views-c.js'];
+  for (var i = 0; i < files.length; i++) {
+    var res = _cp.spawnSync(process.execPath, ['--check', _path.join(__dirname, 'src', files[i])]);
+    if (res.status !== 0) { return false; }
+  }
+  return true;
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */

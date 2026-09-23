@@ -175,26 +175,83 @@ VIEWS.phrases = {
         '<div id="blank-fb"></div>' +
         '</div>';
     } else {
-      // Phrasebook groups
+      // Phrasebook groups with situational clarity
       var groups = [
-        {label:'Agreeing', phrases:['Absolutely.','That makes sense.','I couldn\'t agree more.','You\'re right on that.','That\'s a valid point.']},
-        {label:'Disagreeing Politely', phrases:['I see your point, but...','I\'d look at it differently.','That\'s one way to see it, though I think...','With respect, I disagree.','I\'m not entirely convinced.']},
-        {label:'Clarifying', phrases:['What I mean is...','Let me put it another way.','To clarify,...','In other words,...','What I\'m trying to say is...']},
-        {label:'Buying Time', phrases:['That\'s a great question.','Let me think about that.','That\'s interesting...','Give me a moment.','Could you expand on that?']},
-        {label:'Formal Openers', phrases:['I am writing to enquire about...','Further to our conversation,...','With reference to your email,...','I would be grateful if you could...','Please find attached...']}
+        {
+          label: '🤝 Agreeing with Poise',
+          items: [
+            {p: 'That makes sense.', m: 'Acknowledge logic calmly without over-committing', sit: 'Design reviews when a coworker explains their approach.'},
+            {p: 'I couldn\'t agree more.', m: 'Show enthusiastic 100% alignment', sit: 'When an executive or client shares a vision you strongly support.'},
+            {p: 'Absolutely.', m: 'Fast, confident affirmative reply', sit: 'Replying on client calls or when asked if you can meet a deadline.'},
+            {p: 'You\'re right on that point.', m: 'Concede a specific valid argument', sit: 'Debates when the other person raises an undeniable truth.'},
+            {p: 'That aligns with our goals.', m: 'Connect an idea to company strategy', sit: 'Sprint planning and executive steering meetings.'}
+          ]
+        },
+        {
+          label: '🛡️ Disagreeing Politely & Professionally',
+          items: [
+            {p: 'I see your point, but let\'s consider the trade-offs.', m: 'Soft pushback that invites balanced analysis', sit: 'Architecture debates without making the other person defensive.'},
+            {p: 'I\'d look at it slightly differently.', m: 'Introduce an alternative perspective respectfully', sit: 'Offering a counter-proposal to leadership.'},
+            {p: 'With respect, I have concerns about the timeline.', m: 'Formal and firm pushback', sit: 'When an unrealistic deadline is proposed by management.'},
+            {p: 'I\'m not entirely convinced that will scale.', m: 'Technical hesitation backed by reason', sit: 'Code and infrastructure design reviews.'},
+            {p: 'That\'s one valid approach; another angle is...', m: 'Broaden the discussion constructively', sit: 'Collaborative brainstorming sessions.'}
+          ]
+        },
+        {
+          label: '🔍 Clarifying & Checking Understanding',
+          items: [
+            {p: 'What I mean is — let me rephrase that.', m: 'Recover and simplify your point', sit: 'When you notice the listener looks confused.'},
+            {p: 'To clarify, are you asking about the budget or timeline?', m: 'Pinpoint the exact question before answering', sit: 'Q&A sessions after presentations.'},
+            {p: 'If I understand you correctly, the priority is stability.', m: 'Mirror the client\'s priority to ensure 100% alignment', sit: 'Client requirement gathering calls.'},
+            {p: 'In other words, we need to refactor first.', m: 'Distill complex technical jargon into plain business impact', sit: 'Talking to non-technical product managers.'},
+            {p: 'Could you expand a bit on what you mean by that?', m: 'Politely ask for more details instead of guessing', sit: 'When receiving vague requirements or feedback.'}
+          ]
+        },
+        {
+          label: '⏳ Buying Time to Think with Poise',
+          items: [
+            {p: 'That\'s a really good question. Let me think for a moment.', m: 'Gracefully pause without awkward silence or "umm/aah"', sit: 'Tough interview questions or unexpected client queries.'},
+            {p: 'Let me pull up the latest numbers so I give you the exact figure.', m: 'Buy 30 seconds while checking dashboard/docs', sit: 'Live status meetings.'},
+            {p: 'Give me just a second to check the release notes.', m: 'Natural, professional pause indicator', sit: 'Customer support or Zoom screen shares.'},
+            {p: 'That\'s an interesting angle — let me process that.', m: 'Validate the question while formulating your response', sit: 'Strategy workshops and debates.'},
+            {p: 'I don\'t have that off the top of my head, but I will find out today.', m: 'Confident honesty instead of bluffing or guessing', sit: 'Executive reviews and interviews.'}
+          ]
+        },
+        {
+          label: '✉️ Professional Email & Slack Openers',
+          items: [
+            {p: 'I hope you are having a productive week.', m: 'Warm, respectful professional greeting', sit: 'Mid-week emails to clients or external partners.'},
+            {p: 'Further to our discussion earlier today,...', m: 'Reference a past call with precision', sit: 'Sending follow-up action items after a meeting.'},
+            {p: 'I would be grateful if you could review the attached draft.', m: 'Polite request for review without sounding demanding', sit: 'Submitting documents or PRs for senior approval.'},
+            {p: 'Please let me know if you need any additional context.', m: 'Helpful and proactive closing line', sit: 'Delivering reports or technical summaries.'},
+            {p: 'I look forward to our sync tomorrow.', m: 'Enthusiastic and clear confirmation', sit: 'Confirming calendar invites the day before.'}
+          ]
+        }
       ];
       content = '<div class="phrasebook">';
       for (var gi = 0; gi < groups.length; gi++) {
-        content += '<div class="phrase-group"><h3>' + groups[gi].label + '</h3><ul>';
-        for (var pi = 0; pi < groups[gi].phrases.length; pi++) {
-          content += '<li class="phrase-item" data-say="' + groups[gi].phrases[pi] + '">' + groups[gi].phrases[pi] + ' <button class="btn-sm" data-say="' + groups[gi].phrases[pi] + '">🔊</button></li>';
+        var grp = groups[gi];
+        content += '<div class="phrase-group" style="margin-bottom:24px;"><h3 style="margin-bottom:12px;color:var(--pri);">' + grp.label + '</h3><div style="display:flex;flex-direction:column;gap:10px;">';
+        for (var pi = 0; pi < grp.items.length; pi++) {
+          var itm = grp.items[pi];
+          var pStr = itm.p || itm;
+          var mStr = itm.m || '';
+          var sStr = itm.sit || '';
+          content += '<div class="phrase-card" style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:14px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;">' +
+            '<span class="phrase-text" style="font-size:1.05rem;font-weight:700;color:var(--txt);" data-say="' + pStr + '">' + pStr + '</span>' +
+            '<button class="btn-sm btn-ghost" data-say="' + pStr + '" title="Hear native pronunciation">🔊 Hear</button>' +
+            '</div>' +
+            (mStr ? '<div style="font-size:0.9rem;color:var(--mut);margin-bottom:4px;">💡 <strong>What it means:</strong> ' + mStr + '</div>' : '') +
+            (sStr ? '<div style="font-size:0.85rem;color:var(--ok);">🎯 <strong>When to use:</strong> ' + sStr + '</div>' : '') +
+            '</div>';
         }
-        content += '</ul></div>';
+        content += '</div></div>';
       }
       content += '</div>';
     }
 
-    el.innerHTML = '<div class="view-phrases"><h1>💬 Phrase Builder</h1>' + tabBar + '<div class="tab-content">' + content + '</div></div>';
+    el.innerHTML = '<div class="view-phrases"><h1>💬 Phrase Builder & Situational Guide</h1>' + tabBar + '<div class="tab-content">' + content + '</div></div>';
 
     document.getElementById('tab-builds').addEventListener('click', function () { self._tab = 'builds'; self.render(el); });
     document.getElementById('tab-blanks').addEventListener('click', function () { self._tab = 'blanks'; self.render(el); });

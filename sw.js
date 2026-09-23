@@ -4,7 +4,7 @@
    INV-2: fully offline, no external network calls here.
    ===================================================================== */
 
-var CACHE_NAME = 'engspell-20260923054711';
+var CACHE_NAME = 'engspell-20260923070046';
 
 var ASSETS = [
   './',

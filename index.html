@@ -1604,6 +1604,54 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
   cursor: not-allowed;
 }
 
+/* ── Elite 10/10 UX: Mic Pulse, Situational Modal, Pills, and Cards ── */
+@keyframes micPulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.btn-mic.listening {
+  background: #dc2626 !important;
+  color: #fff !important;
+  animation: micPulse 1.5s infinite;
+}
+.wb-pill-group::-webkit-scrollbar {
+  height: 4px;
+}
+.wb-pill-group::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+.wb-row:hover td {
+  background: rgba(124, 92, 255, 0.06);
+}
+.wb-modal-overlay {
+  animation: fadeIn 0.15s ease-out;
+}
+.wb-modal-card {
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.doctor-issue-card {
+  transition: transform 0.15s ease;
+}
+.doctor-issue-card:hover {
+  transform: translateX(4px);
+}
+.phrase-card {
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.phrase-card:hover {
+  border-color: var(--acc);
+}
+
 </style>
 </head>
 <body>
