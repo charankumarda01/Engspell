@@ -53,6 +53,7 @@ loadSrc('src/data2.js');
 loadSrc('src/data3.js');
 loadSrc('src/data4.js');
 loadSrc('src/data5.js');
+loadSrc('src/data6.js');
 loadSrc('src/speech.js');
 loadSrc('src/core.js');
 loadSrc('src/accent-engine.js');
@@ -2761,20 +2762,22 @@ tryv('M20: store append-only migration leaves existing store keys untouched', fu
          Array.isArray(weekly);
 });
 
-tryv('M20: badge logic: hasNeutralizedBadge true only when all 7 packs are done', function () {
+tryv('M20/M21: badge logic: hasNeutralizedBadge true only when all 13 packs are done (updated for Cycle 2)', function () {
   var acc = { packs: {}, lastXpDate: '' };
-  var packIds = ['ax-vw', 'ax-th', 'ax-r', 'ax-td', 'ax-stress', 'ax-diph', 'ax-rhythm'];
-  for (var i = 0; i < 6; i++) {
-    acc.packs[packIds[i]] = { done: true, listenScore: 90, sayScore: 90 };
+  var allPacks = ACCENT.getPacks();
+  for (var i = 0; i < allPacks.length - 1; i++) {
+    var pk = allPacks[i];
+    acc.packs[pk.id] = { done: true, listenScore: 90, sayScore: 90, sentenceScore: 90 };
   }
   STORE.set('accent', acc);
-  var badge6 = ACCENT.hasNeutralizedBadge();
+  var badge12 = ACCENT.hasNeutralizedBadge();
 
-  acc.packs[packIds[6]] = { done: true, listenScore: 85, sayScore: 80 };
+  var lastPk = allPacks[allPacks.length - 1];
+  acc.packs[lastPk.id] = { done: true, listenScore: 90, sayScore: 90, sentenceScore: 90 };
   STORE.set('accent', acc);
-  var badge7 = ACCENT.hasNeutralizedBadge();
+  var badge13 = ACCENT.hasNeutralizedBadge();
 
-  return badge6 === false && badge7 === true;
+  return badge12 === false && badge13 === true;
 });
 
 tryv('M20: XP anti-farm: awards +20 XP on first completion today, 0 XP on repeat attempt', function () {
@@ -2822,6 +2825,294 @@ tryv('M20: INV-8 check: zero external network calls in data5.js and accent-engin
   var hasFetch = /\bfetch\s*\(/i.test(d5) || /\bfetch\s*\(/i.test(ae);
   var hasXhr = /XMLHttpRequest/i.test(d5) || /XMLHttpRequest/i.test(ae);
   return !hasHttp && !hasFetch && !hasXhr;
+});
+
+/* ── M21 ACCENT CYCLE 2 & REM-FIX ────────────────────────────────────── */
+console.log('\n🎙️ M21 Accent Cycle 2 & REM-FIX (Mobile Reminders)');
+
+tryv('M21: data6 schema: all 6 packs present with required IDs and fields', function () {
+  if (typeof ACCENT_PACKS_2 === 'undefined' || !Array.isArray(ACCENT_PACKS_2)) { return false; }
+  if (ACCENT_PACKS_2.length !== 6) { return false; }
+  var expectedIds = ['ax-zs', 'ax-pf', 'ax-oc', 'ax-asp', 'ax-final', 'ax-storm'];
+  for (var i = 0; i < expectedIds.length; i++) {
+    var p = ACCENT_PACKS_2[i];
+    if (p.id !== expectedIds[i]) { return false; }
+    if (!p.title || typeof p.title !== 'string') { return false; }
+    if (!p.ipa || typeof p.ipa !== 'string') { return false; }
+    if (!p.desiTrap || typeof p.desiTrap !== 'string') { return false; }
+    if (!p.fix || typeof p.fix !== 'string') { return false; }
+    if (!p.sentences || !Array.isArray(p.sentences) || p.sentences.length < 3) { return false; }
+  }
+  return true;
+});
+
+tryv('M21: data6 schema: contrast packs carry 12 minimal pairs with valid a/b tags and ipa', function () {
+  var contrastIds = ['ax-zs', 'ax-pf', 'ax-oc', 'ax-asp', 'ax-final'];
+  for (var i = 0; i < contrastIds.length; i++) {
+    var p = null;
+    for (var j = 0; j < ACCENT_PACKS_2.length; j++) {
+      if (ACCENT_PACKS_2[j].id === contrastIds[i]) { p = ACCENT_PACKS_2[j]; break; }
+    }
+    if (!p || !p.pairs || p.pairs.length !== 12) { return false; }
+    for (var k = 0; k < p.pairs.length; k++) {
+      var pair = p.pairs[k];
+      if (!pair.a || !pair.b) { return false; }
+      if (pair.a.tag !== 'desi' || pair.b.tag !== 'target') { return false; }
+      if (!pair.a.w || !pair.b.w || !pair.a.ipa || !pair.b.ipa) { return false; }
+    }
+  }
+  return true;
+});
+
+tryv('M21: data6 schema: ax-storm has modes: [\'sentence\'] and 12 graded interview sentences', function () {
+  var storm = null;
+  for (var i = 0; i < ACCENT_PACKS_2.length; i++) {
+    if (ACCENT_PACKS_2[i].id === 'ax-storm') { storm = ACCENT_PACKS_2[i]; break; }
+  }
+  if (!storm) { return false; }
+  if (!storm.modes || storm.modes.length !== 1 || storm.modes[0] !== 'sentence') { return false; }
+  if (!storm.sentences || storm.sentences.length !== 12) { return false; }
+  for (var k = 0; k < storm.sentences.length; k++) {
+    var s = storm.sentences[k];
+    if (!s.text || !s.stressMark) { return false; }
+  }
+  return true;
+});
+
+tryv('M21: getPacks concat order: data5 (7) + data6 (6) = 13 packs total', function () {
+  var packs = ACCENT.getPacks();
+  if (packs.length !== 13) { return false; }
+  if (packs[0].id !== 'ax-vw') { return false; }
+  if (packs[6].id !== 'ax-rhythm') { return false; }
+  if (packs[7].id !== 'ax-zs') { return false; }
+  if (packs[12].id !== 'ax-storm') { return false; }
+  return true;
+});
+
+tryv('M21: unlock chain boundary: ax-rhythm completion unlocks ax-zs', function () {
+  var acc = { packs: {}, lastXpDate: '' };
+  acc.packs['ax-rhythm'] = { done: false, listenScore: 70, sayScore: 70, sentenceScore: 60 };
+  STORE.set('accent', acc);
+  var locked = ACCENT.isUnlocked('ax-zs');
+
+  acc.packs['ax-rhythm'] = { done: true, listenScore: 85, sayScore: 80, sentenceScore: 90 };
+  STORE.set('accent', acc);
+  var unlocked = ACCENT.isUnlocked('ax-zs');
+
+  return locked === false && unlocked === true;
+});
+
+tryv('M21: ax-asp verdict matrix: pin->HIT and spin->MISS with aspiration trap at target pin', function () {
+  var hitRes = ACCENT.evaluateSay('ax-asp', 0, 'pin');
+  var missRes = ACCENT.evaluateSay('ax-asp', 0, 'spin');
+  var retryRes = ACCENT.evaluateSay('ax-asp', 0, 'banana');
+
+  var hitOk = (hitRes.verdict === 'HIT' && hitRes.targetWord === 'pin');
+  var missOk = (missRes.verdict === 'MISS' && missRes.targetWord === 'pin' && missRes.message.indexOf('puff of air') !== -1);
+  var retryOk = (retryRes.verdict === 'RETRY');
+  return hitOk && missOk && retryOk;
+});
+
+tryv('M21: ax-final verdict matrix: played->HIT and play->MISS with dropped -ed trap', function () {
+  var hitRes = ACCENT.evaluateSay('ax-final', 0, 'played');
+  var missRes = ACCENT.evaluateSay('ax-final', 0, 'play');
+  var hitOk = (hitRes.verdict === 'HIT' && hitRes.targetWord === 'played');
+  var missOk = (missRes.verdict === 'MISS' && missRes.targetWord === 'played' && missRes.message.indexOf('dropped the -ed') !== -1);
+  return hitOk && missOk;
+});
+
+tryv('M21: ax-storm say-tab absence render: say-tab is hidden and sentence mode active', function () {
+  var el = document.createElement('div');
+  VIEWS.accent.render(el, 'ax-storm');
+  var renderedHtml = el.innerHTML;
+  var hasSayTab = (renderedHtml.indexOf('id="ax-tab-say"') !== -1);
+  var hasSentenceTab = (renderedHtml.indexOf('id="ax-tab-sentence"') !== -1);
+  var hasStormTitle = (renderedHtml.indexOf('Interview Storm') !== -1);
+  return !hasSayTab && hasSentenceTab && hasStormTitle;
+});
+
+tryv('M21: done-math per mode subset: ax-storm requires only sentence >= 85 to complete', function () {
+  var stormPack = ACCENT.getPack('ax-storm');
+  var progFail = { listenScore: 0, sayScore: 0, sentenceScore: 80, done: false };
+  var progPass = { listenScore: 0, sayScore: 0, sentenceScore: 85, done: false };
+  var isDoneFail = ACCENT.isPackDone(progFail, stormPack);
+  var isDonePass = ACCENT.isPackDone(progPass, stormPack);
+  return isDoneFail === false && isDonePass === true;
+});
+
+tryv('M21: REMINDERS schedule computes correct next-fire timestamp', function () {
+  var testNow = new Date('2026-09-23T12:00:00Z').getTime();
+  var delayMs = REMINDERS.computeNextFireMs('19:00', testNow);
+  var parsed = REMINDERS.parseHourMin('19:30');
+  return delayMs > 0 && parsed.hour === 19 && parsed.minute === 30;
+});
+
+tryv('M21: REMINDERS with showTrigger: showNotification receives showTrigger TimestampTrigger', function () {
+  var capturedOpts = null;
+  function MockTimestampTrigger(ts) { this.timestamp = ts; }
+  global.TimestampTrigger = MockTimestampTrigger;
+
+  var oldNotif = global.Notification;
+  global.Notification = function () {};
+  global.Notification.permission = 'granted';
+  global.Notification.prototype.showTrigger = true;
+
+  var oldDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
+  Object.defineProperty(global, 'navigator', {
+    value: {
+      serviceWorker: {
+        ready: _syncPromise({
+          getNotifications: function () { return _syncPromise([]); },
+          showNotification: function (title, opts) {
+            capturedOpts = opts;
+            return _syncPromise(null);
+          }
+        })
+      }
+    },
+    configurable: true,
+    writable: true
+  });
+
+  STORE.set('settings', { remindOn: true, remindHour: '19:00' });
+  REMINDERS.schedule();
+
+  if (oldDesc) { Object.defineProperty(global, 'navigator', oldDesc); }
+  global.Notification = oldNotif;
+  delete global.TimestampTrigger;
+
+  return capturedOpts !== null &&
+         capturedOpts.tag === 'engspell-dose' &&
+         capturedOpts.showTrigger &&
+         capturedOpts.showTrigger.timestamp > 0;
+});
+
+tryv('M21: REMINDERS dedupe: two re-arms in a row -> exactly one showNotification call for tag', function () {
+  var showCalls = 0;
+  var existing = [];
+  function MockTimestampTrigger(ts) { this.timestamp = ts; }
+  global.TimestampTrigger = MockTimestampTrigger;
+
+  var oldNotif = global.Notification;
+  global.Notification = function () {};
+  global.Notification.permission = 'granted';
+  global.Notification.prototype.showTrigger = true;
+
+  var oldDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
+  Object.defineProperty(global, 'navigator', {
+    value: {
+      serviceWorker: {
+        ready: _syncPromise({
+          getNotifications: function (opts) {
+            return _syncPromise(existing);
+          },
+          showNotification: function (title, opts) {
+            showCalls++;
+            existing.push({ tag: opts.tag });
+            return _syncPromise(null);
+          }
+        })
+      }
+    },
+    configurable: true,
+    writable: true
+  });
+
+  STORE.set('settings', { remindOn: true, remindHour: '19:00' });
+
+  REMINDERS.schedule();
+  REMINDERS.schedule();
+
+  if (oldDesc) { Object.defineProperty(global, 'navigator', oldDesc); }
+  global.Notification = oldNotif;
+  delete global.TimestampTrigger;
+
+  return showCalls === 1;
+});
+
+tryv('M21: REMINDERS legacy fallback: unsupported showTrigger routes via timeout and showNotification', function () {
+  var oldNotif = global.Notification;
+  global.Notification = function () {};
+  global.Notification.permission = 'granted';
+  delete global.Notification.prototype.showTrigger;
+  delete global.TimestampTrigger;
+
+  var fireCalled = false;
+  var oldDesc = Object.getOwnPropertyDescriptor(global, 'navigator');
+  Object.defineProperty(global, 'navigator', {
+    value: {
+      serviceWorker: {
+        ready: _syncPromise({
+          showNotification: function () {
+            fireCalled = true;
+            return _syncPromise(null);
+          }
+        })
+      }
+    },
+    configurable: true,
+    writable: true
+  });
+
+  STORE.set('settings', { remindOn: true, remindHour: '19:00' });
+  REMINDERS.schedule();
+  var hasTrig = REMINDERS.hasShowTrigger();
+  REMINDERS.fireNotification();
+
+  if (oldDesc) { Object.defineProperty(global, 'navigator', oldDesc); }
+  global.Notification = oldNotif;
+
+  return hasTrig === false && fireCalled === true;
+});
+
+tryv('M21: REMINDERS permission: requestPermission called 0 times during plain settings render', function () {
+  var reqCalls = 0;
+  var oldNotif = global.Notification;
+  global.Notification = function () {};
+  global.Notification.permission = 'default';
+  global.Notification.requestPermission = function () {
+    reqCalls++;
+    return Promise.resolve('granted');
+  };
+
+  var el = document.createElement('div');
+  VIEWS.settings.render(el);
+
+  global.Notification = oldNotif;
+  return reqCalls === 0;
+});
+
+tryv('M21: REMINDERS enable/disable state round-trips migration-free', function () {
+  REMINDERS.enable(true, '21:00');
+  var s1RemindOn = STORE.get('settings').remindOn;
+  var s1RemindHour = STORE.get('settings').remindHour;
+  var isEn1 = REMINDERS.isEnabled();
+
+  REMINDERS.enable(false);
+  var s2RemindOn = STORE.get('settings').remindOn;
+  var isEn2 = REMINDERS.isEnabled();
+
+  return s1RemindOn === true && s1RemindHour === '21:00' && isEn1 === true &&
+         s2RemindOn === false && isEn2 === false;
+});
+
+tryv('M21: ES5 check: src/data6.js passes node --check with no ES6 features', function () {
+  var res = _cp.spawnSync(process.execPath, ['--check', _path.join(__dirname, 'src', 'data6.js')]);
+  return res.status === 0;
+});
+
+tryv('M21: count sweep: views-a, accent-engine, and landing reference 13 packs', function () {
+  var va = _fs.readFileSync(_path.join(__dirname, 'src', 'views-a.js'), 'utf8');
+  var ae = _fs.readFileSync(_path.join(__dirname, 'src', 'accent-engine.js'), 'utf8');
+  var land = _fs.readFileSync(_path.join(__dirname, 'landing', 'index.html'), 'utf8');
+  var readme = _fs.readFileSync(_path.join(__dirname, 'README.md'), 'utf8');
+
+  var va13 = va.indexOf('13 accent packs') !== -1;
+  var ae13 = ae.indexOf('13 research-backed packs') !== -1 && ae.indexOf('all 13 Indian-English') !== -1;
+  var land13 = land.indexOf('13 research-backed packs') !== -1;
+  var rm13 = readme.indexOf('13 research-backed packs') !== -1 && readme.indexOf('13 contrast packs') !== -1;
+
+  return va13 && ae13 && land13 && rm13;
 });
 
 /* ── SUMMARY ────────────────────────────────────────────────────────── */

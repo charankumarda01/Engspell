@@ -77,6 +77,7 @@ src/data2.js      → COURSE, CLARITY_DATA, IDIOMS, PVS, QUOTES, DAILY_SEEDS
 src/data3.js      → ATLAS, PASSAGES, ASSESSMENT_POOLS, SKILL_META
 src/data4.js      → DATA4 (GEN_LESSONS, GEN_SCENARIOS, GEN_PASSAGES)
 src/data5.js      → ACCENT_PACKS (7 Indian English accent neutralization packs)
+src/data6.js      → ACCENT_PACKS_2 (6 Cycle-2 packs: s/z, p/f, cot/caught, asp, final -ed, storm)
 src/speech.js     → SPEECH (TTS + STT wrapper)
 src/core.js       → STORE, TRAINER, U, UI, router, nav
 src/accent-engine.js → ACCENT (engine & drills), VIEWS.accent
@@ -93,6 +94,7 @@ src/views-f.js    → VIEWS.docstudio, VIEWS.resume
 
 ## Mission Backlog & Release Status
 
+- **M21**: Accent Cycle 2 (ACCENT_PACKS_2, 6 new packs, 13 total, modes subset, interview storm) + Phase 0 REM-FIX (ServiceWorker showNotification, TimestampTrigger dedupe, honest mobile reminders) — **SHIPPED** (2026-09-23)
 - **M20**: Indian Accent Studio (ACCENT-UP), 7 contrast packs, ear quiz, word-level verify, sentence run, badge — **SHIPPED** (2026-09-22)
 
 - **PWA-01**: Offline PWA, Web App Manifest, Service Worker cache-first — **SHIPPED** (2026-09-20 · `e517f27`)
@@ -190,13 +192,18 @@ src/views-f.js    → VIEWS.docstudio, VIEWS.resume
 node --check src/data.js
 node --check src/data2.js
 node --check src/data3.js
+node --check src/data4.js
+node --check src/data5.js
+node --check src/data6.js
 node --check src/speech.js
 node --check src/core.js
+node --check src/accent-engine.js
 node --check src/views-a.js
 node --check src/views-b.js
 node --check src/views-c.js
 node --check src/views-d.js
 node --check src/views-e.js
+node --check src/views-f.js
 node test.js
 bash build.sh
 ```

@@ -4,7 +4,7 @@
    INV-2: fully offline, no external network calls here.
    ===================================================================== */
 
-var CACHE_NAME = 'engspell-20260922182516';
+var CACHE_NAME = 'engspell-20260923054711';
 
 var ASSETS = [
   './',
@@ -14,6 +14,7 @@ var ASSETS = [
   './src/data3.js',
   './src/data4.js',
   './src/data5.js',
+  './src/data6.js',
   './src/speech.js',
   './src/core.js',
   './src/accent-engine.js',

@@ -1053,6 +1053,7 @@ VIEWS.settings = {
         ? '<p class="setting-hint" id="s-remind-note" style="color:var(--warn);">Reminders not supported here — streak chip is your reminder.</p>'
         : '<p class="setting-hint" id="s-remind-note">Receive a local notification when today\'s Flow has remaining steps.</p>'
       ) +
+      '<p class="setting-hint" style="color:var(--txt2);font-size:12px;margin-top:4px;">Reminders fire while EngSpell was opened today on Firefox; instant even after phone sleep on Chrome/Android.</p>' +
       '</div>' +
 
       '<button class="btn-primary" id="s-save">💾 Save Settings</button>' +

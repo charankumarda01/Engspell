@@ -1251,6 +1251,9 @@ function llmAsk(opts) {
 var REMINDERS = (function () {
   'use strict';
   var _timer = null;
+  var _isArming = false;
+  var _lastScheduledTargetMs = 0;
+  var _visibilityAttached = false;
 
   function parseHourMin(hourStr) {
     var parts = String(hourStr || '19:00').split(':');
@@ -1274,12 +1277,18 @@ var REMINDERS = (function () {
   }
 
   function canNotify() {
-    return typeof Notification !== 'undefined';
+    return (typeof Notification !== 'undefined') || (typeof navigator !== 'undefined' && 'serviceWorker' in navigator);
   }
 
   function getPermission() {
-    if (!canNotify()) { return 'unsupported'; }
+    if (typeof Notification === 'undefined') { return 'unsupported'; }
     return Notification.permission;
+  }
+
+  function hasShowTrigger() {
+    return (typeof Notification !== 'undefined' && 'showTrigger' in Notification.prototype) ||
+           (typeof TimestampTrigger !== 'undefined') ||
+           (typeof window !== 'undefined' && typeof window.TimestampTrigger !== 'undefined');
   }
 
   function getRemainingStepsSummary() {
@@ -1296,45 +1305,190 @@ var REMINDERS = (function () {
     return remaining + ' step' + (remaining === 1 ? '' : 's') + ' left in today\'s Flow to keep your streak!';
   }
 
-  function fireNotification() {
-    if (!canNotify() || Notification.permission !== 'granted') { return null; }
-    var title = 'EngSpell — your Flow is waiting 🔥';
-    var body = getRemainingStepsSummary();
+  function _showViaPage(title, options) {
     try {
-      var n = new Notification(title, {
-        body: body,
-        icon: 'icons/icon-192.png'
-      });
-      n.onclick = function () {
-        if (typeof window !== 'undefined') {
-          if (window.focus) { window.focus(); }
-          window.location.hash = '#/home';
-        }
-        if (n.close) { n.close(); }
-      };
-      return n;
+      if (typeof Notification !== 'undefined' && typeof Notification === 'function') {
+        var n = new Notification(title, options);
+        n.onclick = function () {
+          if (typeof window !== 'undefined') {
+            if (window.focus) { window.focus(); }
+            window.location.hash = '#/home';
+          }
+          if (n.close) { n.close(); }
+        };
+        return n;
+      }
     } catch (e) {
-      /* ignore */
+      /* ignore Android new Notification() restriction */
     }
     return null;
   }
 
+  function _toPromise(val) {
+    if (val && typeof val.then === 'function') { return val; }
+    if (typeof Promise !== 'undefined' && Promise.resolve) { return Promise.resolve(val); }
+    return {
+      then: function (cb) {
+        var r = cb ? cb(val) : val;
+        return _toPromise(r);
+      }
+    };
+  }
+
+  function fireNotification(tag) {
+    if (getPermission() !== 'granted') { return null; }
+    var title = 'EngSpell — your Flow is waiting 🔥';
+    var body = getRemainingStepsSummary();
+    var options = {
+      body: body,
+      icon: 'icons/icon-192.png',
+      tag: tag || 'engspell-dose'
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.serviceWorker && navigator.serviceWorker.ready) {
+      return _toPromise(navigator.serviceWorker.ready).then(function (reg) {
+        if (reg && reg.showNotification) {
+          return reg.showNotification(title, options);
+        }
+        return _showViaPage(title, options);
+      });
+    }
+    return _showViaPage(title, options);
+  }
+
   function schedule() {
+    _ensureVisibilityListener();
     if (_timer) { clearTimeout(_timer); _timer = null; }
-    if (typeof STORE === 'undefined' || !STORE.get) { return; }
+    if (typeof STORE === 'undefined' || !STORE.get) { return _toPromise(null); }
     var settings = STORE.get('settings') || {};
-    if (!settings.remindOn) { return; }
-    if (!canNotify() || Notification.permission !== 'granted') { return; }
+    if (!settings.remindOn) { return _toPromise(null); }
+    if (getPermission() !== 'granted') { return _toPromise(null); }
 
     var delayMs = computeNextFireMs(settings.remindHour || '19:00');
+    var targetFireMs = Date.now() + delayMs;
+
+    // Check for Notification Triggers support (Chrome/Android TimestampTrigger)
+    if (hasShowTrigger() && typeof navigator !== 'undefined' && navigator.serviceWorker && navigator.serviceWorker.ready) {
+      if (_isArming) {
+        return _toPromise(null);
+      }
+      _isArming = true;
+      return _toPromise(navigator.serviceWorker.ready).then(function (reg) {
+        if (!reg || !reg.showNotification) {
+          _isArming = false;
+          _fallbackLegacySchedule(delayMs);
+          return null;
+        }
+
+        var getNotesCall = (reg.getNotifications)
+          ? reg.getNotifications({ tag: 'engspell-dose', includeTriggered: true })
+          : [];
+
+        return _toPromise(getNotesCall).then(function (notes) {
+          var hasTag = false;
+          if (notes && notes.length) {
+            for (var i = 0; i < notes.length; i++) {
+              if (notes[i] && notes[i].tag === 'engspell-dose') {
+                hasTag = true;
+                break;
+              }
+            }
+          }
+          if (hasTag) {
+            _isArming = false;
+            return null; // Dedupe: tag already registered/armed!
+          }
+
+          var trigger = null;
+          if (typeof TimestampTrigger !== 'undefined') {
+            trigger = new TimestampTrigger(targetFireMs);
+          } else if (typeof window !== 'undefined' && typeof window.TimestampTrigger !== 'undefined') {
+            trigger = new window.TimestampTrigger(targetFireMs);
+          } else {
+            trigger = { timestamp: targetFireMs };
+          }
+
+          var title = 'EngSpell — your Flow is waiting 🔥';
+          var opts = {
+            body: getRemainingStepsSummary(),
+            icon: 'icons/icon-192.png',
+            tag: 'engspell-dose',
+            showTrigger: trigger
+          };
+
+          return _toPromise(reg.showNotification(title, opts)).then(function (res) {
+            _isArming = false;
+            _lastScheduledTargetMs = targetFireMs;
+            return res;
+          });
+        });
+      });
+    }
+
+    // Legacy fallback (no showTrigger, e.g. Firefox)
+    _fallbackLegacySchedule(delayMs);
+    return _toPromise(null);
+  }
+
+  function _fallbackLegacySchedule(delayMs) {
+    if (_timer) { clearTimeout(_timer); _timer = null; }
     _timer = setTimeout(function () {
-      fireNotification();
+      fireNotification('engspell-dose');
       schedule(); // reschedule for next day
     }, delayMs);
   }
 
+  function _ensureVisibilityListener() {
+    if (_visibilityAttached) { return; }
+    if (typeof document !== 'undefined' && document.addEventListener) {
+      _visibilityAttached = true;
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+          schedule();
+        }
+      });
+    }
+  }
+
   function clear() {
     if (_timer) { clearTimeout(_timer); _timer = null; }
+    _isArming = false;
+    _lastScheduledTargetMs = 0;
+    if (typeof navigator !== 'undefined' && navigator.serviceWorker && navigator.serviceWorker.ready) {
+      Promise.resolve(navigator.serviceWorker.ready).then(function (reg) {
+        if (reg && reg.getNotifications) {
+          reg.getNotifications({ tag: 'engspell-dose', includeTriggered: true }).then(function (notes) {
+            if (notes && notes.length) {
+              for (var i = 0; i < notes.length; i++) {
+                if (notes[i] && notes[i].close) {
+                  notes[i].close();
+                }
+              }
+            }
+          }).catch(function () {});
+        }
+      }).catch(function () {});
+    }
+  }
+
+  function enable(bool, hourStr) {
+    if (typeof STORE === 'undefined' || !STORE.get) { return; }
+    var s = STORE.get('settings') || {};
+    s.remindOn = !!bool;
+    if (hourStr) { s.remindHour = hourStr; }
+    STORE.set('settings', s);
+    if (STORE.save) { STORE.save(); }
+    if (bool) {
+      schedule();
+    } else {
+      clear();
+    }
+  }
+
+  function isEnabled() {
+    if (typeof STORE === 'undefined' || !STORE.get) { return false; }
+    var s = STORE.get('settings') || {};
+    return !!s.remindOn;
   }
 
   return {
@@ -1342,10 +1496,13 @@ var REMINDERS = (function () {
     computeNextFireMs: computeNextFireMs,
     canNotify: canNotify,
     getPermission: getPermission,
+    hasShowTrigger: hasShowTrigger,
     getRemainingStepsSummary: getRemainingStepsSummary,
     fireNotification: fireNotification,
     schedule: schedule,
-    clear: clear
+    clear: clear,
+    enable: enable,
+    isEnabled: isEnabled
   };
 })();
 

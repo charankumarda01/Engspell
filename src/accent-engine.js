@@ -8,7 +8,9 @@ var ACCENT = (function () {
   'use strict';
 
   function getPacks() {
-    return (typeof ACCENT_PACKS !== 'undefined') ? ACCENT_PACKS : [];
+    var p1 = (typeof ACCENT_PACKS !== 'undefined' && Array.isArray(ACCENT_PACKS)) ? ACCENT_PACKS : [];
+    var p2 = (typeof ACCENT_PACKS_2 !== 'undefined' && Array.isArray(ACCENT_PACKS_2)) ? ACCENT_PACKS_2 : [];
+    return p1.concat(p2);
   }
 
   function getPack(id) {
@@ -47,6 +49,32 @@ var ACCENT = (function () {
     };
   }
 
+  function isPackDone(prog, pack) {
+    if (!prog) { return false; }
+    if (prog.done) { return true; }
+    var modes = (pack && pack.modes && Array.isArray(pack.modes)) ? pack.modes : ['listen', 'say', 'sentence'];
+    var hasListen = (modes.indexOf('listen') !== -1);
+    var hasSay = (modes.indexOf('say') !== -1);
+    var hasSentence = (modes.indexOf('sentence') !== -1);
+
+    if (!hasListen && !hasSay && hasSentence) {
+      return (prog.sentenceScore >= 85);
+    }
+    if (hasListen && !hasSay && hasSentence) {
+      return (prog.listenScore >= 80 && prog.sentenceScore >= 85);
+    }
+    if (hasListen && hasSay) {
+      return (prog.listenScore >= 80 && prog.sayScore >= 75);
+    }
+    if (hasListen) {
+      return (prog.listenScore >= 80);
+    }
+    if (hasSay) {
+      return (prog.sayScore >= 75);
+    }
+    return false;
+  }
+
   function isUnlocked(id) {
     var packs = getPacks();
     if (!packs.length) { return false; }
@@ -58,19 +86,18 @@ var ACCENT = (function () {
     }
     if (idx <= 0) { return idx === 0; }
 
-    // Unlocked if previous pack is done (or >=80% listen and >=75% say)
-    var prevId = packs[idx - 1].id;
-    var prevProg = getPackProgress(prevId);
-    return prevProg.done || (prevProg.listenScore >= 80 && prevProg.sayScore >= 75);
+    var prevPack = packs[idx - 1];
+    var prevProg = getPackProgress(prevPack.id);
+    return isPackDone(prevProg, prevPack);
   }
 
   function hasNeutralizedBadge() {
     var packs = getPacks();
-    if (!packs.length) { return false; }
+    if (!packs.length || packs.length < 13) { return false; }
     for (var i = 0; i < packs.length; i++) {
-      var prog = getPackProgress(packs[i].id);
-      var isDone = prog.done || (prog.listenScore >= 80 && prog.sayScore >= 75);
-      if (!isDone) { return false; }
+      var pk = packs[i];
+      var prog = getPackProgress(pk.id);
+      if (!isPackDone(prog, pk)) { return false; }
     }
     return true;
   }
@@ -92,7 +119,8 @@ var ACCENT = (function () {
       p.sentenceScore = Math.max(p.sentenceScore || 0, Math.round(score));
     }
 
-    if (p.listenScore >= 80 && p.sayScore >= 75) {
+    var pack = getPack(id);
+    if (isPackDone(p, pack)) {
       p.done = true;
     }
 
@@ -181,6 +209,12 @@ var ACCENT = (function () {
           message: 'Excellent! Clear international pronunciation for "' + pair.b.w + '".'
         };
       } else if (matchedDesi) {
+        var trapMsg = '⚠️ Desi twin detected: you said "' + pair.a.w + '" instead of "' + pair.b.w + '". Focus on: ' + pack.fix;
+        if (pack.id === 'ax-asp') {
+          trapMsg = 'Your stop is unaspirated — add the puff of air. Focus on: ' + pack.fix;
+        } else if (pack.id === 'ax-final') {
+          trapMsg = 'You dropped the -ed — endings carry the tense, carry the meaning. Focus on: ' + pack.fix;
+        }
         return {
           verdict: 'MISS',
           word: pair.b.w,
@@ -188,7 +222,7 @@ var ACCENT = (function () {
           desiTwin: pair.a.w,
           trap: pack.desiTrap,
           fix: pack.fix,
-          message: '⚠️ Desi twin detected: you said "' + pair.a.w + '" instead of "' + pair.b.w + '". Focus on: ' + pack.fix
+          message: trapMsg
         };
       } else {
         return {
@@ -254,6 +288,7 @@ var ACCENT = (function () {
     getPack: getPack,
     getStore: getStore,
     getPackProgress: getPackProgress,
+    isPackDone: isPackDone,
     isUnlocked: isUnlocked,
     hasNeutralizedBadge: hasNeutralizedBadge,
     saveProgress: saveProgress,
@@ -308,7 +343,7 @@ VIEWS.accent = {
       var p = packs[i];
       var prog = ACCENT.getPackProgress(p.id);
       var unlocked = ACCENT.isUnlocked(p.id);
-      var isDone = prog.done || (prog.listenScore >= 80 && prog.sayScore >= 75);
+      var isDone = ACCENT.isPackDone(prog, p);
       var icon = isDone ? '✅' : (unlocked ? '🔓' : '🔒');
       var bg = isDone ? 'rgba(52,211,153,0.15)' : (unlocked ? 'rgba(124,92,255,0.15)' : 'var(--bg2)');
       var border = isDone ? 'var(--ok)' : (unlocked ? 'var(--acc)' : 'var(--line)');
@@ -326,7 +361,7 @@ VIEWS.accent = {
       badgeBanner = '<div class="card" style="background:rgba(52,211,153,0.12);border:1px solid var(--ok);margin-bottom:20px;padding:16px 20px;display:flex;align-items:center;gap:14px;">' +
         '<span style="font-size:2rem;">🇮🇳✨</span>' +
         '<div><strong style="color:var(--ok);font-size:1.05rem;">+Accent Neutralized Master Badge Unlocked!</strong>' +
-        '<p style="color:var(--txt);font-size:0.85rem;margin:4px 0 0 0;">You have mastered all 7 Indian-English accent contrast modules. Your speech is crisp, globally intelligible, and authentic.</p></div>' +
+        '<p style="color:var(--txt);font-size:0.85rem;margin:4px 0 0 0;">You have mastered all 13 Indian-English accent contrast modules. Your speech is crisp, globally intelligible, and authentic.</p></div>' +
         '</div>';
     }
 
@@ -336,12 +371,17 @@ VIEWS.accent = {
       var pk = packs[j];
       var pr = ACCENT.getPackProgress(pk.id);
       var isUnl = ACCENT.isUnlocked(pk.id);
-      var pkDone = pr.done || (pr.listenScore >= 80 && pr.sayScore >= 75);
+      var pkDone = ACCENT.isPackDone(pr, pk);
 
       var statusBadge = pkDone
         ? '<span class="badge" style="background:rgba(52,211,153,0.2);color:var(--ok);">✅ Mastered</span>'
         : (isUnl ? '<span class="badge" style="background:rgba(124,92,255,0.2);color:var(--acc2);">🔓 Unlocked</span>'
                  : '<span class="badge" style="background:rgba(154,166,201,0.2);color:var(--mut);">🔒 Locked</span>');
+
+      var statsText = 'Ear: ' + pr.listenScore + '% | Voice: ' + pr.sayScore + '%';
+      if (pk.modes && pk.modes.indexOf('say') === -1) {
+        statsText = 'Sentence Run: ' + pr.sentenceScore + '%';
+      }
 
       cardsHtml += '<div class="card accent-pack-card" data-pack-id="' + pk.id + '" style="cursor:' + (isUnl ? 'pointer' : 'not-allowed') + ';opacity:' + (isUnl ? '1' : '0.65') + ';" onclick="' + (isUnl ? 'navigate(\'accent\',\'' + pk.id + '\')' : '') + '">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
@@ -351,7 +391,7 @@ VIEWS.accent = {
         '<h3 style="font-size:1.1rem;margin-bottom:6px;">' + (j + 1) + '. ' + pk.title + '</h3>' +
         '<p style="font-size:0.85rem;color:var(--mut);line-height:1.4;margin-bottom:12px;">' + pk.desiTrap + '</p>' +
         '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--mut);border-top:1px solid var(--line);padding-top:10px;">' +
-          '<span>Ear: ' + pr.listenScore + '% | Voice: ' + pr.sayScore + '%</span>' +
+          '<span>' + statsText + '</span>' +
           (isUnl ? '<span style="color:var(--acc2);font-weight:600;">Train Pack →</span>' : '<span>Requires Pack ' + j + '</span>') +
         '</div>' +
         '</div>';
@@ -360,7 +400,7 @@ VIEWS.accent = {
 
     el.innerHTML = '<div class="view-accent" style="max-width:960px;margin:0 auto;padding:10px 0;">' +
       '<h1>🇮🇳 Indian Accent Studio</h1>' +
-      '<p class="sub">Upgrade from regional Indian phonology to crisp international clarity without erasing your voice. 7 research-backed packs with ear training, word-level contrasts, and stress rhythm.</p>' +
+      '<p class="sub">Upgrade from regional Indian phonology to crisp international clarity without erasing your voice. 13 research-backed packs with ear training, word-level contrasts, and stress rhythm.</p>' +
       badgeBanner +
       stripHtml +
       '<div class="section-title">🎙️ Accent Neutralization Curriculum</div>' +
@@ -371,7 +411,23 @@ VIEWS.accent = {
   _renderPack: function (el, pack) {
     var self = this;
     var prog = ACCENT.getPackProgress(pack.id);
-    var mode = self._mode || 'listen';
+    var modes = (pack.modes && Array.isArray(pack.modes)) ? pack.modes : ['listen', 'say', 'sentence'];
+    if (modes.indexOf(self._mode) === -1) {
+      self._mode = modes[0];
+    }
+    var mode = self._mode;
+
+    var tabsHtml = '<div class="coach-modes" style="margin-bottom:20px;">';
+    if (modes.indexOf('listen') !== -1) {
+      tabsHtml += '<button class="tab-btn' + (mode === 'listen' ? ' active' : '') + '" id="ax-tab-listen">👂 1. Listen Quiz (' + prog.listenScore + '%)</button>';
+    }
+    if (modes.indexOf('say') !== -1) {
+      tabsHtml += '<button class="tab-btn' + (mode === 'say' ? ' active' : '') + '" id="ax-tab-say">🎙️ 2. Say It (' + prog.sayScore + '%)</button>';
+    }
+    if (modes.indexOf('sentence') !== -1) {
+      tabsHtml += '<button class="tab-btn' + (mode === 'sentence' ? ' active' : '') + '" id="ax-tab-sentence">🗣️ 3. Sentence Run (' + prog.sentenceScore + '%)</button>';
+    }
+    tabsHtml += '</div>';
 
     var html = '<div class="view-accent-detail" style="max-width:760px;margin:0 auto;padding:10px 0;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">' +
@@ -393,11 +449,7 @@ VIEWS.accent = {
       '</div>' +
 
       // Mode tabs
-      '<div class="coach-modes" style="margin-bottom:20px;">' +
-        '<button class="tab-btn' + (mode === 'listen' ? ' active' : '') + '" id="ax-tab-listen">👂 1. Listen Quiz (' + prog.listenScore + '%)</button>' +
-        '<button class="tab-btn' + (mode === 'say' ? ' active' : '') + '" id="ax-tab-say">🎙️ 2. Say It (' + prog.sayScore + '%)</button>' +
-        '<button class="tab-btn' + (mode === 'sentence' ? ' active' : '') + '" id="ax-tab-sentence">🗣️ 3. Sentence Run (' + prog.sentenceScore + '%)</button>' +
-      '</div>' +
+      tabsHtml +
 
       '<div id="accent-drill-area"></div>' +
       '</div>';

@@ -11,7 +11,7 @@ TMP="_build_tmp.js"
 echo "🔨 EngSpell build.sh starting..."
 
 # Syntax check all source files first (INV-6)
-for f in src/data.js src/data2.js src/data3.js src/data4.js src/data5.js src/speech.js src/core.js \
+for f in src/data.js src/data2.js src/data3.js src/data4.js src/data5.js src/data6.js src/speech.js src/core.js \
           src/accent-engine.js src/views-a.js src/views-b.js src/views-c.js src/views-d.js src/views-e.js src/views-f.js; do
   node --check "$f" && echo "  ✓ $f"
 done
@@ -24,7 +24,7 @@ if [ -f sw.js ]; then
 fi
 
 # Concatenate JS in dependency order
-cat src/data.js src/data2.js src/data3.js src/data4.js src/data5.js src/speech.js src/core.js \
+cat src/data.js src/data2.js src/data3.js src/data4.js src/data5.js src/data6.js src/speech.js src/core.js \
     src/accent-engine.js src/views-a.js src/views-b.js src/views-c.js src/views-d.js src/views-e.js src/views-f.js \
     > "$TMP"
 

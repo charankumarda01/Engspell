@@ -36,7 +36,7 @@ EngSpell is a single-page "English gym" that runs entirely in the browser:
   with 2 voice missions each that must be completed aloud.
 - **Nova, the AI coach** — free conversation with live grammar correction + native upgrades,
   powered by Gemini 2.0 Flash (free tier, your API key). Falls back to rule engine offline.
-- **Indian Accent Studio** — 7 research-backed packs neutralizing Indian-English phonetic habits (v/w, dental th, rhotic r, retroflex t/d, word stress, diphthongs, sentence rhythm) with ear quizzes and word-level voice checks.
+- **Indian Accent Studio** — 13 research-backed packs neutralizing Indian-English phonetic habits (v/w, dental th, rhotic r, retroflex t/d, word stress, diphthongs, sentence rhythm, s/z, p/f, cot/caught, aspiration, dropped endings, interview storm) with ear quizzes and word-level voice checks.
 - **Adaptive engine** — every action in every module feeds a 6-skill Weakness Radar;
   the app prescribes your next task, never a generic list.
 - **Daily ritual** — Today's Dose: twister, power word, idiom quiz, quote shadow, streaks, XP.
@@ -52,7 +52,7 @@ EngSpell is a single-page "English gym" that runs entirely in the browser:
 | Home + Onboarding | `#/home` | Daily goal ring, streak, week chart, next-best-action |
 | Today's Dose | `#/daily` | Daily twister / power word / idiom quiz / quote shadow |
 | My Trainer | `#/trainer` | SVG Weakness Radar (6 skills), auto-plan |
-| Indian Accent Studio | `#/accent` | 7 contrast packs (v/w, th, stress, rhythm), ear quiz, voice verify |
+| Indian Accent Studio | `#/accent` | 13 contrast packs (v/w, th, stress, rhythm, s/z, p/f, endings, interview storm), ear quiz, voice verify |
 | Learn Path | `#/path`, `#/lesson/:id` | 68 lessons · 4 stages, pattern tables, 2 missions each |
 | Grammar Atlas | `#/atlas` | 12 tenses (machine, when, signal words) + tense quiz |
 | Foundations | `#/foundations` | Alphabet, 20 vowels, 24 consonants, spell-anything tool |

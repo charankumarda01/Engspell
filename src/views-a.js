@@ -202,7 +202,7 @@ VIEWS.home = {
           '<div class="start-card-icon">🇮🇳</div>' +
           '<div class="start-card-body">' +
             '<h3>Accent Studio</h3>' +
-            '<p>Train Indian→neutral, 7 contrast packs</p>' +
+            '<p>Train Indian→neutral, 13 accent packs</p>' +
           '</div>' +
           '<span class="start-card-action">Start Accent →</span>' +
         '</div>' +
