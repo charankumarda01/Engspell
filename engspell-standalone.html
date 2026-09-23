@@ -120,13 +120,44 @@ textarea:focus-visible,
   background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.15s ease;
+}
+.brand:hover {
+  opacity: 0.9;
 }
 
 .topbar-right {
   display: flex;
+  align-items: center;
   gap: 12px;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.topbar-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 32px;
+  height: 32px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 6px;
+  cursor: pointer;
+  outline: none;
+  margin-left: 4px;
+}
+.topbar-menu-btn span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--txt);
+  border-radius: 1px;
 }
 
 #xp-display { color: var(--gold); }
@@ -1179,8 +1210,10 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 
 @media (max-width: 880px) {
   #sidebar { display: none !important; }
+  .topbar-menu-btn { display: flex; }
+  input, select, textarea { font-size: 16px !important; }
   #view {
-    padding: 16px 14px calc(var(--mobbar-h) + env(safe-area-inset-bottom, 16px) + 20px);
+    padding: 16px 14px calc(var(--mobbar-h) + env(safe-area-inset-bottom, 16px) + 24px);
     max-width: 100%;
   }
 
@@ -1753,10 +1786,13 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 <body>
 <div id="app">
   <header id="topbar">
-    <div class="brand">✨ EngSpell</div>
+    <a href="#/home" class="brand" aria-label="EngSpell Home">✨ EngSpell</a>
     <div class="topbar-right">
       <span id="xp-display">⚡ 0 XP</span>
       <span id="streak-display">🔥 0</span>
+      <button type="button" id="topbar-menu-btn" class="topbar-menu-btn" aria-label="Open full menu" onclick="var m = document.getElementById('mob-more-btn'); if (m) m.click();">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
   <div id="flow-strip" class="flow-strip">
@@ -12450,12 +12486,26 @@ var UI = (function () {
     var checkBtn = (el && el.querySelector ? el.querySelector('#' + checkId) : null) || document.getElementById(checkId);
     if (checkBtn) {
       checkBtn.addEventListener('click', function () {
-        if (inputEl) { _evaluate(inputEl.value); }
+        if (inputEl) {
+          var val = (inputEl.value || '').trim();
+          if (!val) {
+            UI.toast('Please speak into the mic or type your answer first.', 'info');
+            return;
+          }
+          _evaluate(val);
+        }
       });
     }
     if (inputEl) {
       inputEl.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { _evaluate(inputEl.value); }
+        if (e.key === 'Enter') {
+          var val = (inputEl.value || '').trim();
+          if (!val) {
+            UI.toast('Please speak into the mic or type your answer first.', 'info');
+            return;
+          }
+          _evaluate(val);
+        }
       });
     }
   }
@@ -12713,12 +12763,54 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     }
     STORE.touchStreak();
     _setActive(p.route);
+
+    // Dynamic page title (Item 5)
+    var routeTitles = {
+      home: 'EngSpell — Speak · Spell · Shine',
+      daily: 'Today\'s Dose & Flow — EngSpell',
+      coach: 'Nova AI Speaking Coach — EngSpell',
+      path: 'Learn Path (68 Lessons) — EngSpell',
+      lesson: 'Lesson Player — EngSpell',
+      foundations: 'English Foundations — EngSpell',
+      pronunciation: 'Pronunciation Lab — EngSpell',
+      accent: 'Indian Accent Studio — EngSpell',
+      spelling: 'Spelling Mastery — EngSpell',
+      phrases: 'Spoken Phrase Builder — EngSpell',
+      idioms: 'Idioms & Phrasal Verbs — EngSpell',
+      clarity: 'Clarity & Rhythm Studio — EngSpell',
+      doctor: 'Sentence Doctor — EngSpell',
+      scenarios: 'Conversations & Role-Play — EngSpell',
+      trainer: 'Adaptive Weakness Radar & Trainer — EngSpell',
+      review: 'Spaced Repetition Review — EngSpell',
+      assessment: 'Speaking Assessment — EngSpell',
+      wordbank: 'Personal Word Bank — EngSpell',
+      quiz: 'CEFR Level Test — EngSpell',
+      read: 'Reading Corner — EngSpell',
+      listening: 'Listening Lab — EngSpell',
+      docstudio: 'Document Studio — EngSpell',
+      resume: 'Resume & Speech Reviewer — EngSpell',
+      settings: 'Settings & Audio — EngSpell',
+      onboarding: 'Welcome to EngSpell — Setup'
+    };
+    if (typeof document !== 'undefined') {
+      document.title = routeTitles[p.route] || ('EngSpell — ' + p.route.charAt(0).toUpperCase() + p.route.slice(1));
+    }
+
     var view = VIEWS[p.route];
     if (view && typeof view.render === 'function') {
       viewEl.innerHTML = '';
       view.render(viewEl, p.arg);
     } else {
-      viewEl.innerHTML = '<div class="not-found"><h2>Page not found</h2><p>Route: #/' + p.route + '</p></div>';
+      var cleanRoute = String(p.route || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      viewEl.innerHTML = '<div class="card not-found-card" style="text-align:center;padding:48px 24px;max-width:560px;margin:32px auto;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);">' +
+        '<div style="font-size:3rem;margin-bottom:12px;">🧭</div>' +
+        '<h2 style="font-size:1.5rem;font-weight:800;color:var(--txt);margin-bottom:8px;">Page Not Found (404)</h2>' +
+        '<p class="sub" style="margin-bottom:24px;">The route <code>#/' + cleanRoute + '</code> was not found.</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn-primary" onclick="navigate(\'home\')">🏠 Return to Home</button>' +
+          '<button type="button" class="btn btn-secondary" onclick="navigate(\'path\')">📖 Explore Lessons</button>' +
+        '</div>' +
+      '</div>';
     }
     // Scroll to top
     if (viewEl.scrollTop !== undefined) { viewEl.scrollTop = 0; }
@@ -14543,7 +14635,7 @@ VIEWS.scenarios = {
         '<h3>' + s.title + '</h3>' +
         '<p>' + s.context + '</p>' +
         '<div class="sc-phrases"><strong>Key phrases:</strong> ' + s.keyPhrases.join(' · ') + '</div>' +
-        '<button class="btn-primary">Start Role-Play →</button>' +
+        '<button type="button" class="btn-primary" onclick="event.stopPropagation();navigate(\'scenarios\',\'' + s.id + '\')">Start Role-Play →</button>' +
         '</div>';
     }
     el.innerHTML = '<div class="view-scenarios"><h1>🎭 Conversations</h1><p class="sub">' + allScenarios.length + ' real-life English conversations & role-plays.</p><div class="scenario-grid">' + cards + '</div></div>';
@@ -15959,6 +16051,16 @@ VIEWS.settings = {
       '<h3>🗑️ Danger Zone</h3>' +
       '<button class="btn-danger" id="s-reset">Reset All Progress</button>' +
       '<button class="btn-secondary" id="s-export">📤 Export Data (JSON)</button>' +
+      '</div>' +
+
+      '<div class="setting-group" style="margin-top:24px;border-top:1px solid var(--line);padding-top:20px;text-align:center;">' +
+      '<h3>💬 Help & Contact</h3>' +
+      '<p class="setting-hint" style="margin-bottom:12px;">Questions, feedback, or need pronunciation guidance?</p>' +
+      '<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">' +
+      '<a href="mailto:support@engspell.ai" class="btn btn-secondary btn-sm" id="s-contact-email">✉️ support@engspell.ai</a>' +
+      '<a href="tel:+918036477355" class="btn btn-secondary btn-sm" id="s-contact-phone">📞 +91 80 3647 7355</a>' +
+      '</div>' +
+      '<p style="font-size:0.8rem;color:var(--mut);">&copy; <span id="s-year">2026</span> EngSpell · ₹0 Forever · Offline First</p>' +
       '</div></div>';
 
     document.getElementById('s-rate').addEventListener('input', function () {
@@ -16156,19 +16258,28 @@ VIEWS.settings = {
     document.getElementById('s-reset').addEventListener('click', function () {
       if (confirm('This will erase ALL your progress. Are you sure?')) {
         STORE.resetAll();
+        UI.toast('All progress reset to defaults.', 'info');
         navigate('onboarding');
       }
     });
 
     document.getElementById('s-export').addEventListener('click', function () {
-      var blob = new Blob([STORE.exportJSON()], {type: 'application/json'});
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'engspell-backup.json';
-      a.click();
-      URL.revokeObjectURL(url);
+      try {
+        var blob = new Blob([STORE.exportJSON()], {type: 'application/json'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'engspell-backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        UI.toast('✅ Backup exported successfully!', 'success');
+      } catch (err) {
+        UI.toast('Export failed: ' + (err.message || 'unknown error'), 'error');
+      }
     });
+
+    var yrEl = document.getElementById('s-year');
+    if (yrEl) { yrEl.textContent = new Date().getFullYear(); }
   }
 };
 
@@ -18768,6 +18879,7 @@ VIEWS.docstudio = {
         d3.splice(idx, 1);
         STORE.set("docs", d3);
         if (self._activeIdx >= d3.length) self._activeIdx = d3.length - 1;
+        UI.toast("Document removed", "info");
         self.render(el);
       });
     });
@@ -19127,6 +19239,7 @@ VIEWS.resume = {
         analyzeBtn.disabled = false;
         var reportEl = el.querySelector("#resume-report");
         if (reportEl) reportEl.innerHTML = _renderResumeReport(report);
+        UI.toast("✅ Analysis complete! Found " + (report.issues || []).length + " diagnostic observations.", "success");
         var settings = STORE.get("settings") || {};
         var key = settings.geminiKey || "";
         if (key && key.trim().length > 10) {

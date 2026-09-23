@@ -1293,6 +1293,16 @@ VIEWS.settings = {
       '<h3>🗑️ Danger Zone</h3>' +
       '<button class="btn-danger" id="s-reset">Reset All Progress</button>' +
       '<button class="btn-secondary" id="s-export">📤 Export Data (JSON)</button>' +
+      '</div>' +
+
+      '<div class="setting-group" style="margin-top:24px;border-top:1px solid var(--line);padding-top:20px;text-align:center;">' +
+      '<h3>💬 Help & Contact</h3>' +
+      '<p class="setting-hint" style="margin-bottom:12px;">Questions, feedback, or need pronunciation guidance?</p>' +
+      '<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">' +
+      '<a href="mailto:support@engspell.ai" class="btn btn-secondary btn-sm" id="s-contact-email">✉️ support@engspell.ai</a>' +
+      '<a href="tel:+918036477355" class="btn btn-secondary btn-sm" id="s-contact-phone">📞 +91 80 3647 7355</a>' +
+      '</div>' +
+      '<p style="font-size:0.8rem;color:var(--mut);">&copy; <span id="s-year">2026</span> EngSpell · ₹0 Forever · Offline First</p>' +
       '</div></div>';
 
     document.getElementById('s-rate').addEventListener('input', function () {
@@ -1490,19 +1500,28 @@ VIEWS.settings = {
     document.getElementById('s-reset').addEventListener('click', function () {
       if (confirm('This will erase ALL your progress. Are you sure?')) {
         STORE.resetAll();
+        UI.toast('All progress reset to defaults.', 'info');
         navigate('onboarding');
       }
     });
 
     document.getElementById('s-export').addEventListener('click', function () {
-      var blob = new Blob([STORE.exportJSON()], {type: 'application/json'});
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'engspell-backup.json';
-      a.click();
-      URL.revokeObjectURL(url);
+      try {
+        var blob = new Blob([STORE.exportJSON()], {type: 'application/json'});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'engspell-backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        UI.toast('✅ Backup exported successfully!', 'success');
+      } catch (err) {
+        UI.toast('Export failed: ' + (err.message || 'unknown error'), 'error');
+      }
     });
+
+    var yrEl = document.getElementById('s-year');
+    if (yrEl) { yrEl.textContent = new Date().getFullYear(); }
   }
 };
 

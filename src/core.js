@@ -2434,12 +2434,26 @@ var UI = (function () {
     var checkBtn = (el && el.querySelector ? el.querySelector('#' + checkId) : null) || document.getElementById(checkId);
     if (checkBtn) {
       checkBtn.addEventListener('click', function () {
-        if (inputEl) { _evaluate(inputEl.value); }
+        if (inputEl) {
+          var val = (inputEl.value || '').trim();
+          if (!val) {
+            UI.toast('Please speak into the mic or type your answer first.', 'info');
+            return;
+          }
+          _evaluate(val);
+        }
       });
     }
     if (inputEl) {
       inputEl.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { _evaluate(inputEl.value); }
+        if (e.key === 'Enter') {
+          var val = (inputEl.value || '').trim();
+          if (!val) {
+            UI.toast('Please speak into the mic or type your answer first.', 'info');
+            return;
+          }
+          _evaluate(val);
+        }
       });
     }
   }
@@ -2697,12 +2711,54 @@ for (var _s = 0; _s < NAV_SECTIONS.length; _s++) {
     }
     STORE.touchStreak();
     _setActive(p.route);
+
+    // Dynamic page title (Item 5)
+    var routeTitles = {
+      home: 'EngSpell — Speak · Spell · Shine',
+      daily: 'Today\'s Dose & Flow — EngSpell',
+      coach: 'Nova AI Speaking Coach — EngSpell',
+      path: 'Learn Path (68 Lessons) — EngSpell',
+      lesson: 'Lesson Player — EngSpell',
+      foundations: 'English Foundations — EngSpell',
+      pronunciation: 'Pronunciation Lab — EngSpell',
+      accent: 'Indian Accent Studio — EngSpell',
+      spelling: 'Spelling Mastery — EngSpell',
+      phrases: 'Spoken Phrase Builder — EngSpell',
+      idioms: 'Idioms & Phrasal Verbs — EngSpell',
+      clarity: 'Clarity & Rhythm Studio — EngSpell',
+      doctor: 'Sentence Doctor — EngSpell',
+      scenarios: 'Conversations & Role-Play — EngSpell',
+      trainer: 'Adaptive Weakness Radar & Trainer — EngSpell',
+      review: 'Spaced Repetition Review — EngSpell',
+      assessment: 'Speaking Assessment — EngSpell',
+      wordbank: 'Personal Word Bank — EngSpell',
+      quiz: 'CEFR Level Test — EngSpell',
+      read: 'Reading Corner — EngSpell',
+      listening: 'Listening Lab — EngSpell',
+      docstudio: 'Document Studio — EngSpell',
+      resume: 'Resume & Speech Reviewer — EngSpell',
+      settings: 'Settings & Audio — EngSpell',
+      onboarding: 'Welcome to EngSpell — Setup'
+    };
+    if (typeof document !== 'undefined') {
+      document.title = routeTitles[p.route] || ('EngSpell — ' + p.route.charAt(0).toUpperCase() + p.route.slice(1));
+    }
+
     var view = VIEWS[p.route];
     if (view && typeof view.render === 'function') {
       viewEl.innerHTML = '';
       view.render(viewEl, p.arg);
     } else {
-      viewEl.innerHTML = '<div class="not-found"><h2>Page not found</h2><p>Route: #/' + p.route + '</p></div>';
+      var cleanRoute = String(p.route || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      viewEl.innerHTML = '<div class="card not-found-card" style="text-align:center;padding:48px 24px;max-width:560px;margin:32px auto;background:var(--bg1);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh2);">' +
+        '<div style="font-size:3rem;margin-bottom:12px;">🧭</div>' +
+        '<h2 style="font-size:1.5rem;font-weight:800;color:var(--txt);margin-bottom:8px;">Page Not Found (404)</h2>' +
+        '<p class="sub" style="margin-bottom:24px;">The route <code>#/' + cleanRoute + '</code> was not found.</p>' +
+        '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn-primary" onclick="navigate(\'home\')">🏠 Return to Home</button>' +
+          '<button type="button" class="btn btn-secondary" onclick="navigate(\'path\')">📖 Explore Lessons</button>' +
+        '</div>' +
+      '</div>';
     }
     // Scroll to top
     if (viewEl.scrollTop !== undefined) { viewEl.scrollTop = 0; }

@@ -363,7 +363,7 @@ VIEWS.scenarios = {
         '<h3>' + s.title + '</h3>' +
         '<p>' + s.context + '</p>' +
         '<div class="sc-phrases"><strong>Key phrases:</strong> ' + s.keyPhrases.join(' · ') + '</div>' +
-        '<button class="btn-primary">Start Role-Play →</button>' +
+        '<button type="button" class="btn-primary" onclick="event.stopPropagation();navigate(\'scenarios\',\'' + s.id + '\')">Start Role-Play →</button>' +
         '</div>';
     }
     el.innerHTML = '<div class="view-scenarios"><h1>🎭 Conversations</h1><p class="sub">' + allScenarios.length + ' real-life English conversations & role-plays.</p><div class="scenario-grid">' + cards + '</div></div>';

@@ -124,6 +124,7 @@ VIEWS.docstudio = {
         d3.splice(idx, 1);
         STORE.set("docs", d3);
         if (self._activeIdx >= d3.length) self._activeIdx = d3.length - 1;
+        UI.toast("Document removed", "info");
         self.render(el);
       });
     });
@@ -483,6 +484,7 @@ VIEWS.resume = {
         analyzeBtn.disabled = false;
         var reportEl = el.querySelector("#resume-report");
         if (reportEl) reportEl.innerHTML = _renderResumeReport(report);
+        UI.toast("✅ Analysis complete! Found " + (report.issues || []).length + " diagnostic observations.", "success");
         var settings = STORE.get("settings") || {};
         var key = settings.geminiKey || "";
         if (key && key.trim().length > 10) {

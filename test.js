@@ -3476,6 +3476,94 @@ tryv('Ace 10/10: VIEWS.settings renders Sound FX audio toggle', function () {
          html.indexOf('Sound FX & Audio Chimes') !== -1;
 });
 
+/* ── WEB EXCELLENCE 20-POINT CHECKLIST AUDIT ────────────────────────── */
+console.log('\n🌐 Web Excellence 20-Point Checklist Audit');
+
+tryv('Web-20: 404.html exists, has favicon, title, meta, and action buttons', function () {
+  var p = _path.join(__dirname, '404.html');
+  if (!_fs.existsSync(p)) { return false; }
+  var html = _fs.readFileSync(p, 'utf8');
+  return html.indexOf('<title>') !== -1 &&
+         html.indexOf('favicon.ico') !== -1 &&
+         html.indexOf('name="description"') !== -1 &&
+         html.indexOf('Return to Home') !== -1 &&
+         html.indexOf('mailto:support@engspell.ai') !== -1 &&
+         html.indexOf('tel:+918036477355') !== -1;
+});
+
+tryv('Web-20: favicon.ico exists at workspace root and is non-empty', function () {
+  var p = _path.join(__dirname, 'favicon.ico');
+  if (!_fs.existsSync(p)) { return false; }
+  var stat = _fs.statSync(p);
+  return stat.size > 100;
+});
+
+tryv('Web-20: index.html and landing/index.html have favicon and og metadata', function () {
+  var indexHtml = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
+  var landHtml = _fs.readFileSync(_path.join(__dirname, 'landing', 'index.html'), 'utf8');
+  var idxHasFavicon = indexHtml.indexOf('rel="icon"') !== -1 && indexHtml.indexOf('favicon.ico') !== -1;
+  var idxHasOg = indexHtml.indexOf('property="og:title"') !== -1;
+  var landHasFavicon = landHtml.indexOf('rel="icon"') !== -1 && landHtml.indexOf('favicon.ico') !== -1;
+  return idxHasFavicon && idxHasOg && landHasFavicon;
+});
+
+tryv('Web-20: index.html topbar brand is a clickable link to #/home', function () {
+  var indexHtml = _fs.readFileSync(_path.join(__dirname, 'index.html'), 'utf8');
+  return indexHtml.indexOf('<a href="#/home" class="brand"') !== -1;
+});
+
+tryv('Web-20: landing/index.html has mobile menu toggle button and drawer', function () {
+  var landHtml = _fs.readFileSync(_path.join(__dirname, 'landing', 'index.html'), 'utf8');
+  return landHtml.indexOf('id="landing-menu-toggle"') !== -1 &&
+         landHtml.indexOf('id="landing-mobile-menu"') !== -1 &&
+         landHtml.indexOf('aria-label="Toggle navigation menu"') !== -1;
+});
+
+tryv('Web-20: landing/index.html has clickable tel: and mailto: links', function () {
+  var landHtml = _fs.readFileSync(_path.join(__dirname, 'landing', 'index.html'), 'utf8');
+  return landHtml.indexOf('href="mailto:support@engspell.ai"') !== -1 &&
+         landHtml.indexOf('href="tel:+918036477355"') !== -1;
+});
+
+tryv('Web-20: landing/index.html section #how is closed and #screenshots exists', function () {
+  var landHtml = _fs.readFileSync(_path.join(__dirname, 'landing', 'index.html'), 'utf8');
+  var howIdx = landHtml.indexOf('id="how"');
+  var voicesIdx = landHtml.indexOf('id="indian-voices"');
+  if (howIdx === -1 || voicesIdx === -1) { return false; }
+  var sub = landHtml.substring(howIdx, voicesIdx);
+  return sub.indexOf('</section>') !== -1 && landHtml.indexOf('id="screenshots"') !== -1;
+});
+
+tryv('Web-20: VIEWS.settings renders clickable tel: and mailto: links', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.settings.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('href="mailto:support@engspell.ai"') !== -1 &&
+         html.indexOf('href="tel:+918036477355"') !== -1 &&
+         html.indexOf('s-year') !== -1;
+});
+
+tryv('Web-20: core.js router renders styled 404 card on invalid route', function () {
+  var coreSrc = _fs.readFileSync(_path.join(__dirname, 'src', 'core.js'), 'utf8');
+  return coreSrc.indexOf('not-found-card') !== -1 &&
+         coreSrc.indexOf('Page Not Found (404)') !== -1 &&
+         coreSrc.indexOf('routeTitles') !== -1;
+});
+
+tryv('Web-20: icons/icon-192.png is a valid compressed PNG under 100KB', function () {
+  var p = _path.join(__dirname, 'icons', 'icon-192.png');
+  var buf = _fs.readFileSync(p);
+  var isPng = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47;
+  return isPng && buf.length < 100000;
+});
+
+tryv('Web-20: views-b.js scenario cards have type=button and explicit onclick', function () {
+  var bSrc = _fs.readFileSync(_path.join(__dirname, 'src', 'views-b.js'), 'utf8');
+  return bSrc.indexOf('type="button" class="btn-primary"') !== -1 &&
+         bSrc.indexOf('event.stopPropagation();navigate') !== -1 &&
+         bSrc.indexOf('Start Role-Play') !== -1;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

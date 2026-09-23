@@ -6,8 +6,18 @@
 <meta name="description" content="EngSpell — Speak · Spell · Shine. The complete English mastery studio: foundations to fluency, powered by an adaptive trainer and Nova, a speaking coach you actually talk to.">
 <meta name="theme-color" content="#0a0f1e">
 <title>EngSpell — Speak · Spell · Shine</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="EngSpell — Speak · Spell · Shine">
+<meta property="og:description" content="The complete offline-first English mastery studio: speech recognition, adaptive weakness radar, and Nova AI speaking coach.">
+<meta property="og:image" content="docs/ui-m8/01_desktop_home.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EngSpell — Speak · Spell · Shine">
+<meta name="twitter:description" content="The complete offline-first English mastery studio: speech recognition, adaptive weakness radar, and Nova AI speaking coach.">
+<meta name="twitter:image" content="docs/ui-m8/01_desktop_home.png">
 <style>
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    DESIGN SYSTEM — EngSpell (M8 Polish)
@@ -123,13 +133,44 @@ textarea:focus-visible,
   background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.15s ease;
+}
+.brand:hover {
+  opacity: 0.9;
 }
 
 .topbar-right {
   display: flex;
+  align-items: center;
   gap: 12px;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.topbar-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 32px;
+  height: 32px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 6px;
+  cursor: pointer;
+  outline: none;
+  margin-left: 4px;
+}
+.topbar-menu-btn span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--txt);
+  border-radius: 1px;
 }
 
 #xp-display { color: var(--gold); }
@@ -1182,8 +1223,10 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 
 @media (max-width: 880px) {
   #sidebar { display: none !important; }
+  .topbar-menu-btn { display: flex; }
+  input, select, textarea { font-size: 16px !important; }
   #view {
-    padding: 16px 14px calc(var(--mobbar-h) + env(safe-area-inset-bottom, 16px) + 20px);
+    padding: 16px 14px calc(var(--mobbar-h) + env(safe-area-inset-bottom, 16px) + 24px);
     max-width: 100%;
   }
 
@@ -1757,10 +1800,13 @@ input[type="range"] { width: 100%; accent-color: var(--acc); }
 <body>
 <div id="app">
   <header id="topbar">
-    <div class="brand">✨ EngSpell — Speak · Spell · Shine</div>
+    <a href="#/home" class="brand" aria-label="EngSpell Home">✨ EngSpell — Speak · Spell · Shine</a>
     <div class="topbar-right">
       <span id="xp-display">⚡ 0 XP</span>
       <span id="streak-display">🔥 0</span>
+      <button type="button" id="topbar-menu-btn" class="topbar-menu-btn" aria-label="Open full menu" onclick="var m = document.getElementById('mob-more-btn'); if (m) m.click();">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
   <div id="flow-strip" class="flow-strip">

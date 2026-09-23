@@ -51,10 +51,13 @@ cat >> "$OUT" <<'BODYSTART'
 <body>
 <div id="app">
   <header id="topbar">
-    <div class="brand">✨ EngSpell</div>
+    <a href="#/home" class="brand" aria-label="EngSpell Home">✨ EngSpell</a>
     <div class="topbar-right">
       <span id="xp-display">⚡ 0 XP</span>
       <span id="streak-display">🔥 0</span>
+      <button type="button" id="topbar-menu-btn" class="topbar-menu-btn" aria-label="Open full menu" onclick="var m = document.getElementById('mob-more-btn'); if (m) m.click();">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
   <div id="flow-strip" class="flow-strip">

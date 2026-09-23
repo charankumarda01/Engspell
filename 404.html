@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Page Not Found · EngSpell</title>
+  <meta name="description" content="The page or lesson you were looking for could not be found. Return to EngSpell, the free, offline-first English mastery studio.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg0: #070b16;
+      --bg1: #0a0f1e;
+      --bg2: #101830;
+      --bg3: #16203c;
+      --line: rgba(148, 163, 216, 0.14);
+      --txt: #e8ecf8;
+      --mut: #9aa6c9;
+      --acc: #7c5cff;
+      --acc2: #5eead4;
+      --gold: #fbbf24;
+      --bad: #f87171;
+      --grad: linear-gradient(135deg, #7c5cff, #ec4899);
+      --r-md: 14px;
+      --r-lg: 20px;
+      --sh2: 0 12px 32px rgba(3, 7, 20, 0.45);
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      min-height: 100%;
+      background: var(--bg0);
+      color: var(--txt);
+      font-family: var(--font);
+      line-height: 1.6;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 18px 24px;
+      background: rgba(10, 15, 30, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--grad);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .card-404 {
+      background: var(--bg1);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 48px 36px;
+      max-width: 620px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--sh2);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-404::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--grad);
+    }
+    .badge-404 {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(248, 113, 113, 0.15);
+      border: 1px solid rgba(248, 113, 113, 0.35);
+      color: var(--bad);
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .num-404 {
+      font-size: clamp(3.5rem, 8vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(1.4rem, 3.5vw, 1.85rem);
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    p.lead {
+      color: var(--mut);
+      font-size: 1rem;
+      margin-bottom: 32px;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: var(--r-md);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      min-height: 44px;
+    }
+    .btn-primary {
+      background: var(--grad);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(124, 92, 255, 0.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124, 92, 255, 0.45);
+    }
+    .btn-secondary {
+      background: var(--bg2);
+      border-color: var(--line);
+      color: var(--txt);
+    }
+    .btn-secondary:hover {
+      background: var(--bg3);
+      border-color: var(--acc);
+    }
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--line);
+      color: var(--mut);
+    }
+    .btn-ghost:hover {
+      color: #fff;
+      border-color: var(--acc2);
+    }
+    footer {
+      background: var(--bg1);
+      border-top: 1px solid var(--line);
+      padding: 24px 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--mut);
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .footer-links a {
+      color: var(--acc2);
+      text-decoration: none;
+    }
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 480px) {
+      .card-404 { padding: 32px 20px; }
+      .btn { width: 100%; }
+      .footer-links { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html#/home" class="brand" aria-label="EngSpell Home">
+      <span class="brand-icon">✨</span>
+      <span>EngSpell</span>
+    </a>
+    <a href="index.html#/home" class="btn btn-secondary" style="padding:8px 16px;font-size:0.85rem;">Open App →</a>
+  </header>
+
+  <main>
+    <div class="card-404">
+      <div class="badge-404">🧭 404 · Uncharted Territory</div>
+      <div class="num-404">404</div>
+      <h1>Lost in Translation?</h1>
+      <p class="lead">
+        We couldn't find that page or lesson in our curriculum. The link might have moved or the route might be misspelled. Let's get you back on track!
+      </p>
+      <div class="btn-group">
+        <a href="index.html#/home" class="btn btn-primary">🏠 Return to Home</a>
+        <a href="index.html#/coach" class="btn btn-secondary">🤖 Talk to Nova Coach</a>
+        <a href="index.html#/path" class="btn btn-ghost">📖 Browse 68 Lessons</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="index.html#/home">Launch Studio</a>
+      <a href="landing/index.html">Product Tour</a>
+      <a href="mailto:support@engspell.ai" id="contact-email">✉️ support@engspell.ai</a>
+      <a href="tel:+918036477355" id="contact-phone">📞 +91 80 3647 7355</a>
+    </div>
+    <p>&copy; <span id="f-year">2026</span> EngSpell · Free, Offline-First English Mastery Studio · ₹0 Forever</p>
+  </footer>
+
+  <script>
+    document.getElementById('f-year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
