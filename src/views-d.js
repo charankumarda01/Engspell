@@ -64,6 +64,9 @@ VIEWS.daily = {
           <button class="btn-sm" data-say="${twister}">🔊 Hear it</button>
           <button class="btn-primary" id="daily-twister-btn">🎤 Say it</button>
         </div>
+        <div id="twister-wave" style="display:none;margin-top:8px;">
+          ${(typeof UI !== 'undefined' && UI.renderAudioWave) ? UI.renderAudioWave(true, '🎙️ Listening... speak clearly') : ''}
+        </div>
         <div id="twister-fb"></div>
       </div>
 
@@ -74,8 +77,12 @@ VIEWS.daily = {
         <div class="pw-ipa">${word.ipa}</div>
         <div class="pw-meaning">${word.meaning}</div>
         <div class="pw-eg"><em>"${word.eg}"</em></div>
-        <button class="btn-sm" data-say="${word.w}">🔊 Listen</button>
-        <button class="btn-secondary" id="daily-word-done">✅ Got it!</button>
+        <div class="dc-btns" style="margin-top:10px;">
+          <button class="btn-sm btn-ghost" data-say="${word.w}">🔊 Listen</button>
+          <button class="btn-sm btn-primary" id="daily-word-voice">🎤 Speak Word</button>
+          <button class="btn-secondary" id="daily-word-done">✅ Got it!</button>
+        </div>
+        <div id="daily-word-practice" style="margin-top:10px;"></div>
       </div>
 
       <!-- IDIOM QUIZ -->
@@ -86,6 +93,13 @@ VIEWS.daily = {
           ${_makeIdiomOpts(idiom)}
         </div>
         <div id="idiom-fb"></div>
+        ${idiom.dialogue ? `
+          <div class="idiom-dialogue-box" style="margin-top:12px;background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.25);border-radius:10px;padding:12px;">
+            <div style="font-size:0.75rem;text-transform:uppercase;color:var(--acc2);font-weight:700;margin-bottom:6px;">💬 Real-World Dialogue</div>
+            <div style="font-size:0.9rem;color:var(--txt);line-height:1.4;">${_esc(idiom.dialogue)}</div>
+            <button class="btn-sm btn-ghost" data-say="${_esc(idiom.dialogue)}" style="margin-top:6px;">🔊 Hear Dialogue</button>
+          </div>
+        ` : ''}
       </div>
 
       <!-- QUOTE SHADOW -->
@@ -110,21 +124,64 @@ VIEWS.daily = {
         return;
       }
       const btn = document.getElementById('daily-twister-btn');
-      btn.textContent = '🔴 Listening…'; btn.disabled = true;
+      const wave = document.getElementById('twister-wave');
+      if (wave) wave.style.display = 'block';
+      btn.textContent = '⏹️ Listening… speak now'; btn.classList.add('pulse');
       SPEECH.listen({
-        onresult: transcript => {
-          const aligned = U.align(twister, transcript);
-          const v = U.verdict(aligned);
-          document.getElementById('twister-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Nailed it!' : '🟡 Keep practising!'}</p>`;
-          _markDone('twister', done, today);
-          TRAINER.log({skill: 'pronunciation', delta: v === 'pass' ? 2 : 1, source: 'daily/twister'});
-          STORE.addXP(5);
-          btn.textContent = '🎤 Say it'; btn.disabled = false;
+        interim: true,
+        continuous: true,
+        onresult: (transcript, isFinal) => {
+          if (wave) {
+            const st = wave.querySelector('.aw-status');
+            if (st) st.textContent = '🎙️ Heard: "' + transcript + '"';
+          }
+          if (isFinal) {
+            const aligned = U.align(twister, transcript);
+            const v = U.verdict(aligned);
+            if (v === 'pass') {
+              if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('success');
+              if (typeof CONFETTI !== 'undefined') CONFETTI.burst();
+            } else {
+              if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('pop');
+            }
+            document.getElementById('twister-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Nailed it!' : '🟡 Keep practising!'}</p>`;
+            _markDone('twister', done, today);
+            TRAINER.log({skill: 'pronunciation', delta: v === 'pass' ? 2 : 1, source: 'daily/twister'});
+            STORE.addXP(5);
+            btn.textContent = '🎤 Say it'; btn.classList.remove('pulse');
+            if (wave) wave.style.display = 'none';
+          }
         },
-        onend: () => { btn.textContent = '🎤 Say it'; btn.disabled = false; },
-        onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Say it'; btn.disabled = false; }
+        onend: () => { btn.textContent = '🎤 Say it'; btn.classList.remove('pulse'); if (wave) wave.style.display = 'none'; },
+        onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Say it'; btn.classList.remove('pulse'); if (wave) wave.style.display = 'none'; }
       });
     });
+
+    // Power word voice test
+    const pwVoiceBtn = document.getElementById('daily-word-voice');
+    if (pwVoiceBtn) {
+      pwVoiceBtn.addEventListener('click', () => {
+        const slot = document.getElementById('daily-word-practice');
+        if (slot) {
+          if (slot.innerHTML.trim().length > 0) {
+            slot.innerHTML = '';
+          } else {
+            UI.practiceBar(slot, {
+              prompt: `Say "${word.w}"`,
+              expected: word.w,
+              skill: 'vocab',
+              onPass: () => {
+                _markDone('word', done, today);
+                STORE.master('spell_' + word.w, true);
+                TRAINER.log({skill: 'vocab', delta: 2, source: 'daily/word'});
+                STORE.addXP(10);
+                UI.toast('Power word mastered with voice! +10 XP', 'success');
+              }
+            });
+          }
+        }
+      });
+    }
 
     // Power word done
     document.getElementById('daily-word-done').addEventListener('click', () => {
@@ -132,6 +189,7 @@ VIEWS.daily = {
       STORE.master('spell_' + word.w, true);
       TRAINER.log({skill: 'vocab', delta: 2, source: 'daily/word'});
       STORE.addXP(5);
+      if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('pass');
       UI.toast('Power word learned! +5 XP', 'success');
     });
 
@@ -148,6 +206,7 @@ VIEWS.daily = {
       SPEECH.speak(quote.text, {
         onend: () => {
           btn.textContent = '🔴 Listening… speak now!';
+          btn.disabled = false;
           btn.classList.add('pulse');
           SPEECH.listen({
             interim: true,
@@ -156,6 +215,12 @@ VIEWS.daily = {
               if (isFinal) {
                 const aligned = U.align(quote.text, t);
                 const v = U.verdict(aligned);
+                if (v === 'pass') {
+                  if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('success');
+                  if (typeof CONFETTI !== 'undefined') CONFETTI.burst();
+                } else {
+                  if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('pop');
+                }
                 document.getElementById('quote-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Great fluency!' : '🟡 Good practice!'}</p>`;
                 _markDone('quote', done, today);
                 TRAINER.log({skill: 'fluency', delta: v === 'pass' ? 2 : 1, source: 'daily/quote'});
@@ -180,6 +245,12 @@ VIEWS.daily = {
         const btn = e.target.closest('.opt-btn');
         if (!btn) return;
         const correct = btn.dataset.correct === '1';
+        if (correct) {
+          if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('success');
+          if (typeof CONFETTI !== 'undefined') CONFETTI.burst();
+        } else {
+          if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('fail');
+        }
         const fb = document.getElementById('idiom-fb');
         fb.innerHTML = correct
           ? `<p class="verdict pass">✅ Correct! ${idiom.meaning}</p><p class="idiom-eg"><em>"${idiom.eg}"</em></p>`

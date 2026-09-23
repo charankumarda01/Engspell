@@ -29,7 +29,7 @@ var STORE = (function () {
     daily: {date: '', twisterIdx: 0, wordIdx: 0, idiomIdx: 0, quoteIdx: 0, done: []},
     assessments: [],
     coachStats: {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0},
-    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false, llmProvider: 'gemini', remindHour: '19:00', remindOn: false},
+    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false, llmProvider: 'gemini', remindHour: '19:00', remindOn: false, soundFx: true, theme: 'midnight'},
     srs: {},  /* INV-5: MISSION 2 SRS */
     docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
     novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
@@ -110,6 +110,13 @@ var STORE = (function () {
       if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
       data.version = 8;
     }
+    // v8 → v9: add soundFx and theme (M22)
+    if (v < 9) {
+      if (!data.settings) { data.settings = {}; }
+      if (data.settings.soundFx === undefined) { data.settings.soundFx = true; }
+      if (data.settings.theme === undefined) { data.settings.theme = 'midnight'; }
+      data.version = 9;
+    }
     if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
     if (!data.accent.packs) { data.accent.packs = {}; }
     if (!data.weeklyHistory) { data.weeklyHistory = []; }
@@ -120,6 +127,8 @@ var STORE = (function () {
     if (!data.settings.llmProvider) { data.settings.llmProvider = 'gemini'; }
     if (data.settings.remindHour === undefined) { data.settings.remindHour = '19:00'; }
     if (data.settings.remindOn === undefined) { data.settings.remindOn = false; }
+    if (data.settings.soundFx === undefined) { data.settings.soundFx = true; }
+    if (data.settings.theme === undefined) { data.settings.theme = 'midnight'; }
     if (!data.coachStats) {
       data.coachStats = {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0};
     }
@@ -623,6 +632,93 @@ var U = (function () {
     return arr[seed % arr.length];
   }
 
+  /**
+   * syllabify(word) — English syllable breakdown with primary stress identification
+   * Returns array of { text: string, stress: boolean }
+   */
+  function syllabify(word) {
+    if (!word) { return []; }
+    var clean = String(word).toLowerCase().replace(/[^a-z]/g, '');
+    if (!clean) { return [{ text: word, stress: true }]; }
+    if (clean.length <= 3) { return [{ text: clean, stress: true }]; }
+
+    var ipa = '';
+    if (typeof WORDS !== 'undefined') {
+      for (var wi = 0; wi < WORDS.length; wi++) {
+        if (WORDS[wi].w && WORDS[wi].w.toLowerCase() === clean) {
+          ipa = WORDS[wi].ipa || '';
+          break;
+        }
+      }
+    }
+
+    var VOWELS = 'aeiouy';
+    var syllables = [];
+    var cur = '';
+    for (var i = 0; i < clean.length; i++) {
+      cur += clean[i];
+      var isVowel = VOWELS.indexOf(clean[i]) !== -1;
+      var nextIsVowel = (i + 1 < clean.length) && (VOWELS.indexOf(clean[i + 1]) !== -1);
+      var next2IsVowel = (i + 2 < clean.length) && (VOWELS.indexOf(clean[i + 2]) !== -1);
+
+      if (isVowel) {
+        if (nextIsVowel && (i + 1 < clean.length)) {
+          var pair = clean[i] + clean[i + 1];
+          if ('ai,ay,ea,ee,ei,ey,ie,oa,oe,oi,oy,ou,oo,au,aw'.indexOf(pair) !== -1) {
+            continue;
+          }
+        }
+        if (!nextIsVowel && next2IsVowel && (i + 2 < clean.length)) {
+          syllables.push(cur);
+          cur = '';
+        } else if (!nextIsVowel && !next2IsVowel && (i + 3 < clean.length) && (VOWELS.indexOf(clean[i + 3]) !== -1)) {
+          cur += clean[i + 1];
+          i++;
+          syllables.push(cur);
+          cur = '';
+        }
+      }
+    }
+    if (cur) {
+      if (syllables.length > 0 && cur.length === 1 && VOWELS.indexOf(cur) === -1) {
+        syllables[syllables.length - 1] += cur;
+      } else {
+        syllables.push(cur);
+      }
+    }
+    if (syllables.length === 0) {
+      syllables = [clean];
+    }
+
+    var stressIdx = 0;
+    if (syllables.length > 1) {
+      if (ipa && ipa.indexOf('ˈ') !== -1) {
+        var afterStress = ipa.split('ˈ')[1] || '';
+        for (var s = 0; s < syllables.length; s++) {
+          if (afterStress.indexOf(syllables[s][0]) !== -1) {
+            stressIdx = s;
+            break;
+          }
+        }
+      } else if (syllables.length >= 3) {
+        if (['un', 'in', 'im', 'dis', 're', 'pre', 'pro', 'con', 'com'].indexOf(syllables[0]) !== -1) {
+          stressIdx = 1;
+        } else {
+          stressIdx = 0;
+        }
+      }
+    }
+
+    var result = [];
+    for (var k = 0; k < syllables.length; k++) {
+      result.push({
+        text: syllables[k],
+        stress: (k === stressIdx)
+      });
+    }
+    return result;
+  }
+
   return {
     norm: norm,
     expandContractions: expandContractions,
@@ -634,7 +730,8 @@ var U = (function () {
     dailyPick: dailyPick,
     dailyPickN: dailyPickN,
     wordsMatch: wordsMatch,
-    HOMOPHONES: HOMOPHONES
+    HOMOPHONES: HOMOPHONES,
+    syllabify: syllabify
   };
 }());
 
@@ -1963,6 +2060,166 @@ if (typeof global !== 'undefined') {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+   SOUND_FX — Web Audio API Sound Synthesizer (100% Offline, Zero CDNs)
+   ════════════════════════════════════════════════════════════════════*/
+var SOUND_FX = (function () {
+  'use strict';
+  var _ctx = null;
+  function _getCtx() {
+    if (_ctx) { return _ctx; }
+    if (typeof window !== 'undefined') {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        try { _ctx = new AC(); } catch (e) { /* ignore */ }
+      }
+    }
+    return _ctx;
+  }
+  function _isEnabled() {
+    try {
+      if (typeof STORE !== 'undefined' && STORE.get) {
+        var s = STORE.get('settings');
+        if (s && s.soundFx === false) { return false; }
+      }
+    } catch (e) {}
+    return true;
+  }
+  function _tone(ctx, freq, startTime, duration, type) {
+    try {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, startTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.02);
+    } catch (e) {}
+  }
+  function play(type) {
+    if (!_isEnabled()) { return; }
+    var ctx = _getCtx();
+    if (!ctx) { return; }
+    if (ctx.state === 'suspended') {
+      try { ctx.resume(); } catch (e) {}
+    }
+    var now = ctx.currentTime;
+    try {
+      if (type === 'pass' || type === 'ok') {
+        _tone(ctx, 523.25, now, 0.08, 'sine');
+        _tone(ctx, 783.99, now + 0.07, 0.16, 'sine');
+      } else if (type === 'success' || type === 'perfect') {
+        _tone(ctx, 523.25, now, 0.07, 'sine');
+        _tone(ctx, 659.25, now + 0.06, 0.07, 'sine');
+        _tone(ctx, 783.99, now + 0.12, 0.07, 'sine');
+        _tone(ctx, 1046.50, now + 0.18, 0.28, 'triangle');
+      } else if (type === 'fail' || type === 'error') {
+        _tone(ctx, 220, now, 0.10, 'triangle');
+        _tone(ctx, 174.61, now + 0.09, 0.18, 'sine');
+      } else if (type === 'streak' || type === 'fanfare') {
+        _tone(ctx, 523.25, now, 0.06, 'triangle');
+        _tone(ctx, 659.25, now + 0.05, 0.06, 'triangle');
+        _tone(ctx, 783.99, now + 0.10, 0.06, 'triangle');
+        _tone(ctx, 1046.50, now + 0.15, 0.12, 'triangle');
+        _tone(ctx, 1318.51, now + 0.22, 0.35, 'sine');
+      } else if (type === 'pop' || type === 'tap') {
+        _tone(ctx, 600, now, 0.03, 'sine');
+      }
+    } catch (err) { /* silent fallback */ }
+  }
+  return {
+    play: play
+  };
+}());
+
+if (typeof window !== 'undefined') { window.SOUND_FX = SOUND_FX; }
+if (typeof global !== 'undefined') { global.SOUND_FX = SOUND_FX; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CONFETTI — Canvas Celebratory Particle Engine (100% Offline, Zero CDNs)
+   ════════════════════════════════════════════════════════════════════*/
+var CONFETTI = (function () {
+  'use strict';
+  function burst(opts) {
+    if (typeof window === 'undefined' || typeof document === 'undefined') { return; }
+    opts = opts || {};
+    var count = opts.count || 45;
+    var canvas = document.getElementById('engspell-confetti-canvas');
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'engspell-confetti-canvas';
+      canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999;';
+      if (document.body && document.body.appendChild) {
+        document.body.appendChild(canvas);
+      }
+    }
+    if (!canvas || !canvas.getContext) { return; }
+    var w = canvas.width = window.innerWidth || 800;
+    var h = canvas.height = window.innerHeight || 600;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) { return; }
+
+    var colors = ['#7c5cff', '#5eead4', '#fbbf24', '#ec4899', '#34d399', '#3b82f6'];
+    var originX = opts.x !== undefined ? opts.x : w / 2;
+    var originY = opts.y !== undefined ? opts.y : h * 0.35;
+    var particles = [];
+    for (var i = 0; i < count; i++) {
+      var angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
+      var speed = 4 + Math.random() * 8;
+      particles.push({
+        x: originX,
+        y: originY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 3,
+        size: 5 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rSpeed: (Math.random() - 0.5) * 12,
+        life: 1.0,
+        decay: 0.015 + Math.random() * 0.015
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, w, h);
+      var active = 0;
+      for (var p = 0; p < particles.length; p++) {
+        var part = particles[p];
+        if (part.life <= 0) { continue; }
+        active++;
+        part.x += part.vx;
+        part.y += part.vy;
+        part.vy += 0.22;
+        part.vx *= 0.98;
+        part.rotation += part.rSpeed;
+        part.life -= part.decay;
+
+        ctx.save();
+        ctx.translate(part.x, part.y);
+        ctx.rotate((part.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, part.life);
+        ctx.fillStyle = part.color;
+        ctx.fillRect(-part.size / 2, -part.size / 2, part.size, part.size * 0.7);
+        ctx.restore();
+      }
+      if (active > 0 && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(render);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+    }
+    render();
+  }
+  return { burst: burst };
+}());
+
+if (typeof window !== 'undefined') { window.CONFETTI = CONFETTI; }
+if (typeof global !== 'undefined') { global.CONFETTI = CONFETTI; }
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -2001,9 +2258,45 @@ var UI = (function () {
   }
 
   /**
+   * renderSyllables(word) — interactive syllable chips with stressed syllables highlighted
+   */
+  function renderSyllables(word) {
+    if (!word) { return ''; }
+    var syls = (typeof U !== 'undefined' && U.syllabify) ? U.syllabify(word) : [];
+    if (!syls || syls.length === 0) { return ''; }
+    var html = '<div class="syllable-bar" style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:10px 0;">';
+    html += '<span style="font-size:0.75rem;text-transform:uppercase;color:var(--mut);letter-spacing:1px;font-weight:700;margin-right:4px;">Syllables:</span>';
+    for (var i = 0; i < syls.length; i++) {
+      var s = syls[i];
+      var cls = s.stress ? 'syllable-chip stressed' : 'syllable-chip';
+      var style = s.stress
+        ? 'background:rgba(251,191,36,0.18);border:1px solid #fbbf24;color:#fbbf24;font-weight:800;font-size:0.95rem;padding:4px 10px;border-radius:8px;cursor:pointer;'
+        : 'background:var(--bg3);border:1px solid var(--line);color:var(--txt);font-weight:500;font-size:0.85rem;padding:4px 8px;border-radius:8px;cursor:pointer;';
+      html += '<button type="button" class="' + cls + '" style="' + style + '" data-say="' + s.text + '" data-slow="1" title="Tap to hear syllable">' + (s.stress ? 'ˈ' : '') + s.text + (s.stress ? ' ★' : '') + '</button>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  /**
+   * renderAudioWave(active, statusText) — dynamic glowing voice waveform visualizer
+   */
+  function renderAudioWave(active, statusText) {
+    var waveHtml = '<div class="audio-wave-wrap' + (active ? ' active' : '') + '" style="display:' + (active ? 'flex' : 'none') + ';align-items:center;justify-content:center;gap:8px;padding:8px 14px;background:rgba(124,92,255,0.12);border:1px solid rgba(124,92,255,0.35);border-radius:12px;margin:8px 0;">'
+      + '<div class="audio-wave-bars" style="display:flex;align-items:center;gap:3px;height:20px;">'
+      + '<span class="aw-bar"></span><span class="aw-bar"></span><span class="aw-bar"></span>'
+      + '<span class="aw-bar"></span><span class="aw-bar"></span><span class="aw-bar"></span>'
+      + '<span class="aw-bar"></span><span class="aw-bar"></span><span class="aw-bar"></span>'
+      + '</div>'
+      + '<span class="aw-status" style="font-size:0.85rem;color:var(--txt);font-weight:600;">' + (statusText || '🎙️ Listening... speak clearly') + '</span>'
+      + '</div>';
+    return waveHtml;
+  }
+
+  /**
    * practiceBar(el, opts)
-   * opts: { expected, onPass, onFail, xp, skill }
-   * Renders a mic/text fallback practice UI into el
+   * opts: { expected, prompt, onPass, onFail, xp, skill }
+   * Renders high-fidelity spoken practice UI into el with live waveform, sound FX, confetti, and syllable stress breakdown
    */
   function practiceBar(el, opts) {
     if (!el) { return; }
@@ -2012,8 +2305,10 @@ var UI = (function () {
     var inst = 'pb' + Math.floor(Math.random() * 1000000);
     var micId = inst + '-mic';
     var hearId = inst + '-hear';
+    var slowId = inst + '-slow';
     var inputId = inst + '-input';
     var checkId = inst + '-check';
+    var waveId = inst + '-wave';
     var resultId = inst + '-result';
     var isListening = false;
 
@@ -2024,8 +2319,12 @@ var UI = (function () {
     var html = '<div class="practice-bar">';
     html += '<div class="practice-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;">';
     html += '<p class="practice-prompt" style="margin:0;"><strong>' + (promptDisplay.indexOf('Say it:') === 0 ? '' : 'Say it: ') + promptDisplay + '</strong></p>';
-    html += '<button class="btn-sm btn-ghost pb-hear-btn" id="' + hearId + '" title="Listen to native model">🔊 Model</button>';
+    html += '<div style="display:flex;gap:6px;">';
+    html += '<button class="btn-sm btn-ghost pb-hear-btn" id="' + hearId + '" title="Listen to model pronunciation">🔊 Model</button>';
+    html += '<button class="btn-sm btn-ghost pb-slow-btn" id="' + slowId + '" title="Listen slowly">🐢 Slow</button>';
     html += '</div>';
+    html += '</div>';
+    html += '<div id="' + waveId + '" style="display:none;">' + renderAudioWave(true, '🎙️ Listening... speak now') + '</div>';
     if (canListen) {
       html += '<button class="btn-mic" id="' + micId + '">🎤 Start Speaking</button>';
     }
@@ -2040,11 +2339,18 @@ var UI = (function () {
     var resultEl = (el && el.querySelector ? el.querySelector('#' + resultId) : null) || document.getElementById(resultId);
     var inputEl = (el && el.querySelector ? el.querySelector('#' + inputId) : null) || document.getElementById(inputId);
     var hearBtn = (el && el.querySelector ? el.querySelector('#' + hearId) : null) || document.getElementById(hearId);
+    var slowBtn = (el && el.querySelector ? el.querySelector('#' + slowId) : null) || document.getElementById(slowId);
+    var waveEl = (el && el.querySelector ? el.querySelector('#' + waveId) : null) || document.getElementById(waveId);
     var micBtn = canListen ? ((el && el.querySelector ? el.querySelector('#' + micId) : null) || document.getElementById(micId)) : null;
 
     if (hearBtn) {
       hearBtn.addEventListener('click', function () {
         SPEECH.speak(cleanTarget || rawText);
+      });
+    }
+    if (slowBtn) {
+      slowBtn.addEventListener('click', function () {
+        SPEECH.speakSlow(cleanTarget || rawText);
       });
     }
 
@@ -2053,16 +2359,21 @@ var UI = (function () {
       var aligned = U.align(cleanTarget || rawText, heard);
       var v = U.verdict(aligned);
       if (resultEl) {
-        resultEl.innerHTML = scoreHTML(aligned);
+        var scoreMarkup = scoreHTML(aligned);
+        var sylMarkup = renderSyllables(cleanTarget || rawText);
         if (v === 'pass') {
-          resultEl.innerHTML += '<p class="verdict pass">✅ Excellent!</p>';
+          SOUND_FX.play('success');
+          CONFETTI.burst();
+          resultEl.innerHTML = scoreMarkup + '<p class="verdict pass">✅ 100% Match · Excellent pronunciation!</p>' + sylMarkup;
           TRAINER.log({skill: opts.skill || 'fluency', delta: 2, source: 'practiceBar'});
           if (opts.onPass) { opts.onPass(); }
         } else if (v === 'almost') {
-          resultEl.innerHTML += '<p class="verdict almost">🟡 Almost! Try again.</p>';
+          SOUND_FX.play('pop');
+          resultEl.innerHTML = scoreMarkup + '<p class="verdict almost">🟡 Almost! Check highlighted syllables below:</p>' + sylMarkup;
           TRAINER.log({skill: opts.skill || 'fluency', delta: 1, source: 'practiceBar'});
         } else {
-          resultEl.innerHTML += '<p class="verdict fail">❌ Keep trying — click red words to hear them slowly.</p>';
+          SOUND_FX.play('fail');
+          resultEl.innerHTML = scoreMarkup + '<p class="verdict fail">❌ Tap red words or syllables below to hear them slowly:</p>' + sylMarkup;
           TRAINER.log({skill: opts.skill || 'fluency', delta: -1, source: 'practiceBar'});
           if (opts.onFail) { opts.onFail(); }
         }
@@ -2071,6 +2382,7 @@ var UI = (function () {
 
     function _resetMic() {
       isListening = false;
+      if (waveEl) { waveEl.style.display = 'none'; }
       if (micBtn) {
         micBtn.textContent = '🎤 Start Speaking';
         micBtn.className = 'btn-mic';
@@ -2086,6 +2398,7 @@ var UI = (function () {
           return;
         }
         isListening = true;
+        if (waveEl) { waveEl.style.display = 'block'; }
         micBtn.textContent = '⏹️ Stop Listening';
         micBtn.className = 'btn-mic listening pulse';
         SPEECH.listen({
@@ -2093,6 +2406,10 @@ var UI = (function () {
           continuous: true,
           onresult: function (transcript, isFinal) {
             if (inputEl) { inputEl.value = transcript; }
+            if (waveEl) {
+              var statusEl = waveEl.querySelector('.aw-status');
+              if (statusEl) { statusEl.textContent = '🎙️ Heard: "' + transcript + '"'; }
+            }
             if (isFinal) {
               _evaluate(transcript);
               _resetMic();
@@ -2142,6 +2459,8 @@ var UI = (function () {
   return {
     toast: toast,
     scoreHTML: scoreHTML,
+    renderSyllables: renderSyllables,
+    renderAudioWave: renderAudioWave,
     practiceBar: practiceBar,
     xpPop: xpPop
   };

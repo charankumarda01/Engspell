@@ -3379,6 +3379,103 @@ tryv('10/10: Grammar Atlas tense detail renders practice slot', function () {
          mockEl.innerHTML.indexOf('Practice Speaking an Example') !== -1;
 });
 
+console.log('\n🚀 Ace 10/10 Studio: Sound FX, Confetti, Syllable Stress & Live Voice Waves');
+
+tryv('Ace 10/10: SOUND_FX exists and handles all tone types safely', function () {
+  if (typeof SOUND_FX !== 'object' || typeof SOUND_FX.play !== 'function') return false;
+  SOUND_FX.play('success');
+  SOUND_FX.play('pass');
+  SOUND_FX.play('fail');
+  SOUND_FX.play('streak');
+  SOUND_FX.play('pop');
+  return true;
+});
+
+tryv('Ace 10/10: CONFETTI exists and burst is callable safely', function () {
+  if (typeof CONFETTI !== 'object' || typeof CONFETTI.burst !== 'function') return false;
+  CONFETTI.burst({ count: 10 });
+  return true;
+});
+
+tryv('Ace 10/10: U.syllabify decomposes word and identifies stress', function () {
+  var syls = U.syllabify('comfortable');
+  if (!Array.isArray(syls) || syls.length < 2) return false;
+  var hasStressed = syls.some(function (s) { return s.stress === true; });
+  return hasStressed && typeof syls[0].text === 'string';
+});
+
+tryv('Ace 10/10: UI.renderSyllables produces interactive chips with stress indicator', function () {
+  var html = UI.renderSyllables('comfortable');
+  return html.indexOf('syllable-bar') !== -1 &&
+         html.indexOf('syllable-chip') !== -1 &&
+         html.indexOf('data-slow="1"') !== -1;
+});
+
+tryv('Ace 10/10: UI.renderAudioWave outputs active wave equalizer markup', function () {
+  var html = UI.renderAudioWave(true, 'Test Wave');
+  return html.indexOf('audio-wave-wrap active') !== -1 &&
+         html.indexOf('audio-wave-bars') !== -1 &&
+         html.indexOf('aw-bar') !== -1 &&
+         html.indexOf('Test Wave') !== -1;
+});
+
+tryv('Ace 10/10: VIEWS.pronunciation words tab renders Practice mic buttons', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.pronunciation._tab = 'words';
+  VIEWS.pronunciation.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('pron-word-mic') !== -1 &&
+         html.indexOf('word-inline-practice') !== -1;
+});
+
+tryv('Ace 10/10: VIEWS.pronunciation pairs tab renders Minimal Pair Ear Quiz', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.pronunciation._tab = 'pairs';
+  VIEWS.pronunciation.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('ear-quiz-card') !== -1 &&
+         html.indexOf('ear-play-btn') !== -1 &&
+         html.indexOf('pair-practice-btn') !== -1;
+});
+
+tryv('Ace 10/10: VIEWS.pronunciation twisters tab renders Speed Ladder Challenge', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.pronunciation._tab = 'twisters';
+  VIEWS.pronunciation.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('Speed Ladder Challenge') !== -1 &&
+         html.indexOf('tw-fast-btn') !== -1 &&
+         html.indexOf('tw-practice-btn') !== -1;
+});
+
+tryv('Ace 10/10: VIEWS.coach renders 1-tap topic scenario pills and hear buttons', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; }, querySelectorAll: function () { return []; } };
+  VIEWS.coach._mode = 'chat';
+  VIEWS.coach.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('coach-quick-pills') !== -1 &&
+         html.indexOf('Job Interview') !== -1 &&
+         html.indexOf('Order Coffee') !== -1 &&
+         html.indexOf('nova-wave-wrap') !== -1;
+});
+
+tryv('Ace 10/10: VIEWS.daily renders Speak Word voice button and dialogue box', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.daily.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('daily-word-voice') !== -1 &&
+         html.indexOf('daily-word-practice') !== -1 &&
+         html.indexOf('twister-wave') !== -1;
+});
+
+tryv('Ace 10/10: VIEWS.settings renders Sound FX audio toggle', function () {
+  var mockEl = { innerHTML: '', querySelector: function () { return null; } };
+  VIEWS.settings.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('s-sound-fx') !== -1 &&
+         html.indexOf('Sound FX & Audio Chimes') !== -1;
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

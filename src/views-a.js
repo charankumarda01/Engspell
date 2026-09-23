@@ -288,35 +288,52 @@ VIEWS.foundations = {
       '<table class="sounds-table"><thead><tr><th>IPA</th><th>Example</th><th>Listen</th></tr></thead><tbody>' + vowelRows + '</tbody></table>' +
       '<div class="section-title">🔊 24 Consonant Sounds</div>' +
       '<table class="sounds-table"><thead><tr><th>IPA</th><th>Example</th><th>Listen</th></tr></thead><tbody>' + conRows + '</tbody></table>' +
-      '<div class="section-title">📝 Spell Anything</div>' +
+      '<div class="section-title">📝 Spell Anything (Letter-by-Letter Bee)</div>' +
       '<div class="spell-tool">' +
-      '<input type="text" id="spell-input" placeholder="Type a word to spell it out..." />' +
+      '<input type="text" id="spell-input" placeholder="Type a word to spell it out (e.g. rhythm, queue)..." />' +
       '<button id="spell-btn" class="btn-primary">🔊 Spell it</button>' +
       '</div>' +
-      '<div id="spell-result"></div>' +
+      '<div id="spell-result" style="margin-top:12px;"></div>' +
+      '<div id="spell-practice-slot" style="margin-top:12px;"></div>' +
       '</div>';
 
-    document.getElementById('spell-btn').addEventListener('click', function () {
-      var word = document.getElementById('spell-input').value.trim();
-      if (!word) { return; }
-      var letters = word.split('');
-      var ipa = '';
-      for (var i = 0; i < letters.length; i++) {
-        var found = null;
-        for (var j = 0; j < WORDS.length; j++) {
-          if (WORDS[j].w === letters[i].toLowerCase()) { found = WORDS[j].ipa; break; }
+    var spellBtn = document.getElementById('spell-btn');
+    if (spellBtn) {
+      spellBtn.addEventListener('click', function () {
+        var word = document.getElementById('spell-input').value.trim();
+        if (!word) { return; }
+        var letters = word.toUpperCase().split('');
+        var chips = '';
+        for (var i = 0; i < letters.length; i++) {
+          chips += '<button class="chip ok" data-say="' + letters[i] + '" style="font-weight:700;font-size:1.1rem;cursor:pointer;padding:6px 10px;" title="Click to hear letter">' + letters[i] + '</button> ';
         }
-        ipa += '<span class="chip ok">' + letters[i] + '</span> ';
-      }
-      document.getElementById('spell-result').innerHTML = '<div class="spell-chips">' + ipa + '</div>';
-      SPEECH.speak(word.split('').join(', '));
-    });
+        var spellRes = document.getElementById('spell-result');
+        if (spellRes) {
+          spellRes.innerHTML = '<div style="margin-bottom:8px;font-size:0.85rem;color:var(--mut);">Spelling out <strong>' + _escA(word) + '</strong>:</div><div class="spell-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">' + chips + '</div>';
+        }
+        SPEECH.speak(letters.join(', '));
+        var slot = document.getElementById('spell-practice-slot');
+        if (slot && typeof UI !== 'undefined' && UI.practiceBar) {
+          UI.practiceBar(slot, {
+            prompt: 'Spell it out loud: "' + letters.join(' ') + '"',
+            expected: letters.join(' '),
+            skill: 'spelling',
+            onPass: function () {
+              STORE.addXP(5);
+              UI.toast('Spelling bee mastered! +5 XP', 'success');
+            }
+          });
+        }
+      });
+    }
   }
 };
 
 /* ── PRONUNCIATION LAB ──────────────────────────────────────────────── */
 VIEWS.pronunciation = {
   _tab: 'words',
+  _earPairIdx: 0,
+  _earMysteryWord: '',
   render: function (el) {
     'use strict';
     var self = this;
@@ -324,8 +341,8 @@ VIEWS.pronunciation = {
 
     var tabBar = '<div class="tab-bar">' +
       '<button class="tab-btn' + (tab === 'words' ? ' active' : '') + '" id="tab-words">Words</button>' +
-      '<button class="tab-btn' + (tab === 'pairs' ? ' active' : '') + '" id="tab-pairs">Minimal Pairs</button>' +
-      '<button class="tab-btn' + (tab === 'twisters' ? ' active' : '') + '" id="tab-twisters">Twisters</button>' +
+      '<button class="tab-btn' + (tab === 'pairs' ? ' active' : '') + '" id="tab-pairs">Minimal Pairs & Ear Quiz</button>' +
+      '<button class="tab-btn' + (tab === 'twisters' ? ' active' : '') + '" id="tab-twisters">Twisters & Speed Ladder</button>' +
       '</div>';
 
     var content = '';
@@ -339,44 +356,214 @@ VIEWS.pronunciation = {
         for (var wi = 0; wi < wds.length; wi++) {
           var w = wds[wi];
           var m = STORE.getMastery('spell_' + w.w);
-          content += '<div class="word-card">' +
-            '<div class="word-text" data-say="' + w.w + '">' + w.w + '</div>' +
-            '<div class="word-ipa">' + w.ipa + '</div>' +
+          content += '<div class="word-card" id="word-card-' + _escA(w.w) + '">' +
+            '<div class="word-text" data-say="' + _escA(w.w) + '">' + _escA(w.w) + '</div>' +
+            '<div class="word-ipa">' + _escA(w.ipa || '') + '</div>' +
             '<div class="mastery-dots">' + _masteryDots(m) + '</div>' +
-            '<button class="btn-sm" data-say="' + w.w + '">🔊</button>' +
+            '<div style="display:flex;gap:4px;margin-top:8px;justify-content:center;">' +
+            '<button class="btn-sm btn-ghost" data-say="' + _escA(w.w) + '" title="Listen">🔊</button>' +
+            '<button class="btn-sm btn-primary pron-word-mic" data-word="' + _escA(w.w) + '" title="Practice Speaking">🎤 Practice</button>' +
+            '</div>' +
+            '<div class="word-inline-practice" id="practice-slot-' + _escA(w.w) + '" style="margin-top:8px;"></div>' +
             '</div>';
         }
         content += '</div>';
       }
     } else if (tab === 'pairs') {
-      content = '<div class="pairs-grid">';
+      var pair = PAIRS[self._earPairIdx % PAIRS.length];
+      self._earMysteryWord = self._earMysteryWord || (Math.random() > 0.5 ? pair.a : pair.b);
+
+      var earQuizHtml = '<div class="card ear-quiz-card" style="background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.35);padding:18px;margin-bottom:20px;border-radius:var(--r-md);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">' +
+        '<div style="font-weight:700;font-size:1.05rem;color:var(--txt);">👂 Minimal Pair Ear Quiz</div>' +
+        '<span style="font-size:0.8rem;color:var(--acc2);font-weight:600;">Pair ' + (self._earPairIdx + 1) + ' of ' + PAIRS.length + '</span>' +
+        '</div>' +
+        '<p style="font-size:0.9rem;color:var(--mut);margin-bottom:14px;">Listen to the secret sound without looking, then identify which word was spoken!</p>' +
+        '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">' +
+        '<button class="btn-primary" id="ear-play-btn" style="font-size:1rem;padding:8px 18px;">🔊 Play Mystery Sound</button>' +
+        '<button class="btn-ghost btn-sm" id="ear-next-btn">🎲 Next Pair</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:12px;margin-bottom:12px;">' +
+        '<button class="btn-secondary ear-choice-btn" id="ear-opt-a" data-choice="' + _escA(pair.a) + '" style="flex:1;padding:12px;font-size:1.1rem;font-weight:700;">' + _escA(pair.a) + '</button>' +
+        '<button class="btn-secondary ear-choice-btn" id="ear-opt-b" data-choice="' + _escA(pair.b) + '" style="flex:1;padding:12px;font-size:1.1rem;font-weight:700;">' + _escA(pair.b) + '</button>' +
+        '</div>' +
+        '<div id="ear-quiz-feedback"></div>' +
+        '</div>';
+
+      content = earQuizHtml + '<div class="section-title">All Minimal Contrast Pairs</div><div class="pairs-grid">';
       for (var pi = 0; pi < PAIRS.length; pi++) {
         var p = PAIRS[pi];
         content += '<div class="pair-card">' +
-          '<div class="pair-words"><span class="pair-word" data-say="' + p.a + '">' + p.a + ' 🔊</span>' +
+          '<div class="pair-words"><span class="pair-word" data-say="' + _escA(p.a) + '">' + _escA(p.a) + ' 🔊</span>' +
           '<span class="pair-sep">vs</span>' +
-          '<span class="pair-word" data-say="' + p.b + '">' + p.b + ' 🔊</span></div>' +
-          '<div class="pair-tip">' + p.tip + '</div>' +
+          '<span class="pair-word" data-say="' + _escA(p.b) + '">' + _escA(p.b) + ' 🔊</span></div>' +
+          '<div class="pair-tip">' + _escA(p.tip) + '</div>' +
+          '<div style="margin-top:10px;display:flex;justify-content:center;">' +
+          '<button class="btn-sm btn-ghost pair-practice-btn" data-a="' + _escA(p.a) + '" data-b="' + _escA(p.b) + '">🎤 Practice Contrast</button>' +
+          '</div>' +
+          '<div class="pair-practice-slot" id="pair-slot-' + pi + '" style="margin-top:8px;"></div>' +
           '</div>';
       }
       content += '</div>';
     } else {
-      content = '<div class="twisters-list">';
+      content = '<div class="card" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);padding:16px;border-radius:var(--r-md);margin-bottom:18px;">' +
+        '<div style="font-weight:700;font-size:1.05rem;color:var(--txt);margin-bottom:6px;">⚡ Speed Ladder Challenge</div>' +
+        '<p style="font-size:0.85rem;color:var(--mut);">Practice tongue agility across 3 speeds: 1.0x (Precision), 1.25x (Conversational), and 1.5x (Speed Demon).</p>' +
+        '</div>' +
+        '<div class="twisters-list">';
       for (var ti = 0; ti < TWISTERS.length; ti++) {
-        content += '<div class="twister-card">' +
-          '<p class="twister-text" data-say="' + TWISTERS[ti] + '">' + TWISTERS[ti] + '</p>' +
-          '<div class="twister-btns">' +
-          '<button class="btn-sm" data-say="' + TWISTERS[ti] + '">🔊 Normal</button>' +
-          '</div></div>';
+        var twText = TWISTERS[ti];
+        content += '<div class="twister-card" id="twister-card-' + ti + '">' +
+          '<p class="twister-text" data-say="' + _escA(twText) + '">' + _escA(twText) + '</p>' +
+          '<div class="twister-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">' +
+          '<button class="btn-sm btn-ghost" data-say="' + _escA(twText) + '">🔊 1.0x Normal</button>' +
+          '<button class="btn-sm btn-ghost tw-fast-btn" data-text="' + _escA(twText) + '">⚡ 1.25x Fast</button>' +
+          '<button class="btn-sm btn-primary tw-practice-btn" data-twister="' + _escA(twText) + '" data-idx="' + ti + '">🎤 Speed Challenge</button>' +
+          '</div>' +
+          '<div class="twister-practice-slot" id="tw-slot-' + ti + '" style="margin-top:10px;"></div>' +
+          '</div>';
       }
       content += '</div>';
     }
 
-    el.innerHTML = '<div class="view-pronunciation"><h1>🗣️ Pronunciation Lab</h1>' + tabBar + '<div class="tab-content">' + content + '</div></div>';
+    el.innerHTML = '<div class="view-pronunciation"><h1>🗣️ Pronunciation Lab & Fluency Studio</h1>' + tabBar + '<div class="tab-content">' + content + '</div></div>';
 
     document.getElementById('tab-words').addEventListener('click', function () { self._tab = 'words'; self.render(el); });
     document.getElementById('tab-pairs').addEventListener('click', function () { self._tab = 'pairs'; self.render(el); });
     document.getElementById('tab-twisters').addEventListener('click', function () { self._tab = 'twisters'; self.render(el); });
+
+    /* Word voice triggers */
+    var wordMicBtns = el.querySelectorAll ? el.querySelectorAll('.pron-word-mic') : [];
+    for (var wmi = 0; wmi < wordMicBtns.length; wmi++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var targetWord = btn.getAttribute('data-word');
+          var slot = document.getElementById('practice-slot-' + targetWord);
+          if (slot) {
+            if (slot.innerHTML.trim().length > 0) {
+              slot.innerHTML = '';
+            } else {
+              UI.practiceBar(slot, {
+                prompt: 'Pronounce "' + targetWord + '"',
+                expected: targetWord,
+                skill: 'pronunciation',
+                onPass: function () {
+                  STORE.master('spell_' + targetWord, true);
+                  STORE.addXP(10);
+                  UI.toast('Pronunciation mastered! +10 XP', 'success');
+                }
+              });
+            }
+          }
+        });
+      }(wordMicBtns[wmi]));
+    }
+
+    /* Ear quiz events */
+    if (tab === 'pairs') {
+      var playBtn = document.getElementById('ear-play-btn');
+      if (playBtn) {
+        playBtn.addEventListener('click', function () {
+          SPEECH.speak(self._earMysteryWord);
+        });
+      }
+      var nextEarBtn = document.getElementById('ear-next-btn');
+      if (nextEarBtn) {
+        nextEarBtn.addEventListener('click', function () {
+          self._earPairIdx = (self._earPairIdx + 1) % PAIRS.length;
+          self._earMysteryWord = '';
+          self.render(el);
+        });
+      }
+      var choiceBtns = el.querySelectorAll ? el.querySelectorAll('.ear-choice-btn') : [];
+      for (var cbi = 0; cbi < choiceBtns.length; cbi++) {
+        (function (cBtn) {
+          cBtn.addEventListener('click', function () {
+            var chosen = cBtn.getAttribute('data-choice');
+            var fbEl = document.getElementById('ear-quiz-feedback');
+            if (chosen === self._earMysteryWord) {
+              if (typeof SOUND_FX !== 'undefined') { SOUND_FX.play('success'); }
+              if (typeof CONFETTI !== 'undefined') { CONFETTI.burst(); }
+              STORE.addXP(10);
+              TRAINER.log({skill: 'listening', delta: 2, source: 'earQuiz'});
+              if (fbEl) {
+                fbEl.innerHTML = '<div style="background:rgba(52,211,153,0.15);border:1px solid var(--ok);color:var(--ok);padding:10px;border-radius:8px;font-weight:700;">✅ Correct! You heard "' + _escA(chosen) + '"! +10 XP</div>';
+              }
+            } else {
+              if (typeof SOUND_FX !== 'undefined') { SOUND_FX.play('fail'); }
+              if (fbEl) {
+                fbEl.innerHTML = '<div style="background:rgba(248,113,113,0.15);border:1px solid var(--bad);color:var(--bad);padding:10px;border-radius:8px;font-weight:700;">❌ That was "' + _escA(self._earMysteryWord) + '". Tap "Play Mystery Sound" and compare carefully!</div>';
+              }
+            }
+          });
+        }(choiceBtns[cbi]));
+      }
+
+      /* Minimal pair contrast practice buttons */
+      var pairBtns = el.querySelectorAll ? el.querySelectorAll('.pair-practice-btn') : [];
+      for (var pbi = 0; pbi < pairBtns.length; pbi++) {
+        (function (pBtn, pIndex) {
+          pBtn.addEventListener('click', function () {
+            var wordA = pBtn.getAttribute('data-a');
+            var wordB = pBtn.getAttribute('data-b');
+            var pairSlot = document.getElementById('pair-slot-' + pIndex);
+            if (pairSlot) {
+              if (pairSlot.innerHTML.trim().length > 0) {
+                pairSlot.innerHTML = '';
+              } else {
+                UI.practiceBar(pairSlot, {
+                  prompt: 'Say the contrast pair: "' + wordA + ' ' + wordB + '"',
+                  expected: wordA + ' ' + wordB,
+                  skill: 'pronunciation',
+                  onPass: function () {
+                    STORE.addXP(10);
+                    UI.toast('Contrast neutralized! +10 XP', 'success');
+                  }
+                });
+              }
+            }
+          });
+        }(pairBtns[pbi], pbi));
+      }
+    }
+
+    /* Twister fast & practice events */
+    if (tab === 'twisters') {
+      var fastBtns = el.querySelectorAll ? el.querySelectorAll('.tw-fast-btn') : [];
+      for (var fbi = 0; fbi < fastBtns.length; fbi++) {
+        (function (fBtn) {
+          fBtn.addEventListener('click', function () {
+            var txt = fBtn.getAttribute('data-text');
+            SPEECH.speak(txt, { rate: 1.25 });
+          });
+        }(fastBtns[fbi]));
+      }
+      var twBtns = el.querySelectorAll ? el.querySelectorAll('.tw-practice-btn') : [];
+      for (var tbi = 0; tbi < twBtns.length; tbi++) {
+        (function (tBtn) {
+          tBtn.addEventListener('click', function () {
+            var twText = tBtn.getAttribute('data-twister');
+            var twIdx = tBtn.getAttribute('data-idx');
+            var slot = document.getElementById('tw-slot-' + twIdx);
+            if (slot) {
+              if (slot.innerHTML.trim().length > 0) {
+                slot.innerHTML = '';
+              } else {
+                UI.practiceBar(slot, {
+                  prompt: 'Speed Drill: "' + twText + '"',
+                  expected: twText,
+                  skill: 'fluency',
+                  onPass: function () {
+                    STORE.addXP(15);
+                    UI.toast('Speed Demon Agility! +15 XP', 'success');
+                  }
+                });
+              }
+            }
+          });
+        }(twBtns[tbi]));
+      }
+    }
   }
 };
 

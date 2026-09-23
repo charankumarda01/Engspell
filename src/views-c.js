@@ -399,18 +399,31 @@ VIEWS.coach = {
         scOpts +
         '</select>' +
         '</div>';
+
+      html += '<div class="coach-quick-pills" style="display:flex;gap:6px;overflow-x:auto;padding:6px 0;margin-bottom:8px;">' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Tell me about yourself and your greatest professional strength.">💼 Job Interview</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="I would like to order an iced oat latte with an extra shot.">☕ Order Coffee</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Here is my agile standup update: yesterday I resolved the auth bug, and today I am deploying.">🚀 Tech Standup</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Can you upgrade this sentence to executive English: I think we should do this project now because it is very good.">💎 Executive Polish</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Let\'s practice casual small talk about weekend plans and hobbies.">☕ Small Talk</button>' +
+        '</div>';
     }
 
     html += '<div class="chat-window" id="chat-window">';
 
     if (history.length === 0) {
       html += '<div class="bubble nova"><div class="bubble-label">Nova</div>'
-        + '<div class="bubble-text">Hi! I\'m Nova, your English coach. I remember our conversations, so we can pick up right where we left off. Ask me to check grammar, explain vocabulary, or chat naturally. What would you like to work on?</div></div>';
+        + '<div class="bubble-text">Hi! I\'m Nova, your English coach. I remember our conversations, so we can pick up right where we left off. Ask me to check grammar, explain vocabulary, or chat naturally. What would you like to work on?</div>'
+        + '<button class="btn-sm btn-ghost nova-hear-btn" data-say="Hi! I am Nova, your English coach. What would you like to work on?" style="margin-top:6px;padding:2px 8px;font-size:0.75rem;">🔊 Listen</button>'
+        + '</div>';
     } else {
       for (var i = 0; i < history.length; i++) {
         var msg = history[i];
         var cls = msg.role === 'user' ? 'user' : 'nova';
-        html += '<div class="bubble ' + cls + '"><div class="bubble-label">' + (msg.role === 'user' ? 'You' : 'Nova') + '</div><div class="bubble-text">' + msg.text + '</div></div>';
+        var hearBtnHtml = (msg.role !== 'user')
+          ? '<button class="btn-sm btn-ghost nova-hear-btn" data-say="' + _esc(msg.text.replace(/<[^>]*>/g, '')) + '" style="margin-top:6px;padding:2px 8px;font-size:0.75rem;">🔊 Listen</button>'
+          : '';
+        html += '<div class="bubble ' + cls + '"><div class="bubble-label">' + (msg.role === 'user' ? 'You' : 'Nova') + '</div><div class="bubble-text">' + msg.text + '</div>' + hearBtnHtml + '</div>';
       }
     }
     html += '</div>'; /* chat-window */
@@ -422,6 +435,10 @@ VIEWS.coach = {
     if (self._mode === 'document' && activeDoc) {
       html += '<div class="doc-hint">💡 Ask: "What does X mean here?", "Summarize this section", or "Check my understanding: …"</div>';
     }
+
+    html += '<div id="nova-wave-wrap" style="display:none;margin-bottom:8px;">'
+      + ((typeof UI !== 'undefined' && UI.renderAudioWave) ? UI.renderAudioWave(true, '🎙️ Listening... speak naturally') : '')
+      + '</div>';
 
     html += '<div class="chat-input-row">';
     if (SPEECH.canListen()) {
@@ -493,20 +510,63 @@ VIEWS.coach = {
       self.render(el);
     });
 
+    /* Quick topic pills click */
+    var promptPills = el.querySelectorAll ? el.querySelectorAll('.coach-prompt-pill') : [];
+    for (var ppi = 0; ppi < promptPills.length; ppi++) {
+      (function (pill) {
+        pill.addEventListener('click', function () {
+          var pr = pill.getAttribute('data-prompt');
+          var inputField = document.getElementById('nova-input');
+          if (inputField) {
+            inputField.value = pr;
+            _send();
+          }
+        });
+      }(promptPills[ppi]));
+    }
+
     /* Mic */
     var micBtn = document.getElementById('nova-mic');
+    var waveEl = document.getElementById('nova-wave-wrap');
+    var novaInput = document.getElementById('nova-input');
+    var isListening = false;
     if (micBtn) {
       micBtn.addEventListener('click', function () {
-        micBtn.textContent = '🔴';
-        micBtn.disabled = true;
+        if (isListening) {
+          SPEECH.stopListening();
+          isListening = false;
+          micBtn.textContent = '🎤';
+          micBtn.className = 'btn-mic';
+          if (waveEl) { waveEl.style.display = 'none'; }
+          return;
+        }
+        isListening = true;
+        micBtn.textContent = '⏹️';
+        micBtn.className = 'btn-mic listening pulse';
+        if (waveEl) { waveEl.style.display = 'block'; }
         SPEECH.listen({
+          interim: true,
+          continuous: true,
           onresult: function (t) {
-            document.getElementById('nova-input').value = t;
-            micBtn.textContent = '🎤';
-            micBtn.disabled = false;
+            if (novaInput) { novaInput.value = t; }
+            if (waveEl) {
+              var sEl = waveEl.querySelector('.aw-status');
+              if (sEl) { sEl.textContent = '🎙️ Heard: "' + t + '"'; }
+            }
           },
-          onend: function () { micBtn.textContent = '🎤'; micBtn.disabled = false; },
-          onerror: function (m) { UI.toast(m, 'error'); micBtn.textContent = '🎤'; micBtn.disabled = false; }
+          onend: function () {
+            isListening = false;
+            micBtn.textContent = '🎤';
+            micBtn.className = 'btn-mic';
+            if (waveEl) { waveEl.style.display = 'none'; }
+          },
+          onerror: function (m) {
+            isListening = false;
+            micBtn.textContent = '🎤';
+            micBtn.className = 'btn-mic';
+            if (waveEl) { waveEl.style.display = 'none'; }
+            UI.toast(m, 'warning');
+          }
         });
       });
     }
@@ -1219,7 +1279,12 @@ VIEWS.settings = {
         ? '<p class="setting-hint" id="s-remind-note" style="color:var(--warn);">Reminders not supported here — streak chip is your reminder.</p>'
         : '<p class="setting-hint" id="s-remind-note">Receive a local notification when today\'s Flow has remaining steps.</p>'
       ) +
-      '<p class="setting-hint" style="color:var(--txt2);font-size:12px;margin-top:4px;">Reminders fire while EngSpell was opened today on Firefox; instant even after phone sleep on Chrome/Android.</p>' +
+      '<div class="setting-group">' +
+      '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+      '<input type="checkbox" id="s-sound-fx"' + (settings.soundFx !== false ? ' checked' : '') + ' style="width:18px;height:18px;" />' +
+      '<span>🎵 Sound FX & Audio Chimes (Web Audio Synth)</span>' +
+      '</label>' +
+      '<p class="setting-hint">Crisp procedural acoustic chords for correct pronunciation, level ups, and streak milestones (100% offline, zero latency).</p>' +
       '</div>' +
 
       '<button class="btn-primary" id="s-save">💾 Save Settings</button>' +
@@ -1400,6 +1465,7 @@ VIEWS.settings = {
       var llmProvider = document.getElementById('s-provider') ? document.getElementById('s-provider').value : 'gemini';
       var remindHour = document.getElementById('s-remind-hour') ? document.getElementById('s-remind-hour').value : '19:00';
       var remindOn = document.getElementById('s-remind-on') ? document.getElementById('s-remind-on').checked : false;
+      var soundFx = document.getElementById('s-sound-fx') ? document.getElementById('s-sound-fx').checked : true;
       var curSettings = STORE.get('settings') || {};
       curSettings.voice = voice;
       curSettings.rate = rate;
@@ -1411,6 +1477,7 @@ VIEWS.settings = {
       curSettings.llmProvider = llmProvider;
       curSettings.remindHour = remindHour;
       curSettings.remindOn = remindOn;
+      curSettings.soundFx = soundFx;
       STORE.set('settings', curSettings);
       SPEECH.setRate(rate);
       if (voice) { SPEECH.setVoiceByName(voice); }

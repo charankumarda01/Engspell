@@ -424,6 +424,102 @@ h3 { font-size: 16px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; co
   border: none;
 }
 
+/* ── Live Mic Pulse & Audio Visualizer ── */
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.pulse {
+  animation: pulse 1.5s infinite;
+}
+
+.audio-wave-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  border-radius: var(--r-sm);
+  padding: 8px 14px;
+  transition: all 0.2s ease;
+}
+.audio-wave-bars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+}
+.aw-bar {
+  width: 3px;
+  height: 6px;
+  background: linear-gradient(180deg, #7c5cff, #ec4899);
+  border-radius: 2px;
+  animation: awPulse 0.9s ease-in-out infinite;
+}
+.aw-bar:nth-child(2) { animation-delay: 0.1s; }
+.aw-bar:nth-child(3) { animation-delay: 0.2s; }
+.aw-bar:nth-child(4) { animation-delay: 0.3s; }
+.aw-bar:nth-child(5) { animation-delay: 0.15s; }
+.aw-bar:nth-child(6) { animation-delay: 0.25s; }
+.aw-bar:nth-child(7) { animation-delay: 0.05s; }
+.aw-bar:nth-child(8) { animation-delay: 0.35s; }
+.aw-bar:nth-child(9) { animation-delay: 0.2s; }
+
+@keyframes awPulse {
+  0%, 100% { height: 4px; opacity: 0.5; }
+  50% { height: 18px; opacity: 1; transform: scaleY(1.1); }
+}
+
+.syllable-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.syllable-chip {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  color: var(--txt);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.syllable-chip:hover {
+  background: var(--bg2);
+  border-color: var(--acc);
+}
+.syllable-chip.stressed {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: #fbbf24;
+  color: #fbbf24;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+}
+
+.coach-quick-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 0;
+  margin-bottom: 8px;
+}
+.coach-prompt-pill {
+  white-space: nowrap;
+  font-size: 0.8rem;
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+.coach-prompt-pill:hover {
+  background: var(--bg3);
+  border-color: var(--acc2);
+}
+
 /* ── Unified Cards ── */
 .card {
   background: var(--bg2);

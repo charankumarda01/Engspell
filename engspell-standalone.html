@@ -421,6 +421,102 @@ h3 { font-size: 16px; font-weight: 600; line-height: 1.4; margin-bottom: 6px; co
   border: none;
 }
 
+/* ── Live Mic Pulse & Audio Visualizer ── */
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.pulse {
+  animation: pulse 1.5s infinite;
+}
+
+.audio-wave-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  border-radius: var(--r-sm);
+  padding: 8px 14px;
+  transition: all 0.2s ease;
+}
+.audio-wave-bars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+}
+.aw-bar {
+  width: 3px;
+  height: 6px;
+  background: linear-gradient(180deg, #7c5cff, #ec4899);
+  border-radius: 2px;
+  animation: awPulse 0.9s ease-in-out infinite;
+}
+.aw-bar:nth-child(2) { animation-delay: 0.1s; }
+.aw-bar:nth-child(3) { animation-delay: 0.2s; }
+.aw-bar:nth-child(4) { animation-delay: 0.3s; }
+.aw-bar:nth-child(5) { animation-delay: 0.15s; }
+.aw-bar:nth-child(6) { animation-delay: 0.25s; }
+.aw-bar:nth-child(7) { animation-delay: 0.05s; }
+.aw-bar:nth-child(8) { animation-delay: 0.35s; }
+.aw-bar:nth-child(9) { animation-delay: 0.2s; }
+
+@keyframes awPulse {
+  0%, 100% { height: 4px; opacity: 0.5; }
+  50% { height: 18px; opacity: 1; transform: scaleY(1.1); }
+}
+
+.syllable-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.syllable-chip {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  color: var(--txt);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.syllable-chip:hover {
+  background: var(--bg2);
+  border-color: var(--acc);
+}
+.syllable-chip.stressed {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: #fbbf24;
+  color: #fbbf24;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+}
+
+.coach-quick-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 0;
+  margin-bottom: 8px;
+}
+.coach-prompt-pill {
+  white-space: nowrap;
+  font-size: 0.8rem;
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+.coach-prompt-pill:hover {
+  background: var(--bg3);
+  border-color: var(--acc2);
+}
+
 /* ── Unified Cards ── */
 .card {
   background: var(--bg2);
@@ -9949,7 +10045,7 @@ var STORE = (function () {
     daily: {date: '', twisterIdx: 0, wordIdx: 0, idiomIdx: 0, quoteIdx: 0, done: []},
     assessments: [],
     coachStats: {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0},
-    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false, llmProvider: 'gemini', remindHour: '19:00', remindOn: false},
+    settings: {voice: '', rate: 1.0, dailyGoal: 10, geminiKey: '', honestMode: false, liveCorrect: false, bargeIn: false, llmProvider: 'gemini', remindHour: '19:00', remindOn: false, soundFx: true, theme: 'midnight'},
     srs: {},  /* INV-5: MISSION 2 SRS */
     docs: [],           /* INV-5: v3 — Document Studio uploaded docs */
     novaHistory: [],    /* INV-5: v3 — persisted Nova chat (capped 50 turns) */
@@ -10030,6 +10126,13 @@ var STORE = (function () {
       if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
       data.version = 8;
     }
+    // v8 → v9: add soundFx and theme (M22)
+    if (v < 9) {
+      if (!data.settings) { data.settings = {}; }
+      if (data.settings.soundFx === undefined) { data.settings.soundFx = true; }
+      if (data.settings.theme === undefined) { data.settings.theme = 'midnight'; }
+      data.version = 9;
+    }
     if (!data.accent) { data.accent = { packs: {}, lastXpDate: '' }; }
     if (!data.accent.packs) { data.accent.packs = {}; }
     if (!data.weeklyHistory) { data.weeklyHistory = []; }
@@ -10040,6 +10143,8 @@ var STORE = (function () {
     if (!data.settings.llmProvider) { data.settings.llmProvider = 'gemini'; }
     if (data.settings.remindHour === undefined) { data.settings.remindHour = '19:00'; }
     if (data.settings.remindOn === undefined) { data.settings.remindOn = false; }
+    if (data.settings.soundFx === undefined) { data.settings.soundFx = true; }
+    if (data.settings.theme === undefined) { data.settings.theme = 'midnight'; }
     if (!data.coachStats) {
       data.coachStats = {messages: 0, corrections: 0, sessions: 0, drills: 0, interrupts: 0};
     }
@@ -10543,6 +10648,93 @@ var U = (function () {
     return arr[seed % arr.length];
   }
 
+  /**
+   * syllabify(word) — English syllable breakdown with primary stress identification
+   * Returns array of { text: string, stress: boolean }
+   */
+  function syllabify(word) {
+    if (!word) { return []; }
+    var clean = String(word).toLowerCase().replace(/[^a-z]/g, '');
+    if (!clean) { return [{ text: word, stress: true }]; }
+    if (clean.length <= 3) { return [{ text: clean, stress: true }]; }
+
+    var ipa = '';
+    if (typeof WORDS !== 'undefined') {
+      for (var wi = 0; wi < WORDS.length; wi++) {
+        if (WORDS[wi].w && WORDS[wi].w.toLowerCase() === clean) {
+          ipa = WORDS[wi].ipa || '';
+          break;
+        }
+      }
+    }
+
+    var VOWELS = 'aeiouy';
+    var syllables = [];
+    var cur = '';
+    for (var i = 0; i < clean.length; i++) {
+      cur += clean[i];
+      var isVowel = VOWELS.indexOf(clean[i]) !== -1;
+      var nextIsVowel = (i + 1 < clean.length) && (VOWELS.indexOf(clean[i + 1]) !== -1);
+      var next2IsVowel = (i + 2 < clean.length) && (VOWELS.indexOf(clean[i + 2]) !== -1);
+
+      if (isVowel) {
+        if (nextIsVowel && (i + 1 < clean.length)) {
+          var pair = clean[i] + clean[i + 1];
+          if ('ai,ay,ea,ee,ei,ey,ie,oa,oe,oi,oy,ou,oo,au,aw'.indexOf(pair) !== -1) {
+            continue;
+          }
+        }
+        if (!nextIsVowel && next2IsVowel && (i + 2 < clean.length)) {
+          syllables.push(cur);
+          cur = '';
+        } else if (!nextIsVowel && !next2IsVowel && (i + 3 < clean.length) && (VOWELS.indexOf(clean[i + 3]) !== -1)) {
+          cur += clean[i + 1];
+          i++;
+          syllables.push(cur);
+          cur = '';
+        }
+      }
+    }
+    if (cur) {
+      if (syllables.length > 0 && cur.length === 1 && VOWELS.indexOf(cur) === -1) {
+        syllables[syllables.length - 1] += cur;
+      } else {
+        syllables.push(cur);
+      }
+    }
+    if (syllables.length === 0) {
+      syllables = [clean];
+    }
+
+    var stressIdx = 0;
+    if (syllables.length > 1) {
+      if (ipa && ipa.indexOf('ˈ') !== -1) {
+        var afterStress = ipa.split('ˈ')[1] || '';
+        for (var s = 0; s < syllables.length; s++) {
+          if (afterStress.indexOf(syllables[s][0]) !== -1) {
+            stressIdx = s;
+            break;
+          }
+        }
+      } else if (syllables.length >= 3) {
+        if (['un', 'in', 'im', 'dis', 're', 'pre', 'pro', 'con', 'com'].indexOf(syllables[0]) !== -1) {
+          stressIdx = 1;
+        } else {
+          stressIdx = 0;
+        }
+      }
+    }
+
+    var result = [];
+    for (var k = 0; k < syllables.length; k++) {
+      result.push({
+        text: syllables[k],
+        stress: (k === stressIdx)
+      });
+    }
+    return result;
+  }
+
   return {
     norm: norm,
     expandContractions: expandContractions,
@@ -10554,7 +10746,8 @@ var U = (function () {
     dailyPick: dailyPick,
     dailyPickN: dailyPickN,
     wordsMatch: wordsMatch,
-    HOMOPHONES: HOMOPHONES
+    HOMOPHONES: HOMOPHONES,
+    syllabify: syllabify
   };
 }());
 
@@ -11883,6 +12076,166 @@ if (typeof global !== 'undefined') {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+   SOUND_FX — Web Audio API Sound Synthesizer (100% Offline, Zero CDNs)
+   ════════════════════════════════════════════════════════════════════*/
+var SOUND_FX = (function () {
+  'use strict';
+  var _ctx = null;
+  function _getCtx() {
+    if (_ctx) { return _ctx; }
+    if (typeof window !== 'undefined') {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        try { _ctx = new AC(); } catch (e) { /* ignore */ }
+      }
+    }
+    return _ctx;
+  }
+  function _isEnabled() {
+    try {
+      if (typeof STORE !== 'undefined' && STORE.get) {
+        var s = STORE.get('settings');
+        if (s && s.soundFx === false) { return false; }
+      }
+    } catch (e) {}
+    return true;
+  }
+  function _tone(ctx, freq, startTime, duration, type) {
+    try {
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, startTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.02);
+    } catch (e) {}
+  }
+  function play(type) {
+    if (!_isEnabled()) { return; }
+    var ctx = _getCtx();
+    if (!ctx) { return; }
+    if (ctx.state === 'suspended') {
+      try { ctx.resume(); } catch (e) {}
+    }
+    var now = ctx.currentTime;
+    try {
+      if (type === 'pass' || type === 'ok') {
+        _tone(ctx, 523.25, now, 0.08, 'sine');
+        _tone(ctx, 783.99, now + 0.07, 0.16, 'sine');
+      } else if (type === 'success' || type === 'perfect') {
+        _tone(ctx, 523.25, now, 0.07, 'sine');
+        _tone(ctx, 659.25, now + 0.06, 0.07, 'sine');
+        _tone(ctx, 783.99, now + 0.12, 0.07, 'sine');
+        _tone(ctx, 1046.50, now + 0.18, 0.28, 'triangle');
+      } else if (type === 'fail' || type === 'error') {
+        _tone(ctx, 220, now, 0.10, 'triangle');
+        _tone(ctx, 174.61, now + 0.09, 0.18, 'sine');
+      } else if (type === 'streak' || type === 'fanfare') {
+        _tone(ctx, 523.25, now, 0.06, 'triangle');
+        _tone(ctx, 659.25, now + 0.05, 0.06, 'triangle');
+        _tone(ctx, 783.99, now + 0.10, 0.06, 'triangle');
+        _tone(ctx, 1046.50, now + 0.15, 0.12, 'triangle');
+        _tone(ctx, 1318.51, now + 0.22, 0.35, 'sine');
+      } else if (type === 'pop' || type === 'tap') {
+        _tone(ctx, 600, now, 0.03, 'sine');
+      }
+    } catch (err) { /* silent fallback */ }
+  }
+  return {
+    play: play
+  };
+}());
+
+if (typeof window !== 'undefined') { window.SOUND_FX = SOUND_FX; }
+if (typeof global !== 'undefined') { global.SOUND_FX = SOUND_FX; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CONFETTI — Canvas Celebratory Particle Engine (100% Offline, Zero CDNs)
+   ════════════════════════════════════════════════════════════════════*/
+var CONFETTI = (function () {
+  'use strict';
+  function burst(opts) {
+    if (typeof window === 'undefined' || typeof document === 'undefined') { return; }
+    opts = opts || {};
+    var count = opts.count || 45;
+    var canvas = document.getElementById('engspell-confetti-canvas');
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'engspell-confetti-canvas';
+      canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999;';
+      if (document.body && document.body.appendChild) {
+        document.body.appendChild(canvas);
+      }
+    }
+    if (!canvas || !canvas.getContext) { return; }
+    var w = canvas.width = window.innerWidth || 800;
+    var h = canvas.height = window.innerHeight || 600;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) { return; }
+
+    var colors = ['#7c5cff', '#5eead4', '#fbbf24', '#ec4899', '#34d399', '#3b82f6'];
+    var originX = opts.x !== undefined ? opts.x : w / 2;
+    var originY = opts.y !== undefined ? opts.y : h * 0.35;
+    var particles = [];
+    for (var i = 0; i < count; i++) {
+      var angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
+      var speed = 4 + Math.random() * 8;
+      particles.push({
+        x: originX,
+        y: originY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 3,
+        size: 5 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rSpeed: (Math.random() - 0.5) * 12,
+        life: 1.0,
+        decay: 0.015 + Math.random() * 0.015
+      });
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, w, h);
+      var active = 0;
+      for (var p = 0; p < particles.length; p++) {
+        var part = particles[p];
+        if (part.life <= 0) { continue; }
+        active++;
+        part.x += part.vx;
+        part.y += part.vy;
+        part.vy += 0.22;
+        part.vx *= 0.98;
+        part.rotation += part.rSpeed;
+        part.life -= part.decay;
+
+        ctx.save();
+        ctx.translate(part.x, part.y);
+        ctx.rotate((part.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, part.life);
+        ctx.fillStyle = part.color;
+        ctx.fillRect(-part.size / 2, -part.size / 2, part.size, part.size * 0.7);
+        ctx.restore();
+      }
+      if (active > 0 && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(render);
+      } else {
+        ctx.clearRect(0, 0, w, h);
+      }
+    }
+    render();
+  }
+  return { burst: burst };
+}());
+
+if (typeof window !== 'undefined') { window.CONFETTI = CONFETTI; }
+if (typeof global !== 'undefined') { global.CONFETTI = CONFETTI; }
+
+/* ══════════════════════════════════════════════════════════════════════
    UI — primitive components
    ════════════════════════════════════════════════════════════════════*/
 var UI = (function () {
@@ -11921,9 +12274,45 @@ var UI = (function () {
   }
 
   /**
+   * renderSyllables(word) — interactive syllable chips with stressed syllables highlighted
+   */
+  function renderSyllables(word) {
+    if (!word) { return ''; }
+    var syls = (typeof U !== 'undefined' && U.syllabify) ? U.syllabify(word) : [];
+    if (!syls || syls.length === 0) { return ''; }
+    var html = '<div class="syllable-bar" style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:10px 0;">';
+    html += '<span style="font-size:0.75rem;text-transform:uppercase;color:var(--mut);letter-spacing:1px;font-weight:700;margin-right:4px;">Syllables:</span>';
+    for (var i = 0; i < syls.length; i++) {
+      var s = syls[i];
+      var cls = s.stress ? 'syllable-chip stressed' : 'syllable-chip';
+      var style = s.stress
+        ? 'background:rgba(251,191,36,0.18);border:1px solid #fbbf24;color:#fbbf24;font-weight:800;font-size:0.95rem;padding:4px 10px;border-radius:8px;cursor:pointer;'
+        : 'background:var(--bg3);border:1px solid var(--line);color:var(--txt);font-weight:500;font-size:0.85rem;padding:4px 8px;border-radius:8px;cursor:pointer;';
+      html += '<button type="button" class="' + cls + '" style="' + style + '" data-say="' + s.text + '" data-slow="1" title="Tap to hear syllable">' + (s.stress ? 'ˈ' : '') + s.text + (s.stress ? ' ★' : '') + '</button>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  /**
+   * renderAudioWave(active, statusText) — dynamic glowing voice waveform visualizer
+   */
+  function renderAudioWave(active, statusText) {
+    var waveHtml = '<div class="audio-wave-wrap' + (active ? ' active' : '') + '" style="display:' + (active ? 'flex' : 'none') + ';align-items:center;justify-content:center;gap:8px;padding:8px 14px;background:rgba(124,92,255,0.12);border:1px solid rgba(124,92,255,0.35);border-radius:12px;margin:8px 0;">'
+      + '<div class="audio-wave-bars" style="display:flex;align-items:center;gap:3px;height:20px;">'
+      + '<span class="aw-bar"></span><span class="aw-bar"></span><span class="aw-bar"></span>'
+      + '<span class="aw-bar"></span><span class="aw-bar"></span><span class="aw-bar"></span>'
+      + '<span class="aw-bar"></span><span class="aw-bar"></span><span class="aw-bar"></span>'
+      + '</div>'
+      + '<span class="aw-status" style="font-size:0.85rem;color:var(--txt);font-weight:600;">' + (statusText || '🎙️ Listening... speak clearly') + '</span>'
+      + '</div>';
+    return waveHtml;
+  }
+
+  /**
    * practiceBar(el, opts)
-   * opts: { expected, onPass, onFail, xp, skill }
-   * Renders a mic/text fallback practice UI into el
+   * opts: { expected, prompt, onPass, onFail, xp, skill }
+   * Renders high-fidelity spoken practice UI into el with live waveform, sound FX, confetti, and syllable stress breakdown
    */
   function practiceBar(el, opts) {
     if (!el) { return; }
@@ -11932,8 +12321,10 @@ var UI = (function () {
     var inst = 'pb' + Math.floor(Math.random() * 1000000);
     var micId = inst + '-mic';
     var hearId = inst + '-hear';
+    var slowId = inst + '-slow';
     var inputId = inst + '-input';
     var checkId = inst + '-check';
+    var waveId = inst + '-wave';
     var resultId = inst + '-result';
     var isListening = false;
 
@@ -11944,8 +12335,12 @@ var UI = (function () {
     var html = '<div class="practice-bar">';
     html += '<div class="practice-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;">';
     html += '<p class="practice-prompt" style="margin:0;"><strong>' + (promptDisplay.indexOf('Say it:') === 0 ? '' : 'Say it: ') + promptDisplay + '</strong></p>';
-    html += '<button class="btn-sm btn-ghost pb-hear-btn" id="' + hearId + '" title="Listen to native model">🔊 Model</button>';
+    html += '<div style="display:flex;gap:6px;">';
+    html += '<button class="btn-sm btn-ghost pb-hear-btn" id="' + hearId + '" title="Listen to model pronunciation">🔊 Model</button>';
+    html += '<button class="btn-sm btn-ghost pb-slow-btn" id="' + slowId + '" title="Listen slowly">🐢 Slow</button>';
     html += '</div>';
+    html += '</div>';
+    html += '<div id="' + waveId + '" style="display:none;">' + renderAudioWave(true, '🎙️ Listening... speak now') + '</div>';
     if (canListen) {
       html += '<button class="btn-mic" id="' + micId + '">🎤 Start Speaking</button>';
     }
@@ -11960,11 +12355,18 @@ var UI = (function () {
     var resultEl = (el && el.querySelector ? el.querySelector('#' + resultId) : null) || document.getElementById(resultId);
     var inputEl = (el && el.querySelector ? el.querySelector('#' + inputId) : null) || document.getElementById(inputId);
     var hearBtn = (el && el.querySelector ? el.querySelector('#' + hearId) : null) || document.getElementById(hearId);
+    var slowBtn = (el && el.querySelector ? el.querySelector('#' + slowId) : null) || document.getElementById(slowId);
+    var waveEl = (el && el.querySelector ? el.querySelector('#' + waveId) : null) || document.getElementById(waveId);
     var micBtn = canListen ? ((el && el.querySelector ? el.querySelector('#' + micId) : null) || document.getElementById(micId)) : null;
 
     if (hearBtn) {
       hearBtn.addEventListener('click', function () {
         SPEECH.speak(cleanTarget || rawText);
+      });
+    }
+    if (slowBtn) {
+      slowBtn.addEventListener('click', function () {
+        SPEECH.speakSlow(cleanTarget || rawText);
       });
     }
 
@@ -11973,16 +12375,21 @@ var UI = (function () {
       var aligned = U.align(cleanTarget || rawText, heard);
       var v = U.verdict(aligned);
       if (resultEl) {
-        resultEl.innerHTML = scoreHTML(aligned);
+        var scoreMarkup = scoreHTML(aligned);
+        var sylMarkup = renderSyllables(cleanTarget || rawText);
         if (v === 'pass') {
-          resultEl.innerHTML += '<p class="verdict pass">✅ Excellent!</p>';
+          SOUND_FX.play('success');
+          CONFETTI.burst();
+          resultEl.innerHTML = scoreMarkup + '<p class="verdict pass">✅ 100% Match · Excellent pronunciation!</p>' + sylMarkup;
           TRAINER.log({skill: opts.skill || 'fluency', delta: 2, source: 'practiceBar'});
           if (opts.onPass) { opts.onPass(); }
         } else if (v === 'almost') {
-          resultEl.innerHTML += '<p class="verdict almost">🟡 Almost! Try again.</p>';
+          SOUND_FX.play('pop');
+          resultEl.innerHTML = scoreMarkup + '<p class="verdict almost">🟡 Almost! Check highlighted syllables below:</p>' + sylMarkup;
           TRAINER.log({skill: opts.skill || 'fluency', delta: 1, source: 'practiceBar'});
         } else {
-          resultEl.innerHTML += '<p class="verdict fail">❌ Keep trying — click red words to hear them slowly.</p>';
+          SOUND_FX.play('fail');
+          resultEl.innerHTML = scoreMarkup + '<p class="verdict fail">❌ Tap red words or syllables below to hear them slowly:</p>' + sylMarkup;
           TRAINER.log({skill: opts.skill || 'fluency', delta: -1, source: 'practiceBar'});
           if (opts.onFail) { opts.onFail(); }
         }
@@ -11991,6 +12398,7 @@ var UI = (function () {
 
     function _resetMic() {
       isListening = false;
+      if (waveEl) { waveEl.style.display = 'none'; }
       if (micBtn) {
         micBtn.textContent = '🎤 Start Speaking';
         micBtn.className = 'btn-mic';
@@ -12006,6 +12414,7 @@ var UI = (function () {
           return;
         }
         isListening = true;
+        if (waveEl) { waveEl.style.display = 'block'; }
         micBtn.textContent = '⏹️ Stop Listening';
         micBtn.className = 'btn-mic listening pulse';
         SPEECH.listen({
@@ -12013,6 +12422,10 @@ var UI = (function () {
           continuous: true,
           onresult: function (transcript, isFinal) {
             if (inputEl) { inputEl.value = transcript; }
+            if (waveEl) {
+              var statusEl = waveEl.querySelector('.aw-status');
+              if (statusEl) { statusEl.textContent = '🎙️ Heard: "' + transcript + '"'; }
+            }
             if (isFinal) {
               _evaluate(transcript);
               _resetMic();
@@ -12062,6 +12475,8 @@ var UI = (function () {
   return {
     toast: toast,
     scoreHTML: scoreHTML,
+    renderSyllables: renderSyllables,
+    renderAudioWave: renderAudioWave,
     practiceBar: practiceBar,
     xpPop: xpPop
   };
@@ -13477,35 +13892,52 @@ VIEWS.foundations = {
       '<table class="sounds-table"><thead><tr><th>IPA</th><th>Example</th><th>Listen</th></tr></thead><tbody>' + vowelRows + '</tbody></table>' +
       '<div class="section-title">🔊 24 Consonant Sounds</div>' +
       '<table class="sounds-table"><thead><tr><th>IPA</th><th>Example</th><th>Listen</th></tr></thead><tbody>' + conRows + '</tbody></table>' +
-      '<div class="section-title">📝 Spell Anything</div>' +
+      '<div class="section-title">📝 Spell Anything (Letter-by-Letter Bee)</div>' +
       '<div class="spell-tool">' +
-      '<input type="text" id="spell-input" placeholder="Type a word to spell it out..." />' +
+      '<input type="text" id="spell-input" placeholder="Type a word to spell it out (e.g. rhythm, queue)..." />' +
       '<button id="spell-btn" class="btn-primary">🔊 Spell it</button>' +
       '</div>' +
-      '<div id="spell-result"></div>' +
+      '<div id="spell-result" style="margin-top:12px;"></div>' +
+      '<div id="spell-practice-slot" style="margin-top:12px;"></div>' +
       '</div>';
 
-    document.getElementById('spell-btn').addEventListener('click', function () {
-      var word = document.getElementById('spell-input').value.trim();
-      if (!word) { return; }
-      var letters = word.split('');
-      var ipa = '';
-      for (var i = 0; i < letters.length; i++) {
-        var found = null;
-        for (var j = 0; j < WORDS.length; j++) {
-          if (WORDS[j].w === letters[i].toLowerCase()) { found = WORDS[j].ipa; break; }
+    var spellBtn = document.getElementById('spell-btn');
+    if (spellBtn) {
+      spellBtn.addEventListener('click', function () {
+        var word = document.getElementById('spell-input').value.trim();
+        if (!word) { return; }
+        var letters = word.toUpperCase().split('');
+        var chips = '';
+        for (var i = 0; i < letters.length; i++) {
+          chips += '<button class="chip ok" data-say="' + letters[i] + '" style="font-weight:700;font-size:1.1rem;cursor:pointer;padding:6px 10px;" title="Click to hear letter">' + letters[i] + '</button> ';
         }
-        ipa += '<span class="chip ok">' + letters[i] + '</span> ';
-      }
-      document.getElementById('spell-result').innerHTML = '<div class="spell-chips">' + ipa + '</div>';
-      SPEECH.speak(word.split('').join(', '));
-    });
+        var spellRes = document.getElementById('spell-result');
+        if (spellRes) {
+          spellRes.innerHTML = '<div style="margin-bottom:8px;font-size:0.85rem;color:var(--mut);">Spelling out <strong>' + _escA(word) + '</strong>:</div><div class="spell-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">' + chips + '</div>';
+        }
+        SPEECH.speak(letters.join(', '));
+        var slot = document.getElementById('spell-practice-slot');
+        if (slot && typeof UI !== 'undefined' && UI.practiceBar) {
+          UI.practiceBar(slot, {
+            prompt: 'Spell it out loud: "' + letters.join(' ') + '"',
+            expected: letters.join(' '),
+            skill: 'spelling',
+            onPass: function () {
+              STORE.addXP(5);
+              UI.toast('Spelling bee mastered! +5 XP', 'success');
+            }
+          });
+        }
+      });
+    }
   }
 };
 
 /* ── PRONUNCIATION LAB ──────────────────────────────────────────────── */
 VIEWS.pronunciation = {
   _tab: 'words',
+  _earPairIdx: 0,
+  _earMysteryWord: '',
   render: function (el) {
     'use strict';
     var self = this;
@@ -13513,8 +13945,8 @@ VIEWS.pronunciation = {
 
     var tabBar = '<div class="tab-bar">' +
       '<button class="tab-btn' + (tab === 'words' ? ' active' : '') + '" id="tab-words">Words</button>' +
-      '<button class="tab-btn' + (tab === 'pairs' ? ' active' : '') + '" id="tab-pairs">Minimal Pairs</button>' +
-      '<button class="tab-btn' + (tab === 'twisters' ? ' active' : '') + '" id="tab-twisters">Twisters</button>' +
+      '<button class="tab-btn' + (tab === 'pairs' ? ' active' : '') + '" id="tab-pairs">Minimal Pairs & Ear Quiz</button>' +
+      '<button class="tab-btn' + (tab === 'twisters' ? ' active' : '') + '" id="tab-twisters">Twisters & Speed Ladder</button>' +
       '</div>';
 
     var content = '';
@@ -13528,44 +13960,214 @@ VIEWS.pronunciation = {
         for (var wi = 0; wi < wds.length; wi++) {
           var w = wds[wi];
           var m = STORE.getMastery('spell_' + w.w);
-          content += '<div class="word-card">' +
-            '<div class="word-text" data-say="' + w.w + '">' + w.w + '</div>' +
-            '<div class="word-ipa">' + w.ipa + '</div>' +
+          content += '<div class="word-card" id="word-card-' + _escA(w.w) + '">' +
+            '<div class="word-text" data-say="' + _escA(w.w) + '">' + _escA(w.w) + '</div>' +
+            '<div class="word-ipa">' + _escA(w.ipa || '') + '</div>' +
             '<div class="mastery-dots">' + _masteryDots(m) + '</div>' +
-            '<button class="btn-sm" data-say="' + w.w + '">🔊</button>' +
+            '<div style="display:flex;gap:4px;margin-top:8px;justify-content:center;">' +
+            '<button class="btn-sm btn-ghost" data-say="' + _escA(w.w) + '" title="Listen">🔊</button>' +
+            '<button class="btn-sm btn-primary pron-word-mic" data-word="' + _escA(w.w) + '" title="Practice Speaking">🎤 Practice</button>' +
+            '</div>' +
+            '<div class="word-inline-practice" id="practice-slot-' + _escA(w.w) + '" style="margin-top:8px;"></div>' +
             '</div>';
         }
         content += '</div>';
       }
     } else if (tab === 'pairs') {
-      content = '<div class="pairs-grid">';
+      var pair = PAIRS[self._earPairIdx % PAIRS.length];
+      self._earMysteryWord = self._earMysteryWord || (Math.random() > 0.5 ? pair.a : pair.b);
+
+      var earQuizHtml = '<div class="card ear-quiz-card" style="background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.35);padding:18px;margin-bottom:20px;border-radius:var(--r-md);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">' +
+        '<div style="font-weight:700;font-size:1.05rem;color:var(--txt);">👂 Minimal Pair Ear Quiz</div>' +
+        '<span style="font-size:0.8rem;color:var(--acc2);font-weight:600;">Pair ' + (self._earPairIdx + 1) + ' of ' + PAIRS.length + '</span>' +
+        '</div>' +
+        '<p style="font-size:0.9rem;color:var(--mut);margin-bottom:14px;">Listen to the secret sound without looking, then identify which word was spoken!</p>' +
+        '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">' +
+        '<button class="btn-primary" id="ear-play-btn" style="font-size:1rem;padding:8px 18px;">🔊 Play Mystery Sound</button>' +
+        '<button class="btn-ghost btn-sm" id="ear-next-btn">🎲 Next Pair</button>' +
+        '</div>' +
+        '<div style="display:flex;gap:12px;margin-bottom:12px;">' +
+        '<button class="btn-secondary ear-choice-btn" id="ear-opt-a" data-choice="' + _escA(pair.a) + '" style="flex:1;padding:12px;font-size:1.1rem;font-weight:700;">' + _escA(pair.a) + '</button>' +
+        '<button class="btn-secondary ear-choice-btn" id="ear-opt-b" data-choice="' + _escA(pair.b) + '" style="flex:1;padding:12px;font-size:1.1rem;font-weight:700;">' + _escA(pair.b) + '</button>' +
+        '</div>' +
+        '<div id="ear-quiz-feedback"></div>' +
+        '</div>';
+
+      content = earQuizHtml + '<div class="section-title">All Minimal Contrast Pairs</div><div class="pairs-grid">';
       for (var pi = 0; pi < PAIRS.length; pi++) {
         var p = PAIRS[pi];
         content += '<div class="pair-card">' +
-          '<div class="pair-words"><span class="pair-word" data-say="' + p.a + '">' + p.a + ' 🔊</span>' +
+          '<div class="pair-words"><span class="pair-word" data-say="' + _escA(p.a) + '">' + _escA(p.a) + ' 🔊</span>' +
           '<span class="pair-sep">vs</span>' +
-          '<span class="pair-word" data-say="' + p.b + '">' + p.b + ' 🔊</span></div>' +
-          '<div class="pair-tip">' + p.tip + '</div>' +
+          '<span class="pair-word" data-say="' + _escA(p.b) + '">' + _escA(p.b) + ' 🔊</span></div>' +
+          '<div class="pair-tip">' + _escA(p.tip) + '</div>' +
+          '<div style="margin-top:10px;display:flex;justify-content:center;">' +
+          '<button class="btn-sm btn-ghost pair-practice-btn" data-a="' + _escA(p.a) + '" data-b="' + _escA(p.b) + '">🎤 Practice Contrast</button>' +
+          '</div>' +
+          '<div class="pair-practice-slot" id="pair-slot-' + pi + '" style="margin-top:8px;"></div>' +
           '</div>';
       }
       content += '</div>';
     } else {
-      content = '<div class="twisters-list">';
+      content = '<div class="card" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);padding:16px;border-radius:var(--r-md);margin-bottom:18px;">' +
+        '<div style="font-weight:700;font-size:1.05rem;color:var(--txt);margin-bottom:6px;">⚡ Speed Ladder Challenge</div>' +
+        '<p style="font-size:0.85rem;color:var(--mut);">Practice tongue agility across 3 speeds: 1.0x (Precision), 1.25x (Conversational), and 1.5x (Speed Demon).</p>' +
+        '</div>' +
+        '<div class="twisters-list">';
       for (var ti = 0; ti < TWISTERS.length; ti++) {
-        content += '<div class="twister-card">' +
-          '<p class="twister-text" data-say="' + TWISTERS[ti] + '">' + TWISTERS[ti] + '</p>' +
-          '<div class="twister-btns">' +
-          '<button class="btn-sm" data-say="' + TWISTERS[ti] + '">🔊 Normal</button>' +
-          '</div></div>';
+        var twText = TWISTERS[ti];
+        content += '<div class="twister-card" id="twister-card-' + ti + '">' +
+          '<p class="twister-text" data-say="' + _escA(twText) + '">' + _escA(twText) + '</p>' +
+          '<div class="twister-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">' +
+          '<button class="btn-sm btn-ghost" data-say="' + _escA(twText) + '">🔊 1.0x Normal</button>' +
+          '<button class="btn-sm btn-ghost tw-fast-btn" data-text="' + _escA(twText) + '">⚡ 1.25x Fast</button>' +
+          '<button class="btn-sm btn-primary tw-practice-btn" data-twister="' + _escA(twText) + '" data-idx="' + ti + '">🎤 Speed Challenge</button>' +
+          '</div>' +
+          '<div class="twister-practice-slot" id="tw-slot-' + ti + '" style="margin-top:10px;"></div>' +
+          '</div>';
       }
       content += '</div>';
     }
 
-    el.innerHTML = '<div class="view-pronunciation"><h1>🗣️ Pronunciation Lab</h1>' + tabBar + '<div class="tab-content">' + content + '</div></div>';
+    el.innerHTML = '<div class="view-pronunciation"><h1>🗣️ Pronunciation Lab & Fluency Studio</h1>' + tabBar + '<div class="tab-content">' + content + '</div></div>';
 
     document.getElementById('tab-words').addEventListener('click', function () { self._tab = 'words'; self.render(el); });
     document.getElementById('tab-pairs').addEventListener('click', function () { self._tab = 'pairs'; self.render(el); });
     document.getElementById('tab-twisters').addEventListener('click', function () { self._tab = 'twisters'; self.render(el); });
+
+    /* Word voice triggers */
+    var wordMicBtns = el.querySelectorAll ? el.querySelectorAll('.pron-word-mic') : [];
+    for (var wmi = 0; wmi < wordMicBtns.length; wmi++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var targetWord = btn.getAttribute('data-word');
+          var slot = document.getElementById('practice-slot-' + targetWord);
+          if (slot) {
+            if (slot.innerHTML.trim().length > 0) {
+              slot.innerHTML = '';
+            } else {
+              UI.practiceBar(slot, {
+                prompt: 'Pronounce "' + targetWord + '"',
+                expected: targetWord,
+                skill: 'pronunciation',
+                onPass: function () {
+                  STORE.master('spell_' + targetWord, true);
+                  STORE.addXP(10);
+                  UI.toast('Pronunciation mastered! +10 XP', 'success');
+                }
+              });
+            }
+          }
+        });
+      }(wordMicBtns[wmi]));
+    }
+
+    /* Ear quiz events */
+    if (tab === 'pairs') {
+      var playBtn = document.getElementById('ear-play-btn');
+      if (playBtn) {
+        playBtn.addEventListener('click', function () {
+          SPEECH.speak(self._earMysteryWord);
+        });
+      }
+      var nextEarBtn = document.getElementById('ear-next-btn');
+      if (nextEarBtn) {
+        nextEarBtn.addEventListener('click', function () {
+          self._earPairIdx = (self._earPairIdx + 1) % PAIRS.length;
+          self._earMysteryWord = '';
+          self.render(el);
+        });
+      }
+      var choiceBtns = el.querySelectorAll ? el.querySelectorAll('.ear-choice-btn') : [];
+      for (var cbi = 0; cbi < choiceBtns.length; cbi++) {
+        (function (cBtn) {
+          cBtn.addEventListener('click', function () {
+            var chosen = cBtn.getAttribute('data-choice');
+            var fbEl = document.getElementById('ear-quiz-feedback');
+            if (chosen === self._earMysteryWord) {
+              if (typeof SOUND_FX !== 'undefined') { SOUND_FX.play('success'); }
+              if (typeof CONFETTI !== 'undefined') { CONFETTI.burst(); }
+              STORE.addXP(10);
+              TRAINER.log({skill: 'listening', delta: 2, source: 'earQuiz'});
+              if (fbEl) {
+                fbEl.innerHTML = '<div style="background:rgba(52,211,153,0.15);border:1px solid var(--ok);color:var(--ok);padding:10px;border-radius:8px;font-weight:700;">✅ Correct! You heard "' + _escA(chosen) + '"! +10 XP</div>';
+              }
+            } else {
+              if (typeof SOUND_FX !== 'undefined') { SOUND_FX.play('fail'); }
+              if (fbEl) {
+                fbEl.innerHTML = '<div style="background:rgba(248,113,113,0.15);border:1px solid var(--bad);color:var(--bad);padding:10px;border-radius:8px;font-weight:700;">❌ That was "' + _escA(self._earMysteryWord) + '". Tap "Play Mystery Sound" and compare carefully!</div>';
+              }
+            }
+          });
+        }(choiceBtns[cbi]));
+      }
+
+      /* Minimal pair contrast practice buttons */
+      var pairBtns = el.querySelectorAll ? el.querySelectorAll('.pair-practice-btn') : [];
+      for (var pbi = 0; pbi < pairBtns.length; pbi++) {
+        (function (pBtn, pIndex) {
+          pBtn.addEventListener('click', function () {
+            var wordA = pBtn.getAttribute('data-a');
+            var wordB = pBtn.getAttribute('data-b');
+            var pairSlot = document.getElementById('pair-slot-' + pIndex);
+            if (pairSlot) {
+              if (pairSlot.innerHTML.trim().length > 0) {
+                pairSlot.innerHTML = '';
+              } else {
+                UI.practiceBar(pairSlot, {
+                  prompt: 'Say the contrast pair: "' + wordA + ' ' + wordB + '"',
+                  expected: wordA + ' ' + wordB,
+                  skill: 'pronunciation',
+                  onPass: function () {
+                    STORE.addXP(10);
+                    UI.toast('Contrast neutralized! +10 XP', 'success');
+                  }
+                });
+              }
+            }
+          });
+        }(pairBtns[pbi], pbi));
+      }
+    }
+
+    /* Twister fast & practice events */
+    if (tab === 'twisters') {
+      var fastBtns = el.querySelectorAll ? el.querySelectorAll('.tw-fast-btn') : [];
+      for (var fbi = 0; fbi < fastBtns.length; fbi++) {
+        (function (fBtn) {
+          fBtn.addEventListener('click', function () {
+            var txt = fBtn.getAttribute('data-text');
+            SPEECH.speak(txt, { rate: 1.25 });
+          });
+        }(fastBtns[fbi]));
+      }
+      var twBtns = el.querySelectorAll ? el.querySelectorAll('.tw-practice-btn') : [];
+      for (var tbi = 0; tbi < twBtns.length; tbi++) {
+        (function (tBtn) {
+          tBtn.addEventListener('click', function () {
+            var twText = tBtn.getAttribute('data-twister');
+            var twIdx = tBtn.getAttribute('data-idx');
+            var slot = document.getElementById('tw-slot-' + twIdx);
+            if (slot) {
+              if (slot.innerHTML.trim().length > 0) {
+                slot.innerHTML = '';
+              } else {
+                UI.practiceBar(slot, {
+                  prompt: 'Speed Drill: "' + twText + '"',
+                  expected: twText,
+                  skill: 'fluency',
+                  onPass: function () {
+                    STORE.addXP(15);
+                    UI.toast('Speed Demon Agility! +15 XP', 'success');
+                  }
+                });
+              }
+            }
+          });
+        }(twBtns[tbi]));
+      }
+    }
   }
 };
 
@@ -14463,18 +15065,31 @@ VIEWS.coach = {
         scOpts +
         '</select>' +
         '</div>';
+
+      html += '<div class="coach-quick-pills" style="display:flex;gap:6px;overflow-x:auto;padding:6px 0;margin-bottom:8px;">' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Tell me about yourself and your greatest professional strength.">💼 Job Interview</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="I would like to order an iced oat latte with an extra shot.">☕ Order Coffee</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Here is my agile standup update: yesterday I resolved the auth bug, and today I am deploying.">🚀 Tech Standup</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Can you upgrade this sentence to executive English: I think we should do this project now because it is very good.">💎 Executive Polish</button>' +
+        '<button class="btn-sm btn-ghost coach-prompt-pill" data-prompt="Let\'s practice casual small talk about weekend plans and hobbies.">☕ Small Talk</button>' +
+        '</div>';
     }
 
     html += '<div class="chat-window" id="chat-window">';
 
     if (history.length === 0) {
       html += '<div class="bubble nova"><div class="bubble-label">Nova</div>'
-        + '<div class="bubble-text">Hi! I\'m Nova, your English coach. I remember our conversations, so we can pick up right where we left off. Ask me to check grammar, explain vocabulary, or chat naturally. What would you like to work on?</div></div>';
+        + '<div class="bubble-text">Hi! I\'m Nova, your English coach. I remember our conversations, so we can pick up right where we left off. Ask me to check grammar, explain vocabulary, or chat naturally. What would you like to work on?</div>'
+        + '<button class="btn-sm btn-ghost nova-hear-btn" data-say="Hi! I am Nova, your English coach. What would you like to work on?" style="margin-top:6px;padding:2px 8px;font-size:0.75rem;">🔊 Listen</button>'
+        + '</div>';
     } else {
       for (var i = 0; i < history.length; i++) {
         var msg = history[i];
         var cls = msg.role === 'user' ? 'user' : 'nova';
-        html += '<div class="bubble ' + cls + '"><div class="bubble-label">' + (msg.role === 'user' ? 'You' : 'Nova') + '</div><div class="bubble-text">' + msg.text + '</div></div>';
+        var hearBtnHtml = (msg.role !== 'user')
+          ? '<button class="btn-sm btn-ghost nova-hear-btn" data-say="' + _esc(msg.text.replace(/<[^>]*>/g, '')) + '" style="margin-top:6px;padding:2px 8px;font-size:0.75rem;">🔊 Listen</button>'
+          : '';
+        html += '<div class="bubble ' + cls + '"><div class="bubble-label">' + (msg.role === 'user' ? 'You' : 'Nova') + '</div><div class="bubble-text">' + msg.text + '</div>' + hearBtnHtml + '</div>';
       }
     }
     html += '</div>'; /* chat-window */
@@ -14486,6 +15101,10 @@ VIEWS.coach = {
     if (self._mode === 'document' && activeDoc) {
       html += '<div class="doc-hint">💡 Ask: "What does X mean here?", "Summarize this section", or "Check my understanding: …"</div>';
     }
+
+    html += '<div id="nova-wave-wrap" style="display:none;margin-bottom:8px;">'
+      + ((typeof UI !== 'undefined' && UI.renderAudioWave) ? UI.renderAudioWave(true, '🎙️ Listening... speak naturally') : '')
+      + '</div>';
 
     html += '<div class="chat-input-row">';
     if (SPEECH.canListen()) {
@@ -14557,20 +15176,63 @@ VIEWS.coach = {
       self.render(el);
     });
 
+    /* Quick topic pills click */
+    var promptPills = el.querySelectorAll ? el.querySelectorAll('.coach-prompt-pill') : [];
+    for (var ppi = 0; ppi < promptPills.length; ppi++) {
+      (function (pill) {
+        pill.addEventListener('click', function () {
+          var pr = pill.getAttribute('data-prompt');
+          var inputField = document.getElementById('nova-input');
+          if (inputField) {
+            inputField.value = pr;
+            _send();
+          }
+        });
+      }(promptPills[ppi]));
+    }
+
     /* Mic */
     var micBtn = document.getElementById('nova-mic');
+    var waveEl = document.getElementById('nova-wave-wrap');
+    var novaInput = document.getElementById('nova-input');
+    var isListening = false;
     if (micBtn) {
       micBtn.addEventListener('click', function () {
-        micBtn.textContent = '🔴';
-        micBtn.disabled = true;
+        if (isListening) {
+          SPEECH.stopListening();
+          isListening = false;
+          micBtn.textContent = '🎤';
+          micBtn.className = 'btn-mic';
+          if (waveEl) { waveEl.style.display = 'none'; }
+          return;
+        }
+        isListening = true;
+        micBtn.textContent = '⏹️';
+        micBtn.className = 'btn-mic listening pulse';
+        if (waveEl) { waveEl.style.display = 'block'; }
         SPEECH.listen({
+          interim: true,
+          continuous: true,
           onresult: function (t) {
-            document.getElementById('nova-input').value = t;
-            micBtn.textContent = '🎤';
-            micBtn.disabled = false;
+            if (novaInput) { novaInput.value = t; }
+            if (waveEl) {
+              var sEl = waveEl.querySelector('.aw-status');
+              if (sEl) { sEl.textContent = '🎙️ Heard: "' + t + '"'; }
+            }
           },
-          onend: function () { micBtn.textContent = '🎤'; micBtn.disabled = false; },
-          onerror: function (m) { UI.toast(m, 'error'); micBtn.textContent = '🎤'; micBtn.disabled = false; }
+          onend: function () {
+            isListening = false;
+            micBtn.textContent = '🎤';
+            micBtn.className = 'btn-mic';
+            if (waveEl) { waveEl.style.display = 'none'; }
+          },
+          onerror: function (m) {
+            isListening = false;
+            micBtn.textContent = '🎤';
+            micBtn.className = 'btn-mic';
+            if (waveEl) { waveEl.style.display = 'none'; }
+            UI.toast(m, 'warning');
+          }
         });
       });
     }
@@ -15283,7 +15945,12 @@ VIEWS.settings = {
         ? '<p class="setting-hint" id="s-remind-note" style="color:var(--warn);">Reminders not supported here — streak chip is your reminder.</p>'
         : '<p class="setting-hint" id="s-remind-note">Receive a local notification when today\'s Flow has remaining steps.</p>'
       ) +
-      '<p class="setting-hint" style="color:var(--txt2);font-size:12px;margin-top:4px;">Reminders fire while EngSpell was opened today on Firefox; instant even after phone sleep on Chrome/Android.</p>' +
+      '<div class="setting-group">' +
+      '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;">' +
+      '<input type="checkbox" id="s-sound-fx"' + (settings.soundFx !== false ? ' checked' : '') + ' style="width:18px;height:18px;" />' +
+      '<span>🎵 Sound FX & Audio Chimes (Web Audio Synth)</span>' +
+      '</label>' +
+      '<p class="setting-hint">Crisp procedural acoustic chords for correct pronunciation, level ups, and streak milestones (100% offline, zero latency).</p>' +
       '</div>' +
 
       '<button class="btn-primary" id="s-save">💾 Save Settings</button>' +
@@ -15464,6 +16131,7 @@ VIEWS.settings = {
       var llmProvider = document.getElementById('s-provider') ? document.getElementById('s-provider').value : 'gemini';
       var remindHour = document.getElementById('s-remind-hour') ? document.getElementById('s-remind-hour').value : '19:00';
       var remindOn = document.getElementById('s-remind-on') ? document.getElementById('s-remind-on').checked : false;
+      var soundFx = document.getElementById('s-sound-fx') ? document.getElementById('s-sound-fx').checked : true;
       var curSettings = STORE.get('settings') || {};
       curSettings.voice = voice;
       curSettings.rate = rate;
@@ -15475,6 +16143,7 @@ VIEWS.settings = {
       curSettings.llmProvider = llmProvider;
       curSettings.remindHour = remindHour;
       curSettings.remindOn = remindOn;
+      curSettings.soundFx = soundFx;
       STORE.set('settings', curSettings);
       SPEECH.setRate(rate);
       if (voice) { SPEECH.setVoiceByName(voice); }
@@ -16082,6 +16751,9 @@ VIEWS.daily = {
           <button class="btn-sm" data-say="${twister}">🔊 Hear it</button>
           <button class="btn-primary" id="daily-twister-btn">🎤 Say it</button>
         </div>
+        <div id="twister-wave" style="display:none;margin-top:8px;">
+          ${(typeof UI !== 'undefined' && UI.renderAudioWave) ? UI.renderAudioWave(true, '🎙️ Listening... speak clearly') : ''}
+        </div>
         <div id="twister-fb"></div>
       </div>
 
@@ -16092,8 +16764,12 @@ VIEWS.daily = {
         <div class="pw-ipa">${word.ipa}</div>
         <div class="pw-meaning">${word.meaning}</div>
         <div class="pw-eg"><em>"${word.eg}"</em></div>
-        <button class="btn-sm" data-say="${word.w}">🔊 Listen</button>
-        <button class="btn-secondary" id="daily-word-done">✅ Got it!</button>
+        <div class="dc-btns" style="margin-top:10px;">
+          <button class="btn-sm btn-ghost" data-say="${word.w}">🔊 Listen</button>
+          <button class="btn-sm btn-primary" id="daily-word-voice">🎤 Speak Word</button>
+          <button class="btn-secondary" id="daily-word-done">✅ Got it!</button>
+        </div>
+        <div id="daily-word-practice" style="margin-top:10px;"></div>
       </div>
 
       <!-- IDIOM QUIZ -->
@@ -16104,6 +16780,13 @@ VIEWS.daily = {
           ${_makeIdiomOpts(idiom)}
         </div>
         <div id="idiom-fb"></div>
+        ${idiom.dialogue ? `
+          <div class="idiom-dialogue-box" style="margin-top:12px;background:rgba(124,92,255,0.08);border:1px solid rgba(124,92,255,0.25);border-radius:10px;padding:12px;">
+            <div style="font-size:0.75rem;text-transform:uppercase;color:var(--acc2);font-weight:700;margin-bottom:6px;">💬 Real-World Dialogue</div>
+            <div style="font-size:0.9rem;color:var(--txt);line-height:1.4;">${_esc(idiom.dialogue)}</div>
+            <button class="btn-sm btn-ghost" data-say="${_esc(idiom.dialogue)}" style="margin-top:6px;">🔊 Hear Dialogue</button>
+          </div>
+        ` : ''}
       </div>
 
       <!-- QUOTE SHADOW -->
@@ -16128,21 +16811,64 @@ VIEWS.daily = {
         return;
       }
       const btn = document.getElementById('daily-twister-btn');
-      btn.textContent = '🔴 Listening…'; btn.disabled = true;
+      const wave = document.getElementById('twister-wave');
+      if (wave) wave.style.display = 'block';
+      btn.textContent = '⏹️ Listening… speak now'; btn.classList.add('pulse');
       SPEECH.listen({
-        onresult: transcript => {
-          const aligned = U.align(twister, transcript);
-          const v = U.verdict(aligned);
-          document.getElementById('twister-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Nailed it!' : '🟡 Keep practising!'}</p>`;
-          _markDone('twister', done, today);
-          TRAINER.log({skill: 'pronunciation', delta: v === 'pass' ? 2 : 1, source: 'daily/twister'});
-          STORE.addXP(5);
-          btn.textContent = '🎤 Say it'; btn.disabled = false;
+        interim: true,
+        continuous: true,
+        onresult: (transcript, isFinal) => {
+          if (wave) {
+            const st = wave.querySelector('.aw-status');
+            if (st) st.textContent = '🎙️ Heard: "' + transcript + '"';
+          }
+          if (isFinal) {
+            const aligned = U.align(twister, transcript);
+            const v = U.verdict(aligned);
+            if (v === 'pass') {
+              if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('success');
+              if (typeof CONFETTI !== 'undefined') CONFETTI.burst();
+            } else {
+              if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('pop');
+            }
+            document.getElementById('twister-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Nailed it!' : '🟡 Keep practising!'}</p>`;
+            _markDone('twister', done, today);
+            TRAINER.log({skill: 'pronunciation', delta: v === 'pass' ? 2 : 1, source: 'daily/twister'});
+            STORE.addXP(5);
+            btn.textContent = '🎤 Say it'; btn.classList.remove('pulse');
+            if (wave) wave.style.display = 'none';
+          }
         },
-        onend: () => { btn.textContent = '🎤 Say it'; btn.disabled = false; },
-        onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Say it'; btn.disabled = false; }
+        onend: () => { btn.textContent = '🎤 Say it'; btn.classList.remove('pulse'); if (wave) wave.style.display = 'none'; },
+        onerror: msg => { UI.toast(msg, 'error'); btn.textContent = '🎤 Say it'; btn.classList.remove('pulse'); if (wave) wave.style.display = 'none'; }
       });
     });
+
+    // Power word voice test
+    const pwVoiceBtn = document.getElementById('daily-word-voice');
+    if (pwVoiceBtn) {
+      pwVoiceBtn.addEventListener('click', () => {
+        const slot = document.getElementById('daily-word-practice');
+        if (slot) {
+          if (slot.innerHTML.trim().length > 0) {
+            slot.innerHTML = '';
+          } else {
+            UI.practiceBar(slot, {
+              prompt: `Say "${word.w}"`,
+              expected: word.w,
+              skill: 'vocab',
+              onPass: () => {
+                _markDone('word', done, today);
+                STORE.master('spell_' + word.w, true);
+                TRAINER.log({skill: 'vocab', delta: 2, source: 'daily/word'});
+                STORE.addXP(10);
+                UI.toast('Power word mastered with voice! +10 XP', 'success');
+              }
+            });
+          }
+        }
+      });
+    }
 
     // Power word done
     document.getElementById('daily-word-done').addEventListener('click', () => {
@@ -16150,6 +16876,7 @@ VIEWS.daily = {
       STORE.master('spell_' + word.w, true);
       TRAINER.log({skill: 'vocab', delta: 2, source: 'daily/word'});
       STORE.addXP(5);
+      if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('pass');
       UI.toast('Power word learned! +5 XP', 'success');
     });
 
@@ -16166,6 +16893,7 @@ VIEWS.daily = {
       SPEECH.speak(quote.text, {
         onend: () => {
           btn.textContent = '🔴 Listening… speak now!';
+          btn.disabled = false;
           btn.classList.add('pulse');
           SPEECH.listen({
             interim: true,
@@ -16174,6 +16902,12 @@ VIEWS.daily = {
               if (isFinal) {
                 const aligned = U.align(quote.text, t);
                 const v = U.verdict(aligned);
+                if (v === 'pass') {
+                  if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('success');
+                  if (typeof CONFETTI !== 'undefined') CONFETTI.burst();
+                } else {
+                  if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('pop');
+                }
                 document.getElementById('quote-fb').innerHTML = UI.scoreHTML(aligned) + `<p class="verdict ${v}">${v === 'pass' ? '✅ Great fluency!' : '🟡 Good practice!'}</p>`;
                 _markDone('quote', done, today);
                 TRAINER.log({skill: 'fluency', delta: v === 'pass' ? 2 : 1, source: 'daily/quote'});
@@ -16198,6 +16932,12 @@ VIEWS.daily = {
         const btn = e.target.closest('.opt-btn');
         if (!btn) return;
         const correct = btn.dataset.correct === '1';
+        if (correct) {
+          if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('success');
+          if (typeof CONFETTI !== 'undefined') CONFETTI.burst();
+        } else {
+          if (typeof SOUND_FX !== 'undefined') SOUND_FX.play('fail');
+        }
         const fb = document.getElementById('idiom-fb');
         fb.innerHTML = correct
           ? `<p class="verdict pass">✅ Correct! ${idiom.meaning}</p><p class="idiom-eg"><em>"${idiom.eg}"</em></p>`
