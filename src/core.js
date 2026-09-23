@@ -478,8 +478,49 @@ var U = (function () {
     "they're": 'they are', "they've": 'they have', "they'll": 'they will',
     "that's": 'that is', "there's": 'there is', "here's": 'here is',
     "let's": 'let us', "who's": 'who is', "what's": 'what is',
-    "needn't": 'need not', "mustn't": 'must not'
+    "needn't": 'need not', "mustn't": 'must not',
+    "wanna": 'want to', "gonna": 'going to'
   };
+
+  var HOMOPHONES = {
+    'i': ['eye', 'aye', 'ai', 'ah'],
+    'she': ['see', 'sea', 'c'],
+    'he': ['hi'],
+    'they': ['dey', 'day'],
+    'we': ['wee', 'v'],
+    'you': ['u', 'ya'],
+    'it': ["it's"],
+    'be': ['b'],
+    'are': ['r', 'our'],
+    'to': ['too', 'two', '2'],
+    'for': ['four', 'fore', '4'],
+    'their': ['there', "they're"],
+    'there': ['their', "they're"],
+    'your': ["you're", 'ur'],
+    'one': ['won', '1'],
+    'won': ['one'],
+    'by': ['bye', 'buy'],
+    'no': ['know'],
+    'know': ['no'],
+    'right': ['write'],
+    'write': ['right']
+  };
+
+  function wordsMatch(w1, w2) {
+    if (!w1 || !w2) { return false; }
+    if (w1 === w2) { return true; }
+    var homs1 = HOMOPHONES[w1];
+    if (homs1 && homs1.indexOf(w2) !== -1) { return true; }
+    var homs2 = HOMOPHONES[w2];
+    if (homs2 && homs2.indexOf(w1) !== -1) { return true; }
+    // Suffix tolerance for spoken English (s/es/ed)
+    if (w1.length > 3 && w2.length > 3) {
+      if (w1 + 's' === w2 || w2 + 's' === w1) { return true; }
+      if (w1 + 'es' === w2 || w2 + 'es' === w1) { return true; }
+      if (w1 + 'ed' === w2 || w2 + 'ed' === w1) { return true; }
+    }
+    return false;
+  }
 
   function norm(text) {
     if (!text) { return ''; }
@@ -519,7 +560,7 @@ var U = (function () {
     }
     for (var a = 1; a <= m; a++) {
       for (var b = 1; b <= n; b++) {
-        dp[a][b] = (exp[a-1] === hrd[b-1]) ? dp[a-1][b-1] + 1 : Math.max(dp[a-1][b], dp[a][b-1]);
+        dp[a][b] = wordsMatch(exp[a-1], hrd[b-1]) ? dp[a-1][b-1] + 1 : Math.max(dp[a-1][b], dp[a][b-1]);
       }
     }
 
@@ -527,7 +568,7 @@ var U = (function () {
     var result = [];
     var ia = m, ib = n;
     while (ia > 0 && ib > 0) {
-      if (exp[ia-1] === hrd[ib-1]) {
+      if (wordsMatch(exp[ia-1], hrd[ib-1])) {
         result.unshift({word: exp[ia-1], ok: true});
         ia--; ib--;
       } else if (dp[ia-1][ib] > dp[ia][ib-1]) {
@@ -591,7 +632,9 @@ var U = (function () {
     score: score,
     fmtXP: fmtXP,
     dailyPick: dailyPick,
-    dailyPickN: dailyPickN
+    dailyPickN: dailyPickN,
+    wordsMatch: wordsMatch,
+    HOMOPHONES: HOMOPHONES
   };
 }());
 
@@ -886,7 +929,10 @@ var LIVE_COACH = (function () {
     if (partialTokens.length > matchedCount) {
       unexpectedCount = partialTokens.length - matchedCount;
       candidate = partialTokens[matchedCount];
-      if (nextExpected && candidate !== nextExpected) {
+      var isCandidateMatch = (typeof U !== 'undefined' && U.wordsMatch)
+        ? U.wordsMatch(nextExpected, candidate)
+        : (candidate === nextExpected);
+      if (nextExpected && !isCandidateMatch) {
         mismatch = true;
       }
     }
@@ -904,6 +950,23 @@ var LIVE_COACH = (function () {
       unexpectedCount: unexpectedCount,
       isComplete: isComplete
     };
+  }
+
+  function matchBest(target, candidates) {
+    if (typeof candidates === 'string') {
+      return matchPrefix(target, candidates);
+    }
+    if (!candidates || !candidates.length) {
+      return matchPrefix(target, '');
+    }
+    var best = null;
+    for (var i = 0; i < candidates.length; i++) {
+      var m = matchPrefix(target, candidates[i]);
+      if (!best || m.matchedCount > best.matchedCount) {
+        best = m;
+      }
+    }
+    return best || matchPrefix(target, candidates[0]);
   }
 
   function shouldInterrupt(state) {
@@ -1065,6 +1128,7 @@ var LIVE_COACH = (function () {
   return {
     HIGH_SEVERITY_RULES: HIGH_SEVERITY_RULES,
     matchPrefix: matchPrefix,
+    matchBest: matchBest,
     shouldInterrupt: shouldInterrupt,
     getChipStates: getChipStates,
     renderChipHTML: renderChipHTML,

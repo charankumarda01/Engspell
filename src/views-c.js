@@ -1544,21 +1544,36 @@ VIEWS.onboarding = {
       self._drillSentence = target;
 
       html += '<h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px;">🎙️ Instant Win — First Live Drill</h1>'
-        + '<p style="color:var(--mut);font-size:0.85rem;margin-bottom:14px;">Calibrated for your level: <strong style="color:var(--acc2);">' + _esc(tag) + '</strong>. Speak or type to see word-level live matching.</p>'
+        + '<p style="color:var(--mut);font-size:0.85rem;margin-bottom:14px;">Calibrated for your level: <strong style="color:var(--acc2);">' + _esc(tag) + '</strong>. Speak aloud or type to experience real-time word-by-word matching.</p>'
         + '<div id="ob-xp-pop" style="display:' + (self._drillFirstWordCelebrated ? 'block' : 'none') + ';background:rgba(52,211,153,0.15);border:1px solid var(--ok);border-radius:var(--r-sm);padding:10px 14px;color:var(--ok);font-weight:700;text-align:center;margin-bottom:14px;">'
-        + '🎉 +10 XP! First word unlocked! Flow Step 1 (Diagnose) marked DONE!'
+        + (self._drillCompleted ? '🏆 +20 XP! Entire sentence mastered! Step 1 Complete!' : '🎉 +10 XP! First word unlocked! Flow Step 1 (Diagnose) marked DONE!')
         + '</div>'
         + '<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px;text-align:center;">'
-        + '<div style="font-size:0.75rem;color:var(--mut);text-transform:uppercase;margin-bottom:8px;">Target sentence</div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">'
+        + '<span style="font-size:0.75rem;color:var(--acc2);text-transform:uppercase;font-weight:700;letter-spacing:0.05em;">Target Sentence</span>'
+        + '<div style="display:flex;gap:6px;">'
+        + '<button class="btn-ghost btn-sm" id="ob-hear-model" style="padding:4px 8px;font-size:0.8rem;border:1px solid var(--line);" title="Listen to model pronunciation">🔊 Hear Model</button>'
+        + '<button class="btn-ghost btn-sm" id="ob-listen-slow" style="padding:4px 8px;font-size:0.8rem;border:1px solid var(--line);" title="Listen slowly">🐢 Slow</button>'
+        + '</div>'
+        + '</div>'
+        + '<div id="ob-target-display" style="font-size:1.15rem;font-weight:700;color:var(--txt);margin-bottom:10px;line-height:1.4;">' + _esc(target) + '</div>'
         + '<div id="ob-chips-container" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0;">'
         + (typeof LIVE_COACH !== 'undefined' ? LIVE_COACH.renderChipHTML(target, self._lastPartial || '') : _esc(target))
         + '</div>'
+        + '<div id="ob-heard-box" style="min-height:24px;font-size:0.85rem;color:var(--mut);margin-top:8px;">'
+        + (self._lastPartial ? ('Heard: <strong>&ldquo;' + _esc(self._lastPartial) + '&rdquo;</strong>') : 'Tap &ldquo;Start Speaking&rdquo; and read the sentence aloud...')
+        + '</div>'
+        + '<div id="ob-match-status" style="font-size:0.8rem;font-weight:700;color:var(--acc2);margin-top:6px;"></div>'
         + '</div>';
 
       if (SPEECH.canListen()) {
         html += '<div style="text-align:center;margin-bottom:14px;">'
-          + '<button class="btn-primary" id="ob-mic-btn" style="padding:10px 20px;font-size:1rem;">🎙️ Start Speaking</button>'
-          + '<p style="font-size:0.78rem;color:var(--mut);margin-top:6px;">Microphone access is used strictly in-browser for speech recognition (never recorded or sent to any server).</p>'
+          + '<button class="btn-primary" id="ob-mic-btn" style="padding:12px 24px;font-size:1.05rem;font-weight:700;box-shadow:var(--sh1);transition:all 0.2s ease;">🎙️ Start Speaking</button>'
+          + '<p style="font-size:0.78rem;color:var(--mut);margin-top:8px;">Microphone is processed in real time in your browser (never saved, recorded, or sent anywhere).</p>'
+          + '</div>';
+      } else {
+        html += '<div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:var(--r-sm);padding:10px;margin-bottom:14px;font-size:0.82rem;color:var(--txt);text-align:center;">'
+          + 'ℹ️ Browser microphone not detected. Type below to practice word-by-word live matching!'
           + '</div>';
       }
 
@@ -1679,15 +1694,61 @@ VIEWS.onboarding = {
       var typedInput = document.getElementById('ob-typed-input');
       var typedSubmit = document.getElementById('ob-typed-submit');
       var s3Next = document.getElementById('ob-s3-next');
+      var hearBtn = document.getElementById('ob-hear-model');
+      var slowBtn = document.getElementById('ob-listen-slow');
       var isListening = false;
+      var completed = false;
 
-      function _onPartialMatch(text) {
-        self._lastPartial = text;
+      if (hearBtn) {
+        hearBtn.addEventListener('click', function () {
+          if (typeof SPEECH !== 'undefined' && SPEECH.speak) {
+            SPEECH.speak(target2);
+          }
+        });
+      }
+      if (slowBtn) {
+        slowBtn.addEventListener('click', function () {
+          if (typeof SPEECH !== 'undefined' && SPEECH.speakSlow) {
+            SPEECH.speakSlow(target2);
+          }
+        });
+      }
+
+      function _onPartialMatch(text, alts) {
+        var candidates = [text];
+        if (alts && alts.length) {
+          for (var a = 0; a < alts.length; a++) {
+            if (candidates.indexOf(alts[a]) === -1) {
+              candidates.push(alts[a]);
+            }
+          }
+        }
+        var match = (typeof LIVE_COACH !== 'undefined' && LIVE_COACH.matchBest)
+          ? LIVE_COACH.matchBest(target2, candidates)
+          : ((typeof LIVE_COACH !== 'undefined') ? LIVE_COACH.matchPrefix(target2, text) : { matchedCount: 0, targetTokens: [] });
+
+        self._lastPartial = match.partial || text;
+
         var chipsContainer = document.getElementById('ob-chips-container');
         if (chipsContainer && typeof LIVE_COACH !== 'undefined') {
-          chipsContainer.innerHTML = LIVE_COACH.renderChipHTML(target2, text);
+          chipsContainer.innerHTML = LIVE_COACH.renderChipHTML(target2, match);
         }
-        var match = (typeof LIVE_COACH !== 'undefined') ? LIVE_COACH.matchPrefix(target2, text) : { matchedCount: 0 };
+
+        var heardBox = document.getElementById('ob-heard-box');
+        if (heardBox && text) {
+          heardBox.innerHTML = '<span style="color:var(--txt);">Heard: <strong>&ldquo;' + _esc(text) + '&rdquo;</strong></span>';
+        }
+
+        var statusEl = document.getElementById('ob-match-status');
+        var totalTokens = match.targetTokens ? match.targetTokens.length : 0;
+        if (statusEl && totalTokens > 0) {
+          if (match.isComplete) {
+            statusEl.innerHTML = '🎉 <strong style="color:var(--ok);">All ' + totalTokens + ' words matched! Perfect!</strong>';
+          } else {
+            statusEl.innerHTML = '<span style="color:var(--acc2);">' + match.matchedCount + '</span> / ' + totalTokens + ' words matched';
+          }
+        }
+
         if (match.matchedCount >= 1 && !self._drillFirstWordCelebrated) {
           self._drillFirstWordCelebrated = true;
           STORE.addXP(10, 'onboarding-drill');
@@ -1695,23 +1756,85 @@ VIEWS.onboarding = {
             FLOW.mark(1);
           }
           var popEl = document.getElementById('ob-xp-pop');
-          if (popEl) { popEl.style.display = 'block'; }
+          if (popEl) {
+            popEl.style.display = 'block';
+            popEl.innerHTML = '🎉 +10 XP! First word unlocked! Flow Step 1 (Diagnose) marked DONE!';
+          }
           if (s3Next) {
             s3Next.style.opacity = '1';
             s3Next.textContent = 'Continue to Power-up →';
           }
           UI.toast('🎉 First word matched! +10 XP & Step 1 Done!', 'success');
         }
+
+        if (match.isComplete && !self._drillCompleted) {
+          self._drillCompleted = true;
+          completed = true;
+          STORE.addXP(20, 'onboarding-drill-complete');
+          var popElComplete = document.getElementById('ob-xp-pop');
+          if (popElComplete) {
+            popElComplete.style.display = 'block';
+            popElComplete.innerHTML = '🏆 +20 XP! Entire sentence matched! Step 1 Complete!';
+          }
+          UI.toast('🏆 Sentence complete! Excellent clarity! +20 XP', 'success');
+          _resetMic();
+          if (s3Next) {
+            s3Next.style.opacity = '1';
+            s3Next.style.boxShadow = '0 0 16px rgba(52, 211, 153, 0.4)';
+            s3Next.textContent = 'Continue to Power-up →';
+          }
+        }
       }
 
-      if (typedSubmit && typedInput) {
-        typedSubmit.addEventListener('click', function () {
-          var val = typedInput.value.trim();
-          if (!val) { return; }
-          _onPartialMatch(val);
-        });
-        typedInput.addEventListener('input', function () {
-          _onPartialMatch(this.value);
+      function _resetMic() {
+        isListening = false;
+        if (micBtn) {
+          micBtn.textContent = '🎙️ Start Speaking';
+          micBtn.style.background = '';
+          micBtn.style.borderColor = '';
+          micBtn.classList.remove('pulse');
+        }
+      }
+
+      function _startListening() {
+        if (isListening) { return; }
+        isListening = true;
+        if (micBtn) {
+          micBtn.textContent = '⏹️ Stop Listening';
+          micBtn.style.background = 'var(--err, #ef4444)';
+          micBtn.style.borderColor = 'var(--err, #ef4444)';
+          micBtn.classList.add('pulse');
+        }
+        var heardBox = document.getElementById('ob-heard-box');
+        if (heardBox && !self._lastPartial) {
+          heardBox.innerHTML = '<span style="color:var(--acc2);font-weight:600;">🎙️ Listening... speak the words clearly</span>';
+        }
+
+        SPEECH.listen({
+          interim: true,
+          continuous: true,
+          maxAlts: 4,
+          onresult: function (transcript, isFinal, alts) {
+            if (completed) { return; }
+            _onPartialMatch(transcript, alts);
+          },
+          onend: function () {
+            if (completed) { return; }
+            _resetMic();
+          },
+          onerror: function (msg, code) {
+            if (completed) { return; }
+            _resetMic();
+            if (code === 'not-allowed') {
+              var hb = document.getElementById('ob-heard-box');
+              if (hb) {
+                hb.innerHTML = '<span style="color:var(--err);">⚠️ Microphone permission denied. Type below to practice!</span>';
+              }
+              if (typedInput && typedInput.focus) { typedInput.focus(); }
+            } else if (code !== 'aborted') {
+              UI.toast(msg, 'warning');
+            }
+          }
         });
       }
 
@@ -1719,26 +1842,21 @@ VIEWS.onboarding = {
         micBtn.addEventListener('click', function () {
           if (isListening) {
             SPEECH.stopListening();
-            isListening = false;
-            micBtn.textContent = '🎙️ Start Speaking';
-            return;
+            _resetMic();
+          } else {
+            _startListening();
           }
-          isListening = true;
-          micBtn.textContent = '🛑 Listening... speak now';
-          SPEECH.listen({
-            onresult: function (transcript, isFinal) {
-              _onPartialMatch(transcript);
-              if (isFinal) {
-                isListening = false;
-                if (micBtn) { micBtn.textContent = '🎙️ Start Speaking'; }
-              }
-            },
-            onerror: function (err) {
-              isListening = false;
-              if (micBtn) { micBtn.textContent = '🎙️ Start Speaking'; }
-              UI.toast('Mic note: ' + err, 'warning');
-            }
-          });
+        });
+      }
+
+      if (typedSubmit && typedInput) {
+        typedSubmit.addEventListener('click', function () {
+          var val = typedInput.value.trim();
+          if (!val) { return; }
+          _onPartialMatch(val, []);
+        });
+        typedInput.addEventListener('input', function () {
+          _onPartialMatch(this.value, []);
         });
       }
 

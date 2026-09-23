@@ -96,11 +96,14 @@ var SPEECH = (function () {
   }
 
   /* ── STT helpers ── */
-  var STT_CTOR = (typeof SpeechRecognition !== 'undefined') ? SpeechRecognition :
-    (typeof webkitSpeechRecognition !== 'undefined') ? webkitSpeechRecognition : null;
+  function _getSTTCtor() {
+    if (typeof SpeechRecognition !== 'undefined' && SpeechRecognition) { return SpeechRecognition; }
+    if (typeof webkitSpeechRecognition !== 'undefined' && webkitSpeechRecognition) { return webkitSpeechRecognition; }
+    return null;
+  }
 
   function canListen() {
-    return STT_CTOR !== null;
+    return _getSTTCtor() !== null;
   }
 
   /* Error taxonomy — maps DOMException names to clear, actionable guidance */
@@ -129,7 +132,8 @@ var SPEECH = (function () {
    * opts.maxAlts  — number of alternative transcripts (1–5)
    */
   function listen(opts) {
-    if (!canListen()) {
+    var ctor = _getSTTCtor();
+    if (!ctor) {
       if (typeof opts.onerror === 'function') {
         opts.onerror('Speech recognition is not supported by your browser. Please type your answer instead.', 'not-supported');
       }
@@ -138,20 +142,33 @@ var SPEECH = (function () {
     if (_listening) { stopListening(); }
 
     opts = opts || {};
-    _recogniser = new STT_CTOR();
-    _recogniser.continuous = false;
-    _recogniser.interimResults = !!opts.interim;
-    _recogniser.lang = opts.lang || 'en-GB';
+    _recogniser = new ctor();
+    _recogniser.continuous = (opts.continuous !== undefined) ? !!opts.continuous : false;
+    _recogniser.interimResults = (opts.interim !== undefined) ? !!opts.interim : false;
+    _recogniser.lang = opts.lang || ((typeof STORE !== 'undefined' && STORE.get && STORE.get('settings') && STORE.get('settings').speechLang) ? STORE.get('settings').speechLang : ((typeof navigator !== 'undefined' && navigator.language && navigator.language.indexOf('en') === 0) ? navigator.language : 'en-US'));
     _recogniser.maxAlternatives = opts.maxAlts || 3;
 
     _recogniser.onresult = function (ev) {
-      var result = ev.results[ev.results.length - 1];
-      var transcript = result[0].transcript.trim();
-      var isFinal = result.isFinal;
+      var fullTranscript = '';
+      var isFinal = false;
       var alts = [];
-      for (var i = 0; i < result.length; i++) {
-        alts.push(result[i].transcript.trim());
+      var prefix = '';
+
+      for (var i = 0; i < ev.results.length; i++) {
+        var res = ev.results[i];
+        var itemText = res[0].transcript.trim();
+        fullTranscript += (fullTranscript ? ' ' : '') + itemText;
+        if (i < ev.results.length - 1) {
+          prefix += (prefix ? ' ' : '') + itemText;
+        } else {
+          isFinal = res.isFinal;
+          for (var a = 0; a < res.length; a++) {
+            var altPiece = res[a].transcript.trim();
+            alts.push(prefix ? (prefix + ' ' + altPiece) : altPiece);
+          }
+        }
       }
+      var transcript = fullTranscript.trim();
       if (typeof opts.onresult === 'function') {
         opts.onresult(transcript, isFinal, alts);
       }

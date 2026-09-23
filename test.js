@@ -3199,6 +3199,110 @@ tryv('10/10: ES5 check: all updated source files pass node --check', function ()
   return true;
 });
 
+/* ── Instant Win Live Drill & Speech Tolerance Checks ──────────────── */
+console.log('\n🎙️ Instant Win Live Drill & Speech Tolerance (10/10 Readiness)');
+
+tryv('Instant Win: U.wordsMatch handles pronouns, homophones, and spoken verb inflections', function () {
+  if (!U.wordsMatch('i', 'eye') || !U.wordsMatch('eye', 'i')) { return false; }
+  if (!U.wordsMatch('she', 'see') || !U.wordsMatch('she', 'sea')) { return false; }
+  if (!U.wordsMatch('he', 'hi')) { return false; }
+  if (!U.wordsMatch('we', 'wee')) { return false; }
+  if (!U.wordsMatch('they', 'dey')) { return false; }
+  if (!U.wordsMatch('speaks', 'speak') || !U.wordsMatch('speak', 'speaks')) { return false; }
+  if (!U.wordsMatch('makes', 'make') || !U.wordsMatch('creates', 'create')) { return false; }
+  if (U.wordsMatch('cat', 'dog')) { return false; }
+  return true;
+});
+
+tryv('Instant Win: U.align matches pronoun homophones and inflections gracefully', function () {
+  var target = 'She speaks English with confidence';
+  var heard = 'see speak english with confidence';
+  var aligned = U.align(target, heard);
+  if (aligned.length !== 5) { return false; }
+  for (var i = 0; i < aligned.length; i++) {
+    if (!aligned[i].ok) { return false; }
+  }
+  return true;
+});
+
+tryv('Instant Win: LIVE_COACH.matchBest selects highest matching candidate from alternatives', function () {
+  var target = 'I want to speak English clearly';
+  var candidates = [
+    'eye want',
+    'I want to speak',
+    'I want to speak English clearly'
+  ];
+  var best = LIVE_COACH.matchBest(target, candidates);
+  if (!best || !best.isComplete || best.matchedCount !== 6) { return false; }
+  return true;
+});
+
+tryv('Instant Win: VIEWS.onboarding Screen 2 renders Hear Model, target sentence, and heard box', function () {
+  var mockEl = { innerHTML: '', querySelectorAll: function () { return []; } };
+  VIEWS.onboarding._screen = 2;
+  VIEWS.onboarding._drillSentence = 'She speaks English with confidence and clarity.';
+  VIEWS.onboarding.render(mockEl);
+  var html = mockEl.innerHTML;
+  return html.indexOf('ob-hear-model') !== -1 &&
+         html.indexOf('🔊 Hear Model') !== -1 &&
+         html.indexOf('ob-listen-slow') !== -1 &&
+         html.indexOf('ob-target-display') !== -1 &&
+         html.indexOf('ob-heard-box') !== -1 &&
+         html.indexOf('ob-match-status') !== -1 &&
+         html.indexOf('ob-chips-container') !== -1;
+});
+
+tryv('Instant Win: SPEECH.listen accumulates multi-segment continuous transcripts', function () {
+  try {
+    var capturedTranscript = '';
+    var capturedAlts = [];
+    var fakeInstance = {
+      continuous: false,
+      interimResults: false,
+      lang: '',
+      maxAlternatives: 3,
+      start: function () {},
+      stop: function () {}
+    };
+
+    global.SpeechRecognition = function () {
+      return fakeInstance;
+    };
+
+    SPEECH.listen({
+      continuous: true,
+      interim: true,
+      onresult: function (t, isFinal, alts) {
+        capturedTranscript = t;
+        capturedAlts = alts;
+      }
+    });
+
+    if (fakeInstance.continuous !== true || fakeInstance.interimResults !== true) {
+      return false;
+    }
+
+    // Simulate multi-segment speech recognition result list
+    var mockEv = {
+      results: [
+        [{ transcript: 'She' }],
+        [{ transcript: 'speaks' }, { transcript: 'speak' }]
+      ]
+    };
+    mockEv.results[0].isFinal = true;
+    mockEv.results[1].isFinal = false;
+
+    fakeInstance.onresult(mockEv);
+
+    if (capturedTranscript !== 'She speaks') { return false; }
+    if (capturedAlts.indexOf('She speaks') === -1 || capturedAlts.indexOf('She speak') === -1) { return false; }
+
+    return true;
+  } finally {
+    global.SpeechRecognition = null;
+  }
+});
+
 /* ── SUMMARY ────────────────────────────────────────────────────────── */
 console.log('\n' + '─'.repeat(50));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');
